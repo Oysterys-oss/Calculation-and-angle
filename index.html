@@ -3,87 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Excel 展示</title>
-    <!-- 引入 SheetJS 库用于解析 Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <title>我的网页版 Excel</title>
+    
+    <!-- 引入 Luckysheet 依赖样式和脚本 -->
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/css/pluginsCss.css' />
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/Plugins.css' />
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/css/luckysheet.css' />
+    
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/js/plugin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/luckysheet.umd.js"></script>
+
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f4f5f7;
+        html, body {
             margin: 0;
-            padding: 20px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        .table-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
-        table {
+            padding: 0;
+            height: 100%;
             width: 100%;
-            border-collapse: collapse;
-            text-align: left;
         }
-        th, td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e1e4e8;
-            font-size: 14px;
-        }
-        th {
-            background-color: #0366d6;
-            color: white;
-            font-weight: 600;
-        }
-        tr:hover {
-            background-color: #f1f8ff;
+        #luckysheet {
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0px;
+            top: 0px;
         }
     </style>
 </head>
 <body>
 
-    <h2>我的 Excel 表格展示</h2>
-    <div class="table-container" id="table-box">
-        正在加载表格数据...
-    </div>
+    <!-- 网页版 Excel 容器 -->
+    <div id="luckysheet"></div>
 
     <script>
-        // 【注意】这里的文件名要改成和你上传的 Excel 文件名一模一样！
-        const excelFileName = '高氏座標計算表-角度距離求坐標 - 用VBA 計算導線.xlsm';
-
-        async function loadExcel() {
-            try {
-                let response = await fetch(excelFileName);
-                if (!response.ok) throw new Error('找不到档案');
-                let arrayBuffer = await response.arrayBuffer();
-                
-                // 解析 Excel 数据
-                let data = new Uint8Array(arrayBuffer);
-                let workbook = XLSX.read(data, { type: 'array' });
-                
-                // 读取第一个工作表
-                let firstSheetName = workbook.SheetNames[0];
-                let worksheet = workbook.Sheets[firstSheetName];
-                
-                // 转换为 HTML 表格字符串
-                let htmlTable = XLSX.utils.sheet_to_html(worksheet, { header: "" });
-                
-                // 渲染到网页中
-                document.getElementById('table-box').innerHTML = htmlTable;
-
-            } catch (error) {
-                document.getElementById('table-box').innerHTML = '<p style="color:red; text-align:center;">加载失败！请检查 Excel 文件名是否和代码里的一致。</p>';
-                console.error(error);
-            }
+        // 页面加载完成后初始化表格
+        window.onload = function () {
+            luckysheet.create({
+                container: 'luckysheet', // 容器 ID
+                title: '我的在线表格',     // 表格名称
+                lang: 'zh',              // 语言设为中文
+                data: [
+                    {
+                        name: "Sheet1", // 工作表名字
+                        color: "",
+                        status: "1",
+                        order: "0",
+                        data: [
+                            // 这里可以自定义初始表格数据（行、列、单元格内容）
+                            [
+                                {v: "项目", m: "项目", bg: "#d9d9d9", ct: {fa: "@", t: "s"}},
+                                {v: "数量", m: "数量", bg: "#d9d9d9", ct: {fa: "@", t: "s"}},
+                                {v: "价格", m: "价格", bg: "#d9d9d9", ct: {fa: "@", t: "s"}}
+                            ],
+                            [
+                                {v: "苹果", m: "苹果"}, {v: 10, m: "10"}, {v: 5, m: "5"}
+                            ],
+                            [
+                                {v: "香蕉", m: "香蕉"}, {v: 20, m: "20"}, {v: 3, m: "3"}
+                            ]
+                        ]
+                    }
+                ]
+            });
         }
-
-        loadExcel();
     </script>
 </body>
 </html>
