@@ -107,6 +107,7 @@
             try {
                 let getData = luckysheet.flowdata();
                 
+                // A點(row 2): B=1, C=2； B點(row 3): B=1, C=2
                 let nA = parseFloat(getData[2][1]?.v);
                 let eA = parseFloat(getData[2][2]?.v);
                 let nB = parseFloat(getData[3][1]?.v);
@@ -126,10 +127,10 @@
                     let row = getData[i];
                     if (!row) continue;
 
-                    let sideLen = parseFloat(row[3]?.v); // 實測平距 (D欄)
-                    let degVal = parseFloat(row[4]?.v);  // 度 (E欄)
-                    let minVal = parseFloat(row[5]?.v);  // 分 (F欄)
-                    let secVal = parseFloat(row[6]?.v);  // 秒 (G欄)
+                    let sideLen = parseFloat(row[3]?.v); // 實測平距 (D欄 = 3)
+                    let degVal = parseFloat(row[4]?.v);  // 度 (E欄 = 4)
+                    let minVal = parseFloat(row[5]?.v);  // 分 (F欄 = 5)
+                    let secVal = parseFloat(row[6]?.v);  // 秒 (G欄 = 6)
 
                     if (isNaN(sideLen)) continue;
 
@@ -140,7 +141,7 @@
                     let eNext = eCurr + sideLen * Math.sin(radAzNext);
                     let azNextDeg = NormalizeAzimuth(radAzNext * 180 / PI);
 
-                    // 確保數值以完整的小數點 4 位寫入 H 欄(7) 與 I 欄(8)
+                    // 寫回計算後座標：H 欄 = 7, I 欄 = 8
                     luckysheet.setCellValue(i, 7, nNext.toFixed(4));
                     luckysheet.setCellValue(i, 8, eNext.toFixed(4));
                     
@@ -169,32 +170,32 @@
                         order: "0",
                         config: {
                             merge: {
-                                "0_0": {r: 0, c: 0, rs: 2, cs: 1},
-                                "0_1": {r: 0, c: 1, rs: 1, cs: 2},
-                                "0_3": {r: 0, c: 3, rs: 2, cs: 1},
-                                "0_4": {r: 0, c: 4, rs: 1, cs: 4},
-                                "0_8": {r: 0, c: 8, rs: 1, cs: 2},
-                                "0_10": {r: 0, c: 10, rs: 1, cs: 2},
-                                "0_12": {r: 0, c: 12, rs: 2, cs: 1},
+                                "0_0": {r: 0, c: 0, rs: 2, cs: 1}, // 點號 (A)
+                                "0_1": {r: 0, c: 1, rs: 1, cs: 2}, // 原始座標值 (B, C)
+                                "0_3": {r: 0, c: 3, rs: 2, cs: 1}, // 實測平距 (D)
+                                "0_4": {r: 0, c: 4, rs: 1, cs: 3}, // 實測夾角 (E, F, G)
+                                "0_7": {r: 0, c: 7, rs: 1, cs: 2}, // 計算後座標 (H, I)
+                                "0_9": {r: 0, c: 9, rs: 1, cs: 2}, // 較差(mm) (J, K)
+                                "0_11": {r: 0, c: 11, rs: 2, cs: 1},// 備註 (L)
+                                // 底部提示合併
                                 "17_0": {r: 17, c: 0, rs: 1, cs: 3},
-                                "17_3": {r: 17, c: 3, rs: 1, cs: 5},
-                                "17_8": {r: 17, c: 8, rs: 1, cs: 2},
-                                "17_10": {r: 17, c: 10, rs: 1, cs: 3}
-                            },
-                            columnlen: {
-                                0: 90, 1: 120, 2: 120, 3: 90, 4: 70, 5: 60, 6: 70, 7: 130, 8: 130, 9: 80, 10: 80, 11: 80, 12: 90
+                                "17_3": {r: 17, c: 3, rs: 1, cs: 4},
+                                "17_7": {r: 17, c: 7, rs: 1, cs: 2},
+                                "17_9": {r: 17, c: 9, rs: 1, cs: 3}
                             }
                         },
                         data: [
+                            // 表頭第一層 (共 12 欄：A 到 L)
                             [
                                 {v: "點 號", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
                                 {v: "原始座標值", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
                                 {v: "實測平距", bg: "#fce5cd", ht: 2, vt: 2, bl: 1},
-                                {v: "實測夾角", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null, null, null,
+                                {v: "實測夾角", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null, null,
                                 {v: "計算後座標", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
                                 {v: "較差(mm)", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
                                 {v: "備註", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}
                             ],
+                            // 表頭第二層
                             [
                                 null,
                                 {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
@@ -203,32 +204,33 @@
                                 {v: "°", bg: "#d9ead3", ht: 2, vt: 2},
                                 {v: "'", bg: "#d9ead3", ht: 2, vt: 2},
                                 {v: "\"", bg: "#d9ead3", ht: 2, vt: 2},
-                                {v: "", bg: "#d9ead3"},
                                 {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
                                 {v: "E", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
                                 {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
                                 {v: "E", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
                                 null
                             ],
-                            // 使用強制字串格式，確保大坐標完整呈現
-                            [{v: "YY21"}, {v: "2766044.2610", ct: {fa: "@", t: "s"}}, {v: "308975.0830", ct: {fa: "@", t: "s"}}, {v: "-"}, {v: "-"}, {v: "-"}, {v: "-"}, {v: ""}, {v: "2766044.2610", ct: {fa: "@", t: "s"}}, {v: "308975.0830", ct: {fa: "@", t: "s"}}, {v: "-"}, {v: "-"}, {v: "後視點"}],
-                            [{v: "Y252A"}, {v: "2765773.8930", ct: {fa: "@", t: "s"}}, {v: "308548.7000", ct: {fa: "@", t: "s"}}, {v: 504.8737}, {v: "-"}, {v: "-"}, {v: "-"}, {v: ""}, {v: "2765773.8930", ct: {fa: "@", t: "s"}}, {v: "308548.7000", ct: {fa: "@", t: "s"}}, {v: "-"}, {v: "-"}, {v: "起始點"}],
-                            [{v: "Y252A"}, {v: "2765724.9997", ct: {fa: "@", t: "s"}}, {v: "308475.1547", ct: {fa: "@", t: "s"}}, {v: 88.3149}, {v: 178}, {v: 45}, {v: 48.8}, {v: ""}, {v: ""}, {v: ""}, {v: 1.2}, {v: -1.2}, {v: ""}],
-                            [{v: "Y251"}, {v: "2765516.7417", ct: {fa: "@", t: "s"}}, {v: "308161.9033", ct: {fa: "@", t: "s"}}, {v: 376.1640}, {v: 179}, {v: 59}, {v: 51.5}, {v: ""}, {v: ""}, {v: ""}, {v: -2.1}, {v: -1.4}, {v: ""}],
-                            [{v: "Y250"}, {v: "2765299.8546", ct: {fa: "@", t: "s"}}, {v: "307921.3133", ct: {fa: "@", t: "s"}}, {v: 323.9214}, {v: 171}, {v: 34}, {v: 57.7}, {v: ""}, {v: ""}, {v: ""}, {v: -6.7}, {v: -0.4}, {v: ""}],
-                            [{v: "HN01"}, {v: "2765170.2915", ct: {fa: "@", t: "s"}}, {v: "307904.2860", ct: {fa: "@", t: "s"}}, {v: 130.6767}, {v: 139}, {v: 31}, {v: 12.8}, {v: ""}, {v: ""}, {v: ""}, {v: -6.7}, {v: 3.0}, {v: ""}],
-                            [{v: "Y249"}, {v: "2764966.4530", ct: {fa: "@", t: "s"}}, {v: "307664.3171", ct: {fa: "@", t: "s"}}, {v: 314.8572}, {v: 222}, {v: 10}, {v: 1.0}, {v: ""}, {v: ""}, {v: ""}, {v: -14.0}, {v: 9.5}, {v: ""}],
-                            [{v: "Y248A"}, {v: "2764967.6440", ct: {fa: "@", t: "s"}}, {v: "307521.3930", ct: {fa: "@", t: "s"}}, {v: 142.9324}, {v: 220}, {v: 49}, {v: 20.3}, {v: ""}, {v: ""}, {v: ""}, {v: -20.7}, {v: 6.1}, {v: ""}],
-                            [{v: "Y248"}, {v: "2764968.1750", ct: {fa: "@", t: "s"}}, {v: "307387.1490", ct: {fa: "@", t: "s"}}, {v: 134.2465}, {v: 179}, {v: 44}, {v: 55.2}, {v: ""}, {v: ""}, {v: ""}, {v: -28.3}, {v: 4.6}, {v: ""}],
-                            [null, null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                            // 資料列 (確保精確對應 A ~ L)
+                            [{v: "YY21"}, {v: "2766044.2610", ct: {fa: "@", t: "s"}}, {v: "308975.0830", ct: {fa: "@", t: "s"}}, {v: "-"}, {v: "-"}, {v: "-"}, {v: "-"}, {v: "2766044.2610", ct: {fa: "@", t: "s"}}, {v: "308975.0830", ct: {fa: "@", t: "s"}}, {v: "-"}, {v: "-"}, {v: "後視點"}],
+                            [{v: "Y252A"}, {v: "2765773.8930", ct: {fa: "@", t: "s"}}, {v: "308548.7000", ct: {fa: "@", t: "s"}}, {v: 504.8737}, {v: "-"}, {v: "-"}, {v: "-"}, {v: "2765773.8930", ct: {fa: "@", t: "s"}}, {v: "308548.7000", ct: {fa: "@", t: "s"}}, {v: "-"}, {v: "-"}, {v: "起始點"}],
+                            [{v: "Y252A"}, {v: "2765724.9997", ct: {fa: "@", t: "s"}}, {v: "308475.1547", ct: {fa: "@", t: "s"}}, {v: 88.3149}, {v: 178}, {v: 45}, {v: 48.8}, {v: ""}, {v: ""}, {v: 1.2}, {v: -1.2}, {v: ""}],
+                            [{v: "Y251"}, {v: "2765516.7417", ct: {fa: "@", t: "s"}}, {v: "308161.9033", ct: {fa: "@", t: "s"}}, {v: 376.1640}, {v: 179}, {v: 59}, {v: 51.5}, {v: ""}, {v: ""}, {v: -2.1}, {v: -1.4}, {v: ""}],
+                            [{v: "Y250"}, {v: "2765299.8546", ct: {fa: "@", t: "s"}}, {v: "307921.3133", ct: {fa: "@", t: "s"}}, {v: 323.9214}, {v: 171}, {v: 34}, {v: 57.7}, {v: ""}, {v: ""}, {v: -6.7}, {v: -0.4}, {v: ""}],
+                            [{v: "HN01"}, {v: "2765170.2915", ct: {fa: "@", t: "s"}}, {v: "307904.2860", ct: {fa: "@", t: "s"}}, {v: 130.6767}, {v: 139}, {v: 31}, {v: 12.8}, {v: ""}, {v: ""}, {v: -6.7}, {v: 3.0}, {v: ""}],
+                            [{v: "Y249"}, {v: "2764966.4530", ct: {fa: "@", t: "s"}}, {v: "307664.3171", ct: {fa: "@", t: "s"}}, {v: 314.8572}, {v: 222}, {v: 10}, {v: 1.0}, {v: ""}, {v: ""}, {v: -14.0}, {v: 9.5}, {v: ""}],
+                            [{v: "Y248A"}, {v: "2764967.6440", ct: {fa: "@", t: "s"}}, {v: "307521.3930", ct: {fa: "@", t: "s"}}, {v: 142.9324}, {v: 220}, {v: 49}, {v: 20.3}, {v: ""}, {v: ""}, {v: -20.7}, {v: 6.1}, {v: ""}],
+                            [{v: "Y248"}, {v: "2764968.1750", ct: {fa: "@", t: "s"}}, {v: "307387.1490", ct: {fa: "@", t: "s"}}, {v: 134.2465}, {v: 179}, {v: 44}, {v: 55.2}, {v: ""}, {v: ""}, {v: -28.3}, {v: 4.6}, {v: ""}],
+                            // 預留空白行
+                            [null, null, null, null, null, null, null, null, null, null, null, null],
+                            [null, null, null, null, null, null, null, null, null, null, null, null],
+                            [null, null, null, null, null, null, null, null, null, null, null, null],
+                            [null, null, null, null, null, null, null, null, null, null, null, null],
+                            [null, null, null, null, null, null, null, null, null, null, null, null],
+                            [null, null, null, null, null, null, null, null, null, null, null, null],
+                            // 底部提示行
                             [
                                 {v: "填入原始座標", fc: "#ff0000", bl: 1, ht: 2}, null, null,
-                                {v: "填入實測資料", fc: "#ff0000", bl: 1, ht: 2}, null, null, null, null,
+                                {v: "填入實測資料", fc: "#ff0000", bl: 1, ht: 2}, null, null, null,
                                 {v: "按下N/E計算按鈕就可以得出答案", fc: "#ff0000", bl: 1, ht: 2}, null,
                                 {v: "填入點號才能計算", fc: "#ff0000", bl: 1, ht: 2}, null, null
                             ]
