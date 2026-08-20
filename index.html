@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的 GitHub 線上 Excel 試算表</title>
+    <title>測量內業計算與校驗表</title>
     
-    <!-- 引入 Luckysheet 的 CSS 樣式 -->
+    <!-- 引入 Luckysheet CSS -->
     <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/css/pluginsCss.css' />
     <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/Plugins.css' />
     <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/css/luckysheet.css' />
     
-    <!-- 引入 Luckysheet 的 JavaScript 套件 -->
+    <!-- 引入 Luckysheet JS -->
     <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/js/plugin.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/luckysheet.umd.js"></script>
 
@@ -28,15 +28,32 @@
             border-bottom: 1px solid #e1e4e8;
             display: flex;
             align-items: center;
-            padding-left: 20px;
+            justify-content: space-between;
+            padding: 0 20px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-size: 16px;
+        }
+        .title {
+            font-size: 15px;
             font-weight: 600;
             color: #24292e;
         }
+        /* 模擬 VBA 執行按鈕的風格 */
+        .calc-btn {
+            background-color: #2ea44f;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: background-color 0.2s;
+        }
+        .calc-btn:hover {
+            background-color: #2c974b;
+        }
         #luckysheet {
-            margin: 0px;
-            padding: 0px;
             position: absolute;
             width: 100%;
             top: 50px;
@@ -47,35 +64,177 @@
 </head>
 <body>
 
-    <div id="header">📊 我的線上試算表（可直接編輯與計算）</div>
+    <div id="header">
+        <span class="title">📐 測量內業計算與校驗系統 (網頁版)</span>
+        <!-- 對應 VBA 執行的按鈕 -->
+        <button class="calc-btn" onclick="runCalcMultiplePoints()">⚡ 執行計算點位座標</button>
+    </div>
+    
     <div id="luckysheet"></div>
 
     <script>
+        // 對應 VBA 的數學函數
+        const PI = 3.14159265358979;
+
+        function AzimuthByAtn(dN, dE) {
+            let angleRad = 0;
+            if (dE > 0) {
+                angleRad = Math.atan(dE / dN);
+            } else if (dE < 0 && dN >= 0) {
+                angleRad = Math.atan(dE / dN) + PI;
+            } else if (dE < 0 && dN < 0) {
+                angleRad = Math.atan(dE / dN) - PI;
+            } else if (dE === 0 && dN > 0) {
+                angleRad = PI / 2;
+            } else if (dE === 0 && dN < 0) {
+                angleRad = -PI / 2;
+            } else {
+                angleRad = 0;
+            }
+            let az = angleRad * 180 / PI;
+            if (az < 0) az += 360;
+            return az;
+        }
+
+        function NormalizeAzimuth(az) {
+            let norm = az - Math.floor(az / 360) * 360;
+            if (norm < 0) norm += 360;
+            return norm;
+        }
+
+        function DMS_to_Decimal(deg, min, sec) {
+            return deg + min / 60.0 + sec / 3600.0;
+        }
+
+        // 網頁版的 CalcMultiplePoints 核心邏輯
+        function runCalcMultiplePoints() {
+            try {
+                // 取得目前 Luckysheet 的所有資料
+                let sheetData = luckysheet.getCellValue(); // 或者用 getData
+                // 為了精準讀取儲存格，我們直接用 luckysheet.getGridData() 或抓取特定格
+                // Luckysheet 的行列索引：Row 2 (第三行) 是 B3, C3 -> 陣列索引為 row: 2, col: 1 (B) 和 2 (C)
+                
+                let getData = luckysheet.flowdata(); // 取得當前工作表的完整二維矩陣數據
+                
+                // 讀取 A 點 (Row 2, B=1, C=2) 與 B 點 (Row 3, B=1, C=2)
+                let nA = parseFloat(getData[2][1]?.v);
+                let eA = parseFloat(getData[2][2]?.v);
+                let nB = parseFloat(getData[3][1]?.v);
+                let eB = parseFloat(getData[3][2]?.v);
+
+                if (isNaN(nA) || isNaN(eA) || isNaN(nB) || isNaN(eB)) {
+                    alert("請先確認 A 點 (第3行) 與 B 點 (第4行) 的原始座標是否正確填入！");
+                    return;
+                }
+
+                let azPrev = AzimuthByAtn(nB - nA, eB - eA);
+                let nCurr = nB;
+                let eCurr = eB;
+
+                // 從第 4 列開始迴圈 (對應 Excel 第 5 行，索引為 4)
+                for (let i = 4; i < getData.length; i++) {
+                    let row = getData[i];
+                    if (!row) continue;
+
+                    let pointName = row[0]?.v; // 點號
+                    let sideLen = parseFloat(row[3]?.v); // 實測平距 (D欄 = 3)
+                    let degVal = parseFloat(row[4]?.v);  // 度 (E欄 = 4)
+                    let minVal = parseFloat(row[5]?.v);  // 分 (F欄 = 5)
+                    let secVal = parseFloat(row[6]?.v);  // 秒 (G欄 = 6)
+
+                    // 如果沒有邊長或點號，跳出或結束
+                    if (isNaN(sideLen)) {
+                        // 如果遇到空白行且沒有後續資料，可以視情況停止
+                        continue;
+                    }
+
+                    // 角度轉十進位 (若度分秒空白則補 0)
+                    let incDeg = DMS_to_Decimal(isNaN(degVal)?0:degVal, isNaN(minVal)?0:minVal, isNaN(secVal)?0:secVal);
+
+                    // 計算下一段絕對方位角
+                    let radAzNext = NormalizeAzimuth(azPrev - 180 + incDeg) * PI / 180.0;
+
+                    // 推算下一點座標
+                    let nNext = nCurr + sideLen * Math.cos(radAzNext);
+                    let eNext = eCurr + sideLen * Math.sin(radAzNext);
+                    let azNextDeg = NormalizeAzimuth(radAzNext * 180 / PI);
+
+                    // 將計算結果寫回 Luckysheet 對應儲存格
+                    // H欄 (索引8) = 計算後 N, I欄 (索引9) = 計算後 E
+                    luckysheet.setCellValue(i, 8, Number(nNext.toFixed(4)));
+                    luckysheet.setCellValue(i, 9, Number(eNext.toFixed(4)));
+                    
+                    // 較差或方位角紀錄 (若你的表格欄位定義不同可對應調整)
+                    
+                    // 更新目前點與方位角
+                    nCurr = nNext;
+                    eCurr = eNext;
+                    azPrev = azNextDeg;
+                }
+
+                alert("多點座標推算完成！網頁計算已更新。");
+
+            } catch (err) {
+                console.error(err);
+                alert("計算發生錯誤，請檢查輸入數據格式。");
+            }
+        }
+
+        // 初始化 Luckysheet 表格
         window.onload = function () {
             luckysheet.create({
-                container: 'luckysheet', // 對應上方 div 的 id
-                title: '線上試算表',     // 試算表標題
-                lang: 'zh',              // 介面語言設為中文
+                container: 'luckysheet',
+                title: '測量計算表',
+                lang: 'zh',
                 data: [
                     {
-                        name: "工作表1",   // 分頁名稱
+                        name: "導線計算表",
                         color: "",
                         status: "1",
                         order: "0",
+                        config: {
+                            merge: {
+                                "0_0": {r: 0, c: 0, rs: 2, cs: 1},
+                                "0_1": {r: 0, c: 1, rs: 1, cs: 2},
+                                "0_3": {r: 0, c: 3, rs: 2, cs: 1},
+                                "0_4": {r: 0, c: 4, rs: 1, cs: 4},
+                                "0_8": {r: 0, c: 8, rs: 1, cs: 2},
+                                "0_10": {r: 0, c: 10, rs: 1, cs: 2},
+                                "0_12": {r: 0, c: 12, rs: 2, cs: 1}
+                            }
+                        },
                         data: [
-                            // 這裡可以預設一些範例資料（支援點擊修改、公式計算等）
                             [
-                                {v: "項目", bg: "#0366d6", color: "#ffffff", ct: {fa: "@", t: "s"}},
-                                {v: "數量", bg: "#0366d6", color: "#ffffff", ct: {fa: "@", t: "s"}},
-                                {v: "單價", bg: "#0366d6", color: "#ffffff", ct: {fa: "@", t: "s"}},
-                                {v: "總價 (公式)", bg: "#0366d6", color: "#ffffff", ct: {fa: "@", t: "s"}}
+                                {v: "點 號", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
+                                {v: "原始座標值", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
+                                {v: "實測平距", bg: "#fce5cd", ht: 2, vt: 2, bl: 1},
+                                {v: "實測夾角", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null, null, null,
+                                {v: "計算後座標", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
+                                {v: "較差(mm)", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
+                                {v: "備註", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}
                             ],
                             [
-                                {v: "範例項目 A"}, {v: 5}, {v: 100}, {v: "=B2*C2", m: "500", f: "=B2*C2"}
+                                null,
+                                {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
+                                {v: "E", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
+                                null,
+                                {v: "°", bg: "#d9ead3", ht: 2, vt: 2},
+                                {v: "'", bg: "#d9ead3", ht: 2, vt: 2},
+                                {v: "\"", bg: "#d9ead3", ht: 2, vt: 2},
+                                {v: "", bg: "#d9ead3"},
+                                {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
+                                {v: "E", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
+                                {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
+                                {v: "E", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
+                                null
                             ],
-                            [
-                                {v: "範例項目 B"}, {v: 2}, {v: 250}, {v: "=B3*C3", m: "500", f: "=B3*C3"}
-                            ]
+                            [{v: "YY21"}, {v: 2766044.2610}, {v: 308975.0830}, {v: "-"}, {v: "-"}, {v: "-"}, {v: "-"}, {v: ""}, {v: 2766044.2610}, {v: 308975.0830}, {v: "-"}, {v: "-"}, {v: "後視點"}],
+                            [{v: "Y252A"}, {v: 2765773.8930}, {v: 308548.7000}, {v: 504.8737}, {v: "-"}, {v: "-"}, {v: "-"}, {v: ""}, {v: 2765773.8930}, {v: 308548.7000}, {v: "-"}, {v: "-"}, {v: "起始點"}],
+                            [{v: "Y252A"}, {v: 2765724.9997}, {v: 308475.1547}, {v: 88.3149}, {v: 178}, {v: 45}, {v: 48.8}, {v: ""}, {v: ""}, {v: ""}, {v: 1.2}, {v: -1.2}, {v: ""}],
+                            [{v: "Y251"}, {v: 2765516.7417}, {v: 308161.9033}, {v: 376.1640}, {v: 179}, {v: 59}, {v: 51.5}, {v: ""}, {v: ""}, {v: ""}, {v: -2.1}, {v: -1.4}, {v: ""}],
+                            [{v: "Y250"}, {v: 2765299.8546}, {v: 307921.3133}, {v: 323.9214}, {v: 171}, {v: 34}, {v: 57.7}, {v: ""}, {v: ""}, {v: ""}, {v: -6.7}, {v: -0.4}, {v: ""}],
+                            [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                            [null, null, null, null, null, null, null, null, null, null, null, null, null]
                         ]
                     }
                 ]
