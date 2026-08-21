@@ -3,52 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>測量方位角與距離計算工具</title>
+    <title>連續導線點方位角與距離計算</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 600px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: auto; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 800px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: auto; }
         h2 { text-align: center; color: #2c3e50; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; background: #3498db; color: white; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
-        button:hover { background: #2980b9; }
-        .result { margin-top: 20px; padding: 15px; background: #e8f8f5; border-left: 5px solid #2ecc71; border-radius: 4px; }
-        .result p { margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #3498db; color: white; }
+        input { width: 90%; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        button { background: #2ecc71; color: white; padding: 10px 15px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-right: 5px; }
+        button:hover { background: #27ae60; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .result-section { margin-top: 20px; }
+        .result-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .result-table th { background-color: #2c3e50; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>測量方位角與距離計算</h2>
-    
-    <div class="input-group">
-        <label>起點座標 (E, N 或 X, Y):</label>
-        <div style="display: flex; gap: 10px;">
-            <input type="number" id="x1" placeholder="起點 E (X)" step="any">
-            <input type="number" id="y1" placeholder="起點 N (Y)" step="any">
-        </div>
-    </div>
+    <h2>連續控制點 / 測點計算工具</h2>
+    <p>請依序輸入各個測點的坐標（系統將自動計算相鄰兩點間的距離與方位角）：</p>
 
-    <div class="input-group">
-        <label>終點座標 (E, N 或 X, Y):</label>
-        <div style="display: flex; gap: 10px;">
-            <input type="number" id="x2" placeholder="終點 E (X)" step="any">
-            <input type="number" id="y2" placeholder="終點 N (Y)" step="any">
-        </div>
-    </div>
+    <table id="pointTable">
+        <thead>
+            <tr>
+                <th>點名 (ID)</th>
+                <th>E 坐標 (X)</th>
+                <th>N 坐標 (Y)</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="pointBody">
+            <tr>
+                <td><input type="text" class="p-id" value="BM-1"></td>
+                <td><input type="number" class="p-x" step="any" value="300000"></td>
+                <td><input type="number" class="p-y" step="any" value="2500000"></td>
+                <td><button type="button" class="btn-danger" onclick="removeRow(this)">刪除</button></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="p-id" value="P-1"></td>
+                <td><input type="number" class="p-x" step="any" value="300100"></td>
+                <td><input type="number" class="p-y" step="any" value="2500100"></td>
+                <td><button type="button" class="btn-danger" onclick="removeRow(this)">刪除</button></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="p-id" value="P-2"></td>
+                <td><input type="number" class="p-x" step="any" value="300150"></td>
+                <td><input type="number" class="p-y" step="any" value="2500250"></td>
+                <td><button type="button" class="btn-danger" onclick="removeRow(this)">刪除</button></td>
+            </tr>
+        </tbody>
+    </table>
 
-    <button onclick="calculate()">計算</button>
+    <button onclick="addRow()">+ 新增下一個點</button>
+    <button onclick="calculateAll()" style="background: #3498db;">開始計算</button>
 
-    <div class="result" id="resultArea" style="display: none;">
+    <div class="result-section">
         <h3>計算結果</h3>
-        <p><strong>水平距離 (Distance):</strong> <span id="resDist"></span> 公尺</p>
-        <p><strong>方位角 (十進位):</strong> <span id="resAzDeg"></span>°</p>
-        <p><strong>方位角 (度分秒 DMS):</strong> <span id="resAzDMS"></span></p>
+        <table class="result-table" id="resultTable">
+            <thead>
+                <tr>
+                    <th>起點</th>
+                    <th>終點</th>
+                    <th>水平距離 (m)</th>
+                    <th>方位角 (十進位)</th>
+                    <th>方位角 (DMS)</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody">
+                <!-- 動態填入結果 -->
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
+function addRow() {
+    let tbody = document.getElementById('pointBody');
+    let rowCount = tbody.rows.length + 1;
+    let newRow = tbody.insertRow();
+    newRow.innerHTML = `
+        <td><input type="text" class="p-id" value="P-${rowCount}"></td>
+        <td><input type="number" class="p-x" step="any"></td>
+        <td><input type="number" class="p-y" step="any"></td>
+        <td><button type="button" class="btn-danger" onclick="removeRow(this)">刪除</button></td>
+    `;
+}
+
+function removeRow(btn) {
+    let row = btn.parentNode.parentNode;
+    if (row.parentNode.rows.length > 2) {
+        row.parentNode.removeChild(row);
+    } else {
+        alert("至少需要保留兩個點才能計算！");
+    }
+}
+
 function degToDMS(deg) {
     let d = Math.floor(deg);
     let mFloat = (deg - d) * 60;
@@ -57,37 +110,52 @@ function degToDMS(deg) {
     return `${d}° ${m}' ${s}"`;
 }
 
-function calculate() {
-    let x1 = parseFloat(document.getElementById('x1').value);
-    let y1 = parseFloat(document.getElementById('y1').value);
-    let x2 = parseFloat(document.getElementById('x2').value);
-    let y2 = parseFloat(document.getElementById('y2').value);
+function calculateAll() {
+    let ids = document.getElementsByClassName('p-id');
+    let xs = document.getElementsByClassName('p-x');
+    let ys = document.getElementsByClassName('p-y');
+    let resultBody = document.getElementById('resultBody');
+    resultBody.innerHTML = "";
 
-    if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
-        alert("請輸入完整的有效座標數值！");
-        return;
+    let points = [];
+    for (let i = 0; i < xs.length; i++) {
+        points.push({
+            id: ids[i].value || `點${i+1}`,
+            x: parseFloat(xs[i].value),
+            y: parseFloat(ys[i].value)
+        });
     }
 
-    let dx = x2 - x1;
-    let dy = y2 - y1;
-
-    // 計算距離
-    let distance = Math.sqrt(dx * dx + dy * dy);
-
-    // 計算方位角 (JavaScript 的 Math.atan2(dx, dy) 配合測量學 Y軸為基準)
-    let angleRad = Math.atan2(dx, dy);
-    let angleDeg = angleRad * (180 / Math.PI);
-
-    // 轉為 0 ~ 360 度
-    if (angleDeg < 0) {
-        angleDeg += 360;
+    // 檢查是否有空值
+    for (let p of points) {
+        if (isNaN(p.x) || isNaN(p.y)) {
+            alert("請檢查坐標，所有欄位都必須填寫有效數字！");
+            return;
+        }
     }
 
-    // 顯示結果
-    document.getElementById('resDist').innerText = distance.toFixed(3);
-    document.getElementById('resAzDeg').innerText = angleDeg.toFixed(4);
-    document.getElementById('resAzDMS').innerText = degToDMS(angleDeg);
-    document.getElementById('resultArea').style.display = 'block';
+    // 逐段計算相鄰兩點
+    for (let i = 0; i < points.length - 1; i++) {
+        let p1 = points[i];
+        let p2 = points[i + 1];
+
+        let dx = p2.x - p1.x;
+        let dy = p2.y - p1.y;
+
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        let angleRad = Math.atan2(dx, dy);
+        let angleDeg = angleRad * (180 / Math.PI);
+        if (angleDeg < 0) angleDeg += 360;
+
+        let row = resultBody.insertRow();
+        row.innerHTML = `
+            <td>${p1.id}</td>
+            <td>${p2.id}</td>
+            <td>${distance.toFixed(3)}</td>
+            <td>${angleDeg.toFixed(4)}°</td>
+            <td>${degToDMS(angleDeg)}</td>
+        `;
+    }
 }
 </script>
 
