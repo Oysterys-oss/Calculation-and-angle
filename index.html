@@ -3,79 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>測量計算器</title>
-    <!-- 引入 Tabulator (Excel 風格表格) -->
-    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
-    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <title>測量方位角與距離計算工具</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 10px; background: #f8f9fa; }
-        .toolbar { margin-bottom: 15px; position: sticky; top: 0; z-index: 100; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        button { padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
-        button:active { background: #218838; }
-        #survey-table { background: white; font-size: 14px; }
-        /* 調整表格在手機上的顯示 */
-        .tabulator-cell { padding: 8px !important; }
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 600px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: auto; }
+        h2 { text-align: center; color: #2c3e50; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; background: #3498db; color: white; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        .result { margin-top: 20px; padding: 15px; background: #e8f8f5; border-left: 5px solid #2ecc71; border-radius: 4px; }
+        .result p { margin: 8px 0; }
     </style>
 </head>
 <body>
 
-    <div class="toolbar">
-        <button onclick="calculateData()">⚡ 執行座標計算 (N/E 計算)</button>
+<div class="container">
+    <h2>測量方位角與距離計算</h2>
+    
+    <div class="input-group">
+        <label>起點座標 (E, N 或 X, Y):</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="x1" placeholder="起點 E (X)" step="any">
+            <input type="number" id="y1" placeholder="起點 N (Y)" step="any">
+        </div>
     </div>
 
-    <div id="survey-table"></div>
+    <div class="input-group">
+        <label>終點座標 (E, N 或 X, Y):</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="x2" placeholder="終點 E (X)" step="any">
+            <input type="number" id="y2" placeholder="終點 N (Y)" step="any">
+        </div>
+    </div>
 
-    <script>
-        const PI = 3.14159265358979;
+    <button onclick="calculate()">計算</button>
 
-        // 表格初始化資料
-        const tableData = [
-            {id: 1, name: "YY21", n: 2766044.2610, e: 308975.0830, dist: 0, d: 0, m: 0, s: 0},
-            {id: 2, name: "Y252A", n: 2765773.8930, e: 308548.7000, dist: 504.8737, d: 0, m: 0, s: 0},
-            {id: 3, name: "Y252A", n: 2765724.9997, e: 308475.1547, dist: 88.3149, d: 178, m: 45, s: 48.8},
-            {id: 4, name: "Y251", n: 2765516.7417, e: 308161.9033, dist: 376.1640, d: 179, m: 59, s: 51.5}
-        ];
+    <div class="result" id="resultArea" style="display: none;">
+        <h3>計算結果</h3>
+        <p><strong>水平距離 (Distance):</strong> <span id="resDist"></span> 公尺</p>
+        <p><strong>方位角 (十進位):</strong> <span id="resAzDeg"></span>°</p>
+        <p><strong>方位角 (度分秒 DMS):</strong> <span id="resAzDMS"></span></p>
+    </div>
+</div>
 
-        const table = new Tabulator("#survey-table", {
-            data: tableData,
-            layout: "fitColumns",
-            columns: [
-                {title: "點號", field: "name", editor: "input", width: 80},
-                {title: "原始N", field: "n", editor: "number", editorParams: {step: 0.0001}},
-                {title: "原始E", field: "e", editor: "number", editorParams: {step: 0.0001}},
-                {title: "平距", field: "dist", editor: "number"},
-                {title: "夾角(° ' \")", columns: [
-                    {field: "d", editor: "number", width: 50},
-                    {field: "m", editor: "number", width: 50},
-                    {field: "s", editor: "number", width: 60}
-                ]},
-                {title: "計算N", field: "calcN", width: 120},
-                {title: "計算E", field: "calcE", width: 120},
-                {title: "較差(mm)", columns: [
-                    {title: "N", field: "diffN", width: 80},
-                    {title: "E", field: "diffE", width: 80}
-                ]}
-            ],
-        });
+<script>
+function degToDMS(deg) {
+    let d = Math.floor(deg);
+    let mFloat = (deg - d) * 60;
+    let m = Math.floor(mFloat);
+    let s = ((mFloat - m) * 60).toFixed(2);
+    return `${d}° ${m}' ${s}"`;
+}
 
-        // 核心計算邏輯
-        function calculateData() {
-            let data = table.getData();
-            let azPrev = 0; // 這裡需根據你的導線起算方位角設定
+function calculate() {
+    let x1 = parseFloat(document.getElementById('x1').value);
+    let y1 = parseFloat(document.getElementById('y1').value);
+    let x2 = parseFloat(document.getElementById('x2').value);
+    let y2 = parseFloat(document.getElementById('y2').value);
 
-            // 實作計算邏輯...
-            // 範例：遍歷資料並更新
-            data.forEach((row, index) => {
-                if (index > 1) {
-                    // 這裡放入你的三角函數推算公式
-                    // row.calcN = ... 
-                    // row.diffN = (row.calcN - row.n) * 1000
-                }
-            });
+    if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
+        alert("請輸入完整的有效座標數值！");
+        return;
+    }
 
-            table.replaceData(data);
-            alert("計算完成！");
-        }
-    </script>
+    let dx = x2 - x1;
+    let dy = y2 - y1;
+
+    // 計算距離
+    let distance = Math.sqrt(dx * dx + dy * dy);
+
+    // 計算方位角 (JavaScript 的 Math.atan2(dx, dy) 配合測量學 Y軸為基準)
+    let angleRad = Math.atan2(dx, dy);
+    let angleDeg = angleRad * (180 / Math.PI);
+
+    // 轉為 0 ~ 360 度
+    if (angleDeg < 0) {
+        angleDeg += 360;
+    }
+
+    // 顯示結果
+    document.getElementById('resDist').innerText = distance.toFixed(3);
+    document.getElementById('resAzDeg').innerText = angleDeg.toFixed(4);
+    document.getElementById('resAzDMS').innerText = degToDMS(angleDeg);
+    document.getElementById('resultArea').style.display = 'block';
+}
+</script>
+
 </body>
 </html>
