@@ -3,53 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多點連續測量方位角與距離計算</title>
+    <title>連續測量導線計算 (起點 -> 中間各點 -> 終點)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 800px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: auto; }
+        .container { max-width: 900px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: auto; }
         h2 { text-align: center; color: #2c3e50; }
         .input-section { margin-bottom: 20px; }
-        textarea { width: 100%; height: 120px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
-        button { background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; width: 100%; }
-        button:hover { background: #2980b9; }
+        textarea { width: 100%; height: 150px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; font-size: 14px; }
+        button { background: #27ae60; color: white; padding: 12px 20px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; width: 100%; }
+        button:hover { background: #219653; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #2c3e50; color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
-        .note { font-size: 12px; color: #666; margin-top: 5px; }
+        .note { font-size: 13px; color: #555; margin-top: 8px; line-height: 1.5; }
+        .summary { margin-top: 15px; font-weight: bold; color: #2c3e50; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>多點連續方位角與距離計算 (A -> B -> C ...)</h2>
+    <h2>連續導線方位角與距離計算</h2>
     
     <div class="input-section">
-        <label><strong>輸入點位座標 (格式：點號, E坐標, N坐標 每行一點)：</strong></label>
-        <textarea id="pointsInput" placeholder="例如:
-A, 300000, 2500000
-B, 300100, 2500100
-C, 300250, 2500150
-D, 300300, 2500300"></textarea>
-        <div class="note">提示：支援 Excel 直接複製貼上（點名、E、N 欄位），中間用逗號或空格隔開皆可。</div>
+        <label><strong>請依序輸入點位座標（從起點、中間各點、到終點）：</strong></label>
+        <textarea id="pointsInput" placeholder="格式範例（每行一點，依序排列）：
+A, 300000.000, 2500000.000
+B, 300100.000, 2500100.000
+C, 300250.000, 2500150.000
+D, 300400.000, 2500300.000
+E, 300500.000, 2500500.000"></textarea>
+        <div class="note">
+            💡 <strong>說明：</strong><br>
+            1. 第一行是<strong>起點</strong>，中間行是<strong>各個中間點</strong>，最後一行是<strong>終點</strong>。<br>
+            2. 支援從 Excel 直接複製貼上（點名、E坐標、N坐標），中間用逗號或空格隔開皆可。
+        </div>
     </div>
 
-    <button onclick="calculateTraverse()">計算相鄰各段距離與方位角</button>
+    <button onclick="calculateTraverse()">開始計算各段與總距離</button>
 
-    <div id="resultArea" style="margin-top: 20px; overflow-x: auto;">
-        <table id="resultTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>起點</th>
-                    <th>終點</th>
-                    <th>水平距離 (m)</th>
-                    <th>方位角 (十進位)</th>
-                    <th>方位角 (DMS 度分秒)</th>
-                </tr>
-            </thead>
-            <tbody id="resultBody">
-            </tbody>
-        </table>
+    <div id="resultArea" style="margin-top: 20px; display: none;">
+        <div class="summary" id="totalSummary"></div>
+        <div style="overflow-x: auto;">
+            <table id="resultTable">
+                <thead>
+                    <tr>
+                        <th>區段</th>
+                        <th>起點</th>
+                        <th>終點</th>
+                        <th>水平距離 (m)</th>
+                        <th>方位角 (十進位)</th>
+                        <th>方位角 (DMS 度分秒)</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody">
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -76,7 +86,7 @@ function calculateTraverse() {
         let line = lines[i].trim();
         if (!line) continue;
         
-        // 支援逗號或空格分隔
+        // 支援逗號、Tab 或空格分隔
         let parts = line.split(/[,\t\s]+/);
         if (parts.length >= 3) {
             let name = parts[0];
@@ -89,14 +99,16 @@ function calculateTraverse() {
     }
 
     if (points.length < 2) {
-        alert("至少需要輸入兩個點（例如 A 和 B）才能計算！");
+        alert("至少需要輸入「起點」與「終點」兩個點以上才能計算！");
         return;
     }
 
     let tbody = document.getElementById('resultBody');
     tbody.innerHTML = "";
+    
+    let totalDistance = 0;
 
-    // 計算每一段 (A->B, B->C, C->D ...)
+    // 依序計算每一段：起點->B, B->C, C->D, D->終點
     for (let i = 0; i < points.length - 1; i++) {
         let p1 = points[i];
         let p2 = points[i+1];
@@ -105,6 +117,8 @@ function calculateTraverse() {
         let dy = p2.n - p1.n;
 
         let distance = Math.sqrt(dx * dx + dy * dy);
+        totalDistance += distance;
+
         let angleRad = Math.atan2(dx, dy);
         let angleDeg = angleRad * (180 / Math.PI);
 
@@ -113,6 +127,7 @@ function calculateTraverse() {
         }
 
         let row = `<tr>
+            <td><strong>#${i+1}</strong></td>
             <td>${p1.name}</td>
             <td>${p2.name}</td>
             <td>${distance.toFixed(3)}</td>
@@ -122,7 +137,9 @@ function calculateTraverse() {
         tbody.innerHTML += row;
     }
 
-    document.getElementById('resultTable').style.display = 'table';
+    // 顯示總距離統計
+    document.getElementById('totalSummary').innerText = `總測點數：${points.length} 個點 | 總導線長度：${totalDistance.toFixed(3)} 公尺`;
+    document.getElementById('resultArea').style.display = 'block';
 }
 </script>
 
