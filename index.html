@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>連續測量導線計算 (起點 -> 中間各點 -> 終點)</title>
+    <title>連續測量導線計算 (N, E 座標版)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
         .container { max-width: 900px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: auto; }
@@ -23,20 +23,15 @@
 <body>
 
 <div class="container">
-    <h2>連續導線方位角與距離計算</h2>
+    <h2>連續導線方位角與距離計算 (N, E 格式)</h2>
     
     <div class="input-section">
-        <label><strong>請依序輸入點位座標（從起點、中間各點、到終點）：</strong></label>
-        <textarea id="pointsInput" placeholder="格式範例（每行一點，依序排列）：
-A, 300000.000, 2500000.000
-B, 300100.000, 2500100.000
-C, 300250.000, 2500150.000
-D, 300400.000, 2500300.000
-E, 300500.000, 2500500.000"></textarea>
+        <label><strong>請依序輸入點位座標（格式：點名, N坐標, E坐標）：</strong></label>
+        <textarea id="pointsInput" placeholder="例如:
+GU04 2764649.9410 308235.9495
+GU05 2764662.2183 308296.8343"></textarea>
         <div class="note">
-            💡 <strong>說明：</strong><br>
-            1. 第一行是<strong>起點</strong>，中間行是<strong>各個中間點</strong>，最後一行是<strong>終點</strong>。<br>
-            2. 支援從 Excel 直接複製貼上（點名、E坐標、N坐標），中間用逗號或空格隔開皆可。
+            💡 <strong>說明：</strong>支援直接貼上從 Excel 複製的資料（點名、N坐標、E坐標），中間用逗號或空格隔開皆可。
         </div>
     </div>
 
@@ -68,7 +63,9 @@ function degToDMS(deg) {
     let d = Math.floor(deg);
     let mFloat = (deg - d) * 60;
     let m = Math.floor(mFloat);
-    let s = ((mFloat - m) * 60).toFixed(2);
+    let s = Math.round(((mFloat - m) * 60)); // 四舍五入到整秒，符合一般測量習慣
+    if (s === 60) { m += 1; s = 0; }
+    if (m === 60) { d += 1; m = 0; }
     return `${d}° ${m}' ${s}"`;
 }
 
@@ -86,20 +83,19 @@ function calculateTraverse() {
         let line = lines[i].trim();
         if (!line) continue;
         
-        // 支援逗號、Tab 或空格分隔
         let parts = line.split(/[,\t\s]+/);
         if (parts.length >= 3) {
             let name = parts[0];
-            let e = parseFloat(parts[1]);
-            let n = parseFloat(parts[2]);
-            if (!isNaN(e) && !isNaN(n)) {
-                points.push({ name: name, e: e, n: n });
+            let nCoord = parseFloat(parts[1]); // 第一個數值為 N
+            let eCoord = parseFloat(parts[2]); // 第二個數值為 E
+            if (!isNaN(nCoord) && !isNaN(eCoord)) {
+                points.push({ name: name, n: nCoord, e: eCoord });
             }
         }
     }
 
     if (points.length < 2) {
-        alert("至少需要輸入「起點」與「終點」兩個點以上才能計算！");
+        alert("至少需要輸入兩個點才能計算！");
         return;
     }
 
@@ -108,18 +104,20 @@ function calculateTraverse() {
     
     let totalDistance = 0;
 
-    // 依序計算每一段：起點->B, B->C, C->D, D->終點
     for (let i = 0; i < points.length - 1; i++) {
         let p1 = points[i];
         let p2 = points[i+1];
 
-        let dx = p2.e - p1.e;
-        let dy = p2.n - p1.n;
+        // 測量方位角計算公式 (針對 N 在前、E 在後)：
+        // dN = N2 - N1, dE = E2 - E1
+        let dn = p2.n - p1.n;
+        let de = p2.e - p1.e;
 
-        let distance = Math.sqrt(dx * dx + dy * dy);
+        let distance = Math.sqrt(dn * dn + de * de);
         totalDistance += distance;
 
-        let angleRad = Math.atan2(dx, dy);
+        // 以 N 軸為基準的方位角計算 (atan2(de, dn))
+        let angleRad = Math.atan2(de, dn);
         let angleDeg = angleRad * (180 / Math.PI);
 
         if (angleDeg < 0) {
@@ -137,9 +135,8 @@ function calculateTraverse() {
         tbody.innerHTML += row;
     }
 
-    // 顯示總距離統計
     document.getElementById('totalSummary').innerText = `總測點數：${points.length} 個點 | 總導線長度：${totalDistance.toFixed(3)} 公尺`;
-    document.getElementById('resultArea').style.display = 'block';
+    document.getElementById('resultTable').style.display = 'table';
 }
 </script>
 
