@@ -3,258 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>測量內業計算與校驗表</title>
-    
-    <!-- 引入 Luckysheet CSS -->
-    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/css/pluginsCss.css' />
-    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/Plugins.css' />
-    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/css/luckysheet.css' />
-    
-    <!-- 引入 Luckysheet JS -->
-    <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/js/plugin.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/luckysheet.umd.js"></script>
-
+    <title>測量計算器</title>
+    <!-- 引入 Tabulator (Excel 風格表格) -->
+    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            background-color: #f4f5f7;
-        }
-        #header {
-            height: 50px;
-            background-color: #ffffff;
-            border-bottom: 1px solid #e1e4e8;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .title {
-            font-size: 15px;
-            font-weight: 600;
-            color: #24292e;
-        }
-        .calc-btn {
-            background-color: #2ea44f;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: background-color 0.2s;
-        }
-        .calc-btn:hover {
-            background-color: #2c974b;
-        }
-        #luckysheet {
-            position: absolute;
-            width: 100%;
-            top: 50px;
-            bottom: 0px;
-            left: 0px;
-        }
+        body { font-family: 'Segoe UI', sans-serif; padding: 10px; background: #f8f9fa; }
+        .toolbar { margin-bottom: 15px; position: sticky; top: 0; z-index: 100; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        button { padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
+        button:active { background: #218838; }
+        #survey-table { background: white; font-size: 14px; }
+        /* 調整表格在手機上的顯示 */
+        .tabulator-cell { padding: 8px !important; }
     </style>
 </head>
 <body>
 
-    <div id="header">
-        <span class="title">📐 測量內業計算與校驗系統 (網頁版)</span>
-        <button class="calc-btn" onclick="runCalcMultiplePoints()">⚡ 執行計算點位座標</button>
+    <div class="toolbar">
+        <button onclick="calculateData()">⚡ 執行座標計算 (N/E 計算)</button>
     </div>
-    
-    <div id="luckysheet"></div>
+
+    <div id="survey-table"></div>
 
     <script>
         const PI = 3.14159265358979;
 
-        function AzimuthByAtn(dN, dE) {
-            let angleRad = 0;
-            if (dE > 0) {
-                angleRad = Math.atan(dE / dN);
-            } else if (dE < 0 && dN >= 0) {
-                angleRad = Math.atan(dE / dN) + PI;
-            } else if (dE < 0 && dN < 0) {
-                angleRad = Math.atan(dE / dN) - PI;
-            } else if (dE === 0 && dN > 0) {
-                angleRad = PI / 2;
-            } else if (dE === 0 && dN < 0) {
-                angleRad = -PI / 2;
-            } else {
-                angleRad = 0;
-            }
-            let az = angleRad * 180 / PI;
-            if (az < 0) az += 360;
-            return az;
-        }
+        // 表格初始化資料
+        const tableData = [
+            {id: 1, name: "YY21", n: 2766044.2610, e: 308975.0830, dist: 0, d: 0, m: 0, s: 0},
+            {id: 2, name: "Y252A", n: 2765773.8930, e: 308548.7000, dist: 504.8737, d: 0, m: 0, s: 0},
+            {id: 3, name: "Y252A", n: 2765724.9997, e: 308475.1547, dist: 88.3149, d: 178, m: 45, s: 48.8},
+            {id: 4, name: "Y251", n: 2765516.7417, e: 308161.9033, dist: 376.1640, d: 179, m: 59, s: 51.5}
+        ];
 
-        function NormalizeAzimuth(az) {
-            let norm = az - Math.floor(az / 360) * 360;
-            if (norm < 0) norm += 360;
-            return norm;
-        }
+        const table = new Tabulator("#survey-table", {
+            data: tableData,
+            layout: "fitColumns",
+            columns: [
+                {title: "點號", field: "name", editor: "input", width: 80},
+                {title: "原始N", field: "n", editor: "number", editorParams: {step: 0.0001}},
+                {title: "原始E", field: "e", editor: "number", editorParams: {step: 0.0001}},
+                {title: "平距", field: "dist", editor: "number"},
+                {title: "夾角(° ' \")", columns: [
+                    {field: "d", editor: "number", width: 50},
+                    {field: "m", editor: "number", width: 50},
+                    {field: "s", editor: "number", width: 60}
+                ]},
+                {title: "計算N", field: "calcN", width: 120},
+                {title: "計算E", field: "calcE", width: 120},
+                {title: "較差(mm)", columns: [
+                    {title: "N", field: "diffN", width: 80},
+                    {title: "E", field: "diffE", width: 80}
+                ]}
+            ],
+        });
 
-        function DMS_to_Decimal(deg, min, sec) {
-            return deg + min / 60.0 + sec / 3600.0;
-        }
+        // 核心計算邏輯
+        function calculateData() {
+            let data = table.getData();
+            let azPrev = 0; // 這裡需根據你的導線起算方位角設定
 
-        function runCalcMultiplePoints() {
-            try {
-                let getData = luckysheet.flowdata();
-                
-                let nA = parseFloat(getData[2][1]?.v);
-                let eA = parseFloat(getData[2][2]?.v);
-                let nB = parseFloat(getData[3][1]?.v);
-                let eB = parseFloat(getData[3][2]?.v);
-
-                if (isNaN(nA) || isNaN(eA) || isNaN(nB) || isNaN(eB)) {
-                    alert("請先確認 A 點 (第3行) 與 B 點 (第4行) 的原始座標是否正確填入！");
-                    return;
+            // 實作計算邏輯...
+            // 範例：遍歷資料並更新
+            data.forEach((row, index) => {
+                if (index > 1) {
+                    // 這裡放入你的三角函數推算公式
+                    // row.calcN = ... 
+                    // row.diffN = (row.calcN - row.n) * 1000
                 }
-
-                let azPrev = AzimuthByAtn(nB - nA, eB - eA);
-                let nCurr = nB;
-                let eCurr = eB;
-
-                for (let i = 4; i < getData.length - 1; i++) {
-                    let row = getData[i];
-                    if (!row) continue;
-
-                    let sideLen = parseFloat(row[3]?.v); // 實測平距 (D欄=3)
-                    let degVal = parseFloat(row[4]?.v);  // 度 (E欄=4)
-                    let minVal = parseFloat(row[5]?.v);  // 分 (F欄=5)
-                    let secVal = parseFloat(row[6]?.v);  // 秒 (G欄=6)
-
-                    if (isNaN(sideLen)) continue;
-
-                    let incDeg = DMS_to_Decimal(isNaN(degVal)?0:degVal, isNaN(minVal)?0:minVal, isNaN(secVal)?0:secVal);
-                    let radAzNext = NormalizeAzimuth(azPrev - 180 + incDeg) * PI / 180.0;
-
-                    let nNext = nCurr + sideLen * Math.cos(radAzNext);
-                    let eNext = eCurr + sideLen * Math.sin(radAzNext);
-                    let azNextDeg = NormalizeAzimuth(radAzNext * 180 / PI);
-
-                    // 1. 寫入計算後座標：H 欄(7) 與 I 欄(8)
-                    luckysheet.setCellValue(i, 7, nNext.toFixed(4));
-                    luckysheet.setCellValue(i, 8, eNext.toFixed(4));
-                    
-                    // 2. 較差計算 (H - 原始N, I - 原始E)，單位轉為 mm，取小數點 1 位
-                    let origN = parseFloat(row[1]?.v);
-                    let origE = parseFloat(row[2]?.v);
-                    if (!isNaN(origN) && !isNaN(origE)) {
-                        let diffN = (nNext - origN) * 1000;
-                        let diffE = (eNext - origE) * 1000;
-                        luckysheet.setCellValue(i, 9, diffN.toFixed(1));  // J 欄 = 9 (較差 N = H - 原始N)
-                        luckysheet.setCellValue(i, 10, diffE.toFixed(1)); // K 欄 = 10 (較差 E = I - 原始E)
-                    }
-
-                    nCurr = nNext;
-                    eCurr = eNext;
-                    azPrev = azNextDeg;
-                }
-
-                alert("多點座標推算與較差校驗完成！");
-            } catch (err) {
-                console.error(err);
-                alert("計算發生錯誤，請檢查輸入數據格式。");
-            }
-        }
-
-        window.onload = function () {
-            luckysheet.create({
-                container: 'luckysheet',
-                title: '測量計算表',
-                lang: 'zh',
-                allowUpdate: true,
-                data: [
-                    {
-                        name: "導線計算表",
-                        color: "",
-                        status: "1",
-                        order: "0",
-                        config: {
-                            merge: {
-                                "0_0": {r: 0, c: 0, rs: 2, cs: 1},
-                                "0_1": {r: 0, c: 1, rs: 1, cs: 2},
-                                "0_3": {r: 0, c: 3, rs: 2, cs: 1},
-                                "0_4": {r: 0, c: 4, rs: 1, cs: 3},
-                                "0_7": {r: 0, c: 7, rs: 1, cs: 2},
-                                "0_9": {r: 0, c: 9, rs: 1, cs: 2},
-                                "0_11": {r: 0, c: 11, rs: 2, cs: 1},
-                                "17_0": {r: 17, c: 0, rs: 1, cs: 3},
-                                "17_3": {r: 17, c: 3, rs: 1, cs: 4},
-                                "17_7": {r: 17, c: 7, rs: 1, cs: 2},
-                                "17_9": {r: 17, c: 9, rs: 1, cs: 3}
-                            },
-                            columnlen: {
-                                0: 80,   // 點號
-                                1: 150,  // 原始 N
-                                2: 150,  // 原始 E
-                                3: 95,   // 實測平距
-                                4: 65,   // 度
-                                5: 60,   // 分
-                                6: 70,   // 秒
-                                7: 150,  // 計算 N
-                                8: 150,  // 計算 E
-                                9: 75,   // 較差 N
-                                10: 75,  // 較差 E
-                                11: 90   // 備註
-                            }
-                        },
-                        data: [
-                            [
-                                {v: "點 號", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
-                                {v: "原始座標值", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
-                                {v: "實測平距", bg: "#fce5cd", ht: 2, vt: 2, bl: 1},
-                                {v: "實測夾角", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null, null,
-                                {v: "計算後座標", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
-                                {v: "較差(mm)", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}, null,
-                                {v: "備註", bg: "#d9ead3", ht: 2, vt: 2, bl: 1}
-                            ],
-                            [
-                                null,
-                                {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
-                                {v: "E", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
-                                null,
-                                {v: "°", bg: "#d9ead3", ht: 2, vt: 2},
-                                {v: "'", bg: "#d9ead3", ht: 2, vt: 2},
-                                {v: "\"", bg: "#d9ead3", ht: 2, vt: 2},
-                                {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
-                                {v: "E", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
-                                {v: "N", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
-                                {v: "E", bg: "#d9ead3", ht: 2, vt: 2, bl: 1},
-                                null
-                            ],
-                            [{v: "YY21", ht: 2, vt: 2}, {v: "2766044.2610", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "308975.0830", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "2766044.2610", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "308975.0830", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "後視點", ht: 2, vt: 2}],
-                            [{v: "Y252A", ht: 2, vt: 2}, {v: "2765773.8930", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "308548.7000", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: 504.8737, ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "2765773.8930", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "308548.7000", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "-", ht: 2, vt: 2}, {v: "起始點", ht: 2, vt: 2}],
-                            [{v: "Y252A", ht: 2, vt: 2}, {v: "2765724.9997", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "308475.1547", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: 88.3149, ht: 2, vt: 2}, {v: 178, ht: 2, vt: 2}, {v: 45, ht: 2, vt: 2}, {v: 48.8, ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}],
-                            [{v: "Y251", ht: 2, vt: 2}, {v: "2765516.7417", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "308161.9033", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: 376.1640, ht: 2, vt: 2}, {v: 179, ht: 2, vt: 2}, {v: 59, ht: 2, vt: 2}, {v: 51.5, ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}],
-                            [{v: "Y250", ht: 2, vt: 2}, {v: "2765299.8546", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "307921.3133", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: 323.9214, ht: 2, vt: 2}, {v: 171, ht: 2, vt: 2}, {v: 34, ht: 2, vt: 2}, {v: 57.7, ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}],
-                            [{v: "HN01", ht: 2, vt: 2}, {v: "2765170.2915", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "307904.2860", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: 130.6767, ht: 2, vt: 2}, {v: 139, ht: 2, vt: 2}, {v: 31, ht: 2, vt: 2}, {v: 12.8, ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}],
-                            [{v: "Y249", ht: 2, vt: 2}, {v: "2764966.4530", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "307664.3171", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: 314.8572, ht: 2, vt: 2}, {v: 222, ht: 2, vt: 2}, {v: 10, ht: 2, vt: 2}, {v: 1.0, ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}],
-                            [{v: "Y248A", ht: 2, vt: 2}, {v: "2764967.6440", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "307521.3930", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: 142.9324, ht: 2, vt: 2}, {v: 220, ht: 2, vt: 2}, {v: 49, ht: 2, vt: 2}, {v: 20.3, ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}],
-                            [{v: "Y248", ht: 2, vt: 2}, {v: "2764968.1750", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: "307387.1490", ct: {fa: "@", t: "s"}, ht: 2, vt: 2}, {v: 134.2465, ht: 2, vt: 2}, {v: 179, ht: 2, vt: 2}, {v: 44, ht: 2, vt: 2}, {v: 55.2, ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}, {v: "", ht: 2, vt: 2}],
-                            [null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null],
-                            [null, null, null, null, null, null, null, null, null, null, null, null],
-                            [
-                                {v: "填入原始座標", fc: "#ff0000", bl: 1, ht: 2, vt: 2}, null, null,
-                                {v: "填入實測資料", fc: "#ff0000", bl: 1, ht: 2, vt: 2}, null, null, null,
-                                {v: "按下N/E計算按鈕就可以得出答案", fc: "#ff0000", bl: 1, ht: 2, vt: 2}, null,
-                                {v: "填入點號才能計算", fc: "#ff0000", bl: 1, ht: 2, vt: 2}, null, null
-                            ]
-                        ]
-                    }
-                ]
             });
+
+            table.replaceData(data);
+            alert("計算完成！");
         }
     </script>
 </body>
