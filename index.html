@@ -44,7 +44,34 @@
         p.subtitle {
             text-align: center;
             color: #64748b;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .batch-paste-box {
+            background-color: #f1f5f9;
+            border: 1px dashed var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .batch-paste-box label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+
+        .batch-paste-box textarea {
+            width: 100%;
+            height: 80px;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: monospace;
             font-size: 0.9rem;
         }
 
@@ -143,13 +170,6 @@
             font-size: 0.95rem;
             display: none;
         }
-
-        .tip {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-top: -1rem;
-            margin-bottom: 1.5rem;
-        }
     </style>
 </head>
 <body>
@@ -158,7 +178,12 @@
     <h1>測量導線與方位角計算工具</h1>
     <p class="subtitle">座標系統：X 軸為北向、Y 軸為東向（方位角：北向 0° 順時針）</p>
 
-    <div class="tip">💡 提示：可直接從 Excel 選取多行多欄（點號、X座標、Y座標）並點擊任一輸入框貼上 (Ctrl + V)。</div>
+    <!-- Excel 批次貼上專用區塊 -->
+    <div class="batch-paste-box">
+        <label for="batchInput">📋 Excel 批次帶入區（請在此處按 Ctrl + V 貼上多行資料）：</label>
+        <textarea id="batchInput" placeholder="在此處點擊並按下 Ctrl + V，格式支援：點號 \t X座標 \t Y座標"></textarea>
+        <button type="button" id="importBtn" class="btn-secondary" style="margin-top: 8px; width: 100%;">將上方文字帶入下方表格</button>
+    </div>
 
     <div class="table-container">
         <table id="coordTable">
@@ -201,11 +226,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const coordTable = document.getElementById('coordTable');
-    const tbody = coordTable.querySelector('tbody');
+    const tbody = document.querySelector('#coordTable tbody');
     const addRowBtn = document.getElementById('addRowBtn');
     const calculateBtn = document.getElementById('calculateBtn');
     const resultArea = document.getElementById('resultArea');
+    const batchInput = document.getElementById('batchInput');
+    const importBtn = document.getElementById('importBtn');
 
     function updateRowIndices() {
         const rows = tbody.querySelectorAll('tr');
@@ -257,43 +283,45 @@ document.addEventListener('DOMContentLoaded', function() {
         addRow();
     });
 
-    // 修正後的 Excel 貼上功能：直接監聽整個表格的 paste 事件
-    coordTable.addEventListener('paste', function(e) {
-        const clipboardData = e.clipboardData || window.clipboardData;
-        const pastedData = clipboardData.getData('Text');
-        if (!pastedData) return;
-
-        // 當貼上內容包含 Tab 或換行時（代表多欄或多行 Excel 資料），攔截預設貼上行為
-        if (pastedData.includes('\t') || pastedData.includes('\n')) {
-            e.preventDefault();
-
-            const lines = pastedData.split(/\r\n|\n/);
-            let currentRow = e.target.closest('tr');
-            if (!currentRow) {
-                currentRow = tbody.querySelector('tr');
-            }
-
-            lines.forEach((line) => {
-                if (!line.trim()) return;
-                const cols = line.split('\t'); // 以 Tab 分隔 Excel 欄位
-                
-                if (cols.length >= 3) {
-                    const id = cols[0].trim();
-                    const x = cols[1].trim();
-                    const y = cols[2].trim();
-
-                    if (currentRow) {
-                        currentRow.querySelector('.input-id').value = id;
-                        currentRow.querySelector('.input-x').value = x;
-                        currentRow.querySelector('.input-y').value = y;
-                        currentRow = currentRow.nextElementSibling;
-                    } else {
-                        addRow(id, x, y);
-                    }
-                }
-            });
-            updateRowIndices();
+    // 批次匯入按鈕事件
+    importBtn.addEventListener('click', function() {
+        const text = batchInput.value.trim();
+        if (!text) {
+            alert('請先在上方文字框貼上 Excel 資料！');
+            return;
         }
+
+        const lines = text.split(/\r\n|\n/);
+        
+        // 檢查是否要清空舊資料或從頭填入
+        const rows = tbody.querySelectorAll('tr');
+        let rowIndex = 0;
+
+        lines.forEach((line) => {
+            if (!line.trim()) return;
+            const cols = line.split('\t'); // Excel 複製的分隔符號
+            
+            if (cols.length >= 3) {
+                const id = cols[0].trim();
+                const x = cols[1].trim();
+                const y = cols[2].trim();
+
+                if (rowIndex < rows.length) {
+                    // 填入現有行
+                    rows[rowIndex].querySelector('.input-id').value = id;
+                    rows[rowIndex].querySelector('.input-x').value = x;
+                    rows[rowIndex].querySelector('.input-y').value = y;
+                } else {
+                    // 超過現有行則自動新增
+                    addRow(id, x, y);
+                }
+                rowIndex++;
+            }
+        });
+
+        updateRowIndices();
+        alert(`成功匯入 ${rowIndex} 筆座標資料！`);
+        batchInput.value = ''; // 清空文字框
     });
 
     // 計算邏輯
