@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>測量邊長與夾角計算工具</title>
+    <title>臨時測量邊長與夾角計算工具</title>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -175,7 +175,7 @@
 <body>
 
 <div class="container">
-    <h1>測量邊長與夾角計算工具</h1>
+    <h1>臨時測量邊長與夾角計算工具</h1>
 
     <div class="batch-paste-box">
         <label for="batchInput">📋 批次輸入區（可直接手動打字或貼上，欄位間用空白或 Tab 分隔）：</label>
@@ -287,10 +287,8 @@ document.addEventListener('DOMContentLoaded', function() {
         lines.forEach((line) => {
             if (!line.trim()) return;
             
-            // 支援用空格、Tab 或「數字加點」分隔
             let cols = line.trim().split(/\s+/);
             
-            // 如果第一欄帶有結尾句點（例如 "1."），把它去掉變成 "1"
             if (cols.length >= 3) {
                 let id = cols[0].trim().replace(/\.$/, '');
                 let x = cols[1].trim();
