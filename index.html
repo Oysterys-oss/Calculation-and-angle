@@ -178,10 +178,10 @@
     <h1>測量邊長與夾角計算工具</h1>
 
     <div class="batch-paste-box">
-        <label for="batchInput">📋 批次輸入區（可直接手動打字，或按 Ctrl + V 貼上多行 Excel 資料）：</label>
+        <label for="batchInput">📋 批次輸入區（可直接手動打字或貼上，欄位間用空白或 Tab 分隔）：</label>
         <textarea id="batchInput" placeholder="格式範例：
-P01	250000.123	260000.456
-P02	250100.789	260100.123"></textarea>
+P01 250000.123 260000.456
+P02 250100.789 260100.123"></textarea>
         <button type="button" id="importBtn" class="btn-secondary" style="margin-top: 8px; width: 100%;">將上方文字追加至表格下方</button>
     </div>
 
@@ -286,7 +286,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         lines.forEach((line) => {
             if (!line.trim()) return;
-            const cols = line.split('\t');
+            // 改用正則表達式，支援任意空白字元（包含空格、多個空格、或 Tab）來切分欄位
+            const cols = line.trim().split(/\s+/);
             
             if (cols.length >= 3) {
                 const id = cols[0].trim();
@@ -309,9 +310,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        updateRowIndices();
-        alert(`成功追加匯入 ${importedCount} 筆座標資料！`);
-        batchInput.value = '';
+        if (importedCount > 0) {
+            updateRowIndices();
+            alert(`成功追加匯入 ${importedCount} 筆座標資料！`);
+            batchInput.value = '';
+        } else {
+            alert('格式有誤！每行請包含：點號、X座標、Y座標（欄位之間請用空格或 Tab 隔開）。');
+        }
     });
 
     function formatDMS(angleDeg) {
