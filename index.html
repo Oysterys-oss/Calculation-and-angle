@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>測量導線與方位角計算工具</title>
+    <title>測量導線、方位角與夾角計算工具</title>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -26,7 +26,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 950px;
             margin: 0 auto;
             background-color: var(--card-bg);
             padding: 30px;
@@ -175,10 +175,9 @@
 <body>
 
 <div class="container">
-    <h1>測量導線與方位角計算工具</h1>
+    <h1>測量導線、方位角與夾角計算工具</h1>
     <p class="subtitle">座標系統：X 軸為北向、Y 軸為東向（方位角：北向 0° 順時針）</p>
 
-    <!-- Excel 批次貼上專用區塊 -->
     <div class="batch-paste-box">
         <label for="batchInput">📋 Excel 批次帶入區（請在此處按 Ctrl + V 貼上多行資料）：</label>
         <textarea id="batchInput" placeholder="在此處點擊並按下 Ctrl + V，格式支援：點號 \t X座標 \t Y座標"></textarea>
@@ -197,7 +196,6 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- 預設兩行 -->
                 <tr>
                     <td class="row-index">1</td>
                     <td><input type="text" class="input-id" value="A1" placeholder="例: A1"></td>
@@ -212,13 +210,20 @@
                     <td><input type="number" step="any" class="input-y" placeholder="例: 200050.000"></td>
                     <td><button type="button" class="btn-delete">刪除</button></td>
                 </tr>
+                <tr>
+                    <td class="row-index">3</td>
+                    <td><input type="text" class="input-id" value="A3" placeholder="例: A3"></td>
+                    <td><input type="number" step="any" class="input-x" placeholder="例: 2500150.000"></td>
+                    <td><input type="number" step="any" class="input-y" placeholder="例: 200150.000"></td>
+                    <td><button type="button" class="btn-delete">刪除</button></td>
+                </tr>
             </tbody>
         </table>
     </div>
 
     <div class="btn-group">
         <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
-        <button type="button" id="calculateBtn" class="btn-primary">開始計算導線</button>
+        <button type="button" id="calculateBtn" class="btn-primary">開始計算方位角與夾角</button>
     </div>
 
     <div id="resultArea"></div>
@@ -272,7 +277,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 綁定現有刪除按鈕
     tbody.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', function() {
             deleteRow(this);
@@ -283,7 +287,6 @@ document.addEventListener('DOMContentLoaded', function() {
         addRow();
     });
 
-    // 批次匯入按鈕事件
     importBtn.addEventListener('click', function() {
         const text = batchInput.value.trim();
         if (!text) {
@@ -292,14 +295,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const lines = text.split(/\r\n|\n/);
-        
-        // 檢查是否要清空舊資料或從頭填入
         const rows = tbody.querySelectorAll('tr');
         let rowIndex = 0;
 
         lines.forEach((line) => {
             if (!line.trim()) return;
-            const cols = line.split('\t'); // Excel 複製的分隔符號
+            const cols = line.split('\t');
             
             if (cols.length >= 3) {
                 const id = cols[0].trim();
@@ -307,12 +308,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const y = cols[2].trim();
 
                 if (rowIndex < rows.length) {
-                    // 填入現有行
                     rows[rowIndex].querySelector('.input-id').value = id;
                     rows[rowIndex].querySelector('.input-x').value = x;
                     rows[rowIndex].querySelector('.input-y').value = y;
                 } else {
-                    // 超過現有行則自動新增
                     addRow(id, x, y);
                 }
                 rowIndex++;
@@ -321,8 +320,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         updateRowIndices();
         alert(`成功匯入 ${rowIndex} 筆座標資料！`);
-        batchInput.value = ''; // 清空文字框
+        batchInput.value = '';
     });
+
+    function formatDMS(angleDeg) {
+        if (angleDeg < 0) angleDeg += 360;
+        if (angleDeg >= 360) angleDeg %= 360;
+
+        const deg = Math.floor(angleDeg);
+        const minFloat = (angleDeg - deg) * 60;
+        const min = Math.floor(minFloat);
+        const sec = ((minFloat - min) * 60).toFixed(1);
+        return `${deg}° ${min}′ ${sec}″ (${angleDeg.toFixed(4)}°)`;
+    }
 
     // 計算邏輯
     calculateBtn.addEventListener('click', function() {
@@ -350,33 +360,58 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        let resultText = "=== 導線計算結果 (測量學方位角: 北向0°順時針) ===\n\n";
+        let azList = [];
+        let resultText = "=== 導線邊長與方位角計算 ===\n\n";
         
+        // 1. 計算各線段方位角與距離
         for (let i = 0; i < coordinates.length - 1; i++) {
             const p1 = coordinates[i];
             const p2 = coordinates[i + 1];
 
             const dx = p2.x - p1.x; // 北向差
             const dy = p2.y - p1.y; // 東向差
-            
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             let angleRad = Math.atan2(dy, dx);
             let angleDeg = angleRad * (180 / Math.PI);
-            
-            if (angleDeg < 0) {
-                angleDeg += 360;
-            }
+            if (angleDeg < 0) angleDeg += 360;
 
-            const deg = Math.floor(angleDeg);
-            const minFloat = (angleDeg - deg) * 60;
-            const min = Math.floor(minFloat);
-            const sec = ((minFloat - min) * 60).toFixed(1);
+            azList.push({
+                from: p1.id,
+                to: p2.id,
+                azimuth: angleDeg,
+                distance: distance,
+                dx: dx,
+                dy: dy
+            });
 
             resultText += `路段：${p1.id} ➔ ${p2.id}\n`;
             resultText += `  ΔX (北向差): ${dx.toFixed(4)} m | ΔY (東向差): ${dy.toFixed(4)} m\n`;
             resultText += `  距離: ${distance.toFixed(3)} 公尺\n`;
-            resultText += `  方位角: ${deg}° ${min}′ ${sec}″ (${angleDeg.toFixed(4)}°)\n\n`;
+            resultText += `  方位角: ${formatDMS(angleDeg)}\n\n`;
+        }
+
+        // 2. 計算轉折夾角（若有 3 個點以上，即至少 2 個連續線段）
+        if (azList.length >= 2) {
+            resultText += "=== 導線轉折夾角計算 (依據連續線段反算) ===\n\n";
+            for (let i = 0; i < azList.length - 1; i++) {
+                const prevAz = azList[i].azimuth;     // 前一邊方位角
+                const nextAz = azList[i + 1].azimuth; // 後一邊方位角
+                const vertexPoint = azList[i].to;     // 夾角所在頂點
+
+                // 右角計算公式：後方位角 - 前方位角
+                let rightAngle = nextAz - prevAz;
+                if (rightAngle < 0) rightAngle += 360;
+
+                // 內角（左側夾角或對應夾角，視導線前進方向而定，此處提供標準右角與補角供參）
+                let deflection = nextAz - prevAz;
+                // 轉角計算
+                let interiorAngle = 180 - Math.abs(nextAz - prevAz); // 簡易相對夾角
+
+                resultText += `頂點：${vertexPoint} 處夾角\n`;
+                resultText += `  右角 (Forward Az - Back Az): ${formatDMS(rightAngle)}\n`;
+                resultText += `  -----------------------------------------\n`;
+            }
         }
 
         resultArea.style.display = 'block';
