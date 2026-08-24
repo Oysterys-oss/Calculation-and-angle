@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const addRowBtn = document.getElementById('addRowBtn');
     const calculateBtn = document.getElementById('calculateBtn');
 
-    // 更新序號
     function updateRowIndices() {
         const rows = tbody.querySelectorAll('tr');
         rows.forEach((row, index) => {
@@ -16,8 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 新增空白列
-    window.addRow = function(id = '', x = '', y = '') {
+    function addRow(id = '', x = '', y = '') {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="row-index"></td>
@@ -26,16 +24,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><input type="number" step="any" class="input-y" value="${y}" placeholder="例: 2764649.9410"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
-        
         newRow.querySelector('.btn-delete').addEventListener('click', function() {
             deleteRow(this);
         });
-
         tbody.appendChild(newRow);
         updateRowIndices();
     }
 
-    // 刪除列
     function deleteRow(btn) {
         const row = btn.closest('tr');
         if (tbody.rows.length > 1) {
@@ -48,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 綁定第一行的刪除按鈕
     const initialDeleteBtn = tbody.querySelector('.btn-delete');
     if (initialDeleteBtn) {
         initialDeleteBtn.addEventListener('click', function() {
@@ -56,23 +50,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 點擊「新增一行」按鈕
     addRowBtn.addEventListener('click', function() {
         addRow();
     });
 
-    // 改進的貼上功能：支援直接從 Excel 或文字複製貼上
     coordTable.addEventListener('paste', function(e) {
-        // 取得剪貼簿文字
         const clipboardData = e.clipboardData || window.clipboardData;
         const pastedData = clipboardData.getData('Text');
         if (!pastedData) return;
-
-        e.preventDefault(); // 阻止預設貼上行為
+        e.preventDefault();
 
         const lines = pastedData.split(/\r\n|\n/);
-        
-        // 找出目前游標在哪一個輸入框，如果沒有就從第一列開始
         let currentRow = e.target.closest('tr');
         if (!currentRow) {
             currentRow = tbody.querySelector('tr');
@@ -80,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         lines.forEach((line) => {
             if (!line.trim()) return;
-            // 支援 Tab 或多個空白作為欄位分隔
             const cols = line.trim().split(/\s+/);
             if (cols.length >= 3) {
                 const id = cols[0];
@@ -91,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const idInput = currentRow.querySelector('.input-id');
                     const xInput = currentRow.querySelector('.input-x');
                     const yInput = currentRow.querySelector('.input-y');
-                    
                     if (idInput && xInput && yInput) {
                         idInput.value = id;
                         xInput.value = x;
@@ -99,7 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     currentRow = currentRow.nextElementSibling;
                 } else {
-                    // 如果列不夠，自動新增一行
                     addRow(id, x, y);
                 }
             }
@@ -107,7 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRowIndices();
     });
 
-    // 點擊「開始計算導線」
+    // ==========================================
+    // 📍 就是把下面這整段取代原本的計算按鈕事件
+    // ==========================================
     calculateBtn.addEventListener('click', function() {
         const rows = tbody.querySelectorAll('tr');
         const coordinates = [];
@@ -118,33 +105,49 @@ document.addEventListener('DOMContentLoaded', function() {
             const yInput = row.querySelector('.input-y');
 
             if (idInput && xInput && yInput) {
-                const id = idInput.value.trim();
-                const x = xInput.value.trim();
-                const y = yInput.value.trim();
+                const id = idInput.value.trim() || `P${coordinates.length + 1}`;
+                const x = parseFloat(xInput.value);
+                const y = parseFloat(yInput.value);
 
-                // 只要其中一個欄位有填，就視為有效資料
-                if (id !== '' || x !== '' || y !== '') {
-                    coordinates.push({ 
-                        id: id, 
-                        x: parseFloat(x) || 0, 
-                        y: parseFloat(y) || 0 
-                    });
+                if (!isNaN(x) && !isNaN(y)) {
+                    coordinates.push({ id, x, y });
                 }
             }
         });
 
-        if (coordinates.length === 0) {
-            alert('請至少輸入一筆有效的座標資料！');
+        if (coordinates.length < 2) {
+            alert('請至少輸入兩筆有效的座標（包含X與Y）才能計算距離與方位角！');
             return;
         }
 
-        console.log('收集到的座標資料：', coordinates);
-        alert(`成功收集 ${coordinates.length} 筆座標！準備開始計算。`);
+        let resultText = "--- 導線計算結果 ---\n\n";
         
-        // ==========================================
-        // 💡 可以在這裡串接您原本的導線計算邏輯
-        // 例如：calculateTraverse(coordinates);
-        // ==========================================
+        for (let i = 0; i < coordinates.length - 1; i++) {
+            const p1 = coordinates[i];
+            const p2 = coordinates[i + 1];
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            let angleRad = Math.atan2(dy, dx);
+            let angleDeg = angleRad * (180 / Math.PI);
+            if (angleDeg < 0) {
+                angleDeg += 360;
+            }
+
+            const deg = Math.floor(angleDeg);
+            const minFloat = (angleDeg - deg) * 60;
+            const min = Math.floor(minFloat);
+            const sec = ((minFloat - min) * 60).toFixed(1);
+
+            resultText += `路段：${p1.id} ➔ ${p2.id}\n`;
+            resultText += `  距離: ${distance.toFixed(3)} 公尺\n`;
+            resultText += `  方位角: ${deg}° ${min}′ ${sec}″ (${angleDeg.toFixed(4)}°)\n\n`;
+        }
+
+        alert(resultText);
     });
 });
 </script>
