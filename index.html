@@ -1,10 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>導線計算</title>
+    <style>
+        .coordinate-container {
+            font-family: sans-serif;
+            max-width: 700px;
+            margin: 20px auto;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .table-wrapper {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #coordTable {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        #coordTable th, #coordTable td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+        }
+        #coordTable th {
+            background-color: #f1f1f1;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        #coordTable input {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .row-index {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .btn-delete {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-delete:hover {
+            background-color: #cc0000;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-primary {
+            flex: 1;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #218838;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+
+<div class="coordinate-container">
+    <h3>請輸入座標資料：</h3>
+    
+    <div class="table-wrapper">
+        <table id="coordTable">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>點號 (Point ID)</th>
+                    <th>X 座標</th>
+                    <th>Y 座標</th>
+                    <th style="width: 60px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="row-index">1</td>
+                    <td><input type="text" class="input-id" placeholder="例: GU04"></td>
+                    <td><input type="number" step="any" class="input-x" placeholder="例: 308235.9495"></td>
+                    <td><input type="number" step="any" class="input-y" placeholder="例: 2764649.9410"></td>
+                    <td><button type="button" class="btn-delete">刪除</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="button-group">
+        <button type="button" id="addRowBtn" class="btn-secondary">新增一行</button>
+        <button type="button" id="calculateBtn" class="btn-primary">開始計算導線</button>
+    </div>
+</div>
+
+<!-- 必須使用 script 標籤包住 JavaScript 程式碼 -->
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const coordTable = document.getElementById('coordTable');
     const tbody = coordTable.querySelector('tbody');
     const addRowBtn = document.getElementById('addRowBtn');
     const calculateBtn = document.getElementById('calculateBtn');
 
-    // 更新序號
     function updateRowIndices() {
         const rows = tbody.querySelectorAll('tr');
         rows.forEach((row, index) => {
@@ -15,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 新增空白列
     function addRow(id = '', x = '', y = '') {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
@@ -26,7 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
         
-        // 綁定該行刪除按鈕事件
         newRow.querySelector('.btn-delete').addEventListener('click', function() {
             deleteRow(this);
         });
@@ -35,21 +160,18 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRowIndices();
     }
 
-    // 刪除列
     function deleteRow(btn) {
         const row = btn.closest('tr');
         if (tbody.rows.length > 1) {
             row.remove();
             updateRowIndices();
         } else {
-            // 如果只剩一行，則清空內容而不刪除
             row.querySelector('.input-id').value = '';
             row.querySelector('.input-x').value = '';
             row.querySelector('.input-y').value = '';
         }
     }
 
-    // 為預設的第一行刪除按鈕綁定事件
     const initialDeleteBtn = tbody.querySelector('.btn-delete');
     if (initialDeleteBtn) {
         initialDeleteBtn.addEventListener('click', function() {
@@ -57,12 +179,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 點擊「新增一行」按鈕
     addRowBtn.addEventListener('click', function() {
         addRow();
     });
 
-    // 支援直接從 Excel 或文字複製貼上
     coordTable.addEventListener('paste', function(e) {
         e.preventDefault();
         const clipboardData = e.clipboardData || window.clipboardData;
@@ -91,15 +211,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 點擊「開始計算導線」
     calculateBtn.addEventListener('click', function() {
         const rows = tbody.querySelectorAll('tr');
         const coordinates = [];
 
         rows.forEach(row => {
             const id = row.querySelector('.input-id').value.trim();
-            const x = row.querySelector('.input-y').value.trim(); // 確保對應X/Y
-            const y = row.querySelector('.input-x').value.trim();
+            const x = row.querySelector('.input-x').value.trim();
+            const y = row.querySelector('.input-y').value.trim();
 
             if (id !== '' || x !== '' || y !== '') {
                 coordinates.push({ id, x: parseFloat(x), y: parseFloat(y) });
@@ -115,3 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(`成功收集 ${coordinates.length} 筆座標！`);
     });
 });
+</script>
+
+</body>
+</html>
