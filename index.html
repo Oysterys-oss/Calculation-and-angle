@@ -116,6 +116,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
         button {
@@ -132,6 +133,7 @@
             background-color: var(--primary-color);
             color: white;
             flex: 2;
+            min-width: 200px;
         }
 
         .btn-primary:hover {
@@ -142,10 +144,23 @@
             background-color: #e2e8f0;
             color: var(--text-color);
             flex: 1;
+            min-width: 130px;
         }
 
         .btn-secondary:hover {
             background-color: #cbd5e1;
+        }
+
+        .btn-danger-outline {
+            background-color: #fff;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            flex: 1;
+            min-width: 130px;
+        }
+
+        .btn-danger-outline:hover {
+            background-color: #ffeeef;
         }
 
         .btn-delete {
@@ -197,19 +212,14 @@ P02 250100.789 260100.123"></textarea>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="row-index">1</td>
-                    <td><input type="text" class="input-id" placeholder="例: P01"></td>
-                    <td><input type="number" step="any" class="input-x" placeholder="X座標"></td>
-                    <td><input type="number" step="any" class="input-y" placeholder="Y座標"></td>
-                    <td><button type="button" class="btn-delete">刪除</button></td>
-                </tr>
+                <!-- 內容會由 JavaScript 自動載入或初始化 -->
             </tbody>
         </table>
     </div>
 
     <div class="btn-group">
         <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
+        <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空全部資料</button>
         <button type="button" id="calculateBtn" class="btn-primary">計算邊長與夾角</button>
     </div>
 
@@ -220,11 +230,26 @@ P02 250100.789 260100.123"></textarea>
 document.addEventListener('DOMContentLoaded', function() {
     const tbody = document.querySelector('#coordTable tbody');
     const addRowBtn = document.getElementById('addRowBtn');
+    const clearBtn = document.getElementById('clearBtn');
     const calculateBtn = document.getElementById('calculateBtn');
     const resultArea = document.getElementById('resultArea');
     const batchInput = document.getElementById('batchInput');
     const importBtn = document.getElementById('importBtn');
 
+    // 儲存資料至 LocalStorage
+    function saveData() {
+        const rows = tbody.querySelectorAll('tr');
+        const data = [];
+        rows.forEach(row => {
+            const id = row.querySelector('.input-id').value;
+            const x = row.querySelector('.input-x').value;
+            const y = row.querySelector('.input-y').value;
+            data.push({ id, x, y });
+        });
+        localStorage.setItem('temp_survey_data', JSON.stringify(data));
+    }
+
+    // 更新項次編號
     function updateRowIndices() {
         const rows = tbody.querySelectorAll('tr');
         rows.forEach((row, index) => {
@@ -235,6 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // 新增列並綁定即時自動儲存事件
     function addRow(id = '', x = '', y = '') {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
@@ -244,11 +270,20 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><input type="number" step="any" class="input-y" value="${y}" placeholder="Y座標"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
+
+        // 綁定輸入即時儲存
+        newRow.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', saveData);
+        });
+
+        // 綁定刪除按鈕
         newRow.querySelector('.btn-delete').addEventListener('click', function() {
             deleteRow(this);
         });
+
         tbody.appendChild(newRow);
         updateRowIndices();
+        saveData();
         return newRow;
     }
 
@@ -257,21 +292,49 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tbody.rows.length > 1) {
             row.remove();
             updateRowIndices();
+            saveData();
         } else {
             row.querySelector('.input-id').value = '';
             row.querySelector('.input-x').value = '';
             row.querySelector('.input-y').value = '';
+            saveData();
         }
     }
 
-    tbody.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', function() {
-            deleteRow(this);
-        });
-    });
+    // 初始化：讀取儲存的資料，若無則給一筆空白列
+    function loadSavedData() {
+        const saved = localStorage.getItem('temp_survey_data');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (Array.isArray(data) && data.length > 0) {
+                    tbody.innerHTML = '';
+                    data.forEach(item => {
+                        addRow(item.id, item.x, item.y);
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.error("載入儲存資料失敗", e);
+            }
+        }
+        // 預設給一筆
+        addRow();
+    }
+
+    loadSavedData();
 
     addRowBtn.addEventListener('click', function() {
         addRow();
+    });
+
+    clearBtn.addEventListener('click', function() {
+        if (confirm('確定要清空所有表格資料嗎？')) {
+            localStorage.removeItem('temp_survey_data');
+            tbody.innerHTML = '';
+            addRow();
+            resultArea.style.display = 'none';
+        }
     });
 
     importBtn.addEventListener('click', function() {
@@ -295,11 +358,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 let y = cols[2].trim();
 
                 const firstRow = tbody.querySelector('tr');
-                const firstId = firstRow.querySelector('.input-id').value.trim();
-                const firstX = firstRow.querySelector('.input-x').value.trim();
-                const firstY = firstRow.querySelector('.input-y').value.trim();
+                const firstId = firstRow ? firstRow.querySelector('.input-id').value.trim() : '';
+                const firstX = firstRow ? firstRow.querySelector('.input-x').value.trim() : '';
+                const firstY = firstRow ? firstRow.querySelector('.input-y').value.trim() : '';
 
-                if (!firstId && !firstX && !firstY && importedCount === 0) {
+                if (firstRow && !firstId && !firstX && !firstY && importedCount === 0) {
                     firstRow.querySelector('.input-id').value = id;
                     firstRow.querySelector('.input-x').value = x;
                     firstRow.querySelector('.input-y').value = y;
@@ -312,6 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (importedCount > 0) {
             updateRowIndices();
+            saveData();
             alert(`成功追加匯入 ${importedCount} 筆座標資料！`);
             batchInput.value = '';
         } else {
