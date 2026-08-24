@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>測量導線、方位角與夾角計算工具</title>
+    <title>測量邊長與夾角計算工具</title>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -26,7 +26,7 @@
         }
 
         .container {
-            max-width: 950px;
+            max-width: 900px;
             margin: 0 auto;
             background-color: var(--card-bg);
             padding: 30px;
@@ -175,8 +175,8 @@
 <body>
 
 <div class="container">
-    <h1>測量導線、方位角與夾角計算工具</h1>
-    <p class="subtitle">座標系統：X 軸為北向、Y 軸為東向（方位角：北向 0° 順時針）</p>
+    <h1>測量邊長與夾角計算工具</h1>
+    <p class="subtitle">座標系統：X 軸為北向、Y 軸為東向</p>
 
     <div class="batch-paste-box">
         <label for="batchInput">📋 Excel 批次帶入區（請在此處按 Ctrl + V 貼上多行資料）：</label>
@@ -223,7 +223,7 @@
 
     <div class="btn-group">
         <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
-        <button type="button" id="calculateBtn" class="btn-primary">開始計算方位角與夾角</button>
+        <button type="button" id="calculateBtn" class="btn-primary">計算邊長與夾角</button>
     </div>
 
     <div id="resultArea"></div>
@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const minFloat = (angleDeg - deg) * 60;
         const min = Math.floor(minFloat);
         const sec = ((minFloat - min) * 60).toFixed(1);
-        return `${deg}° ${min}′ ${sec}″ (${angleDeg.toFixed(4)}°)`;
+        return `${deg}° ${min}′ ${sec}″`;
     }
 
     // 計算邏輯
@@ -361,15 +361,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let azList = [];
-        let resultText = "=== 導線邊長與方位角計算 ===\n\n";
+        let resultText = "=== 導線邊長計算 ===\n\n";
         
-        // 1. 計算各線段方位角與距離
+        // 1. 計算各線段距離與方位角
         for (let i = 0; i < coordinates.length - 1; i++) {
             const p1 = coordinates[i];
             const p2 = coordinates[i + 1];
 
-            const dx = p2.x - p1.x; // 北向差
-            const dy = p2.y - p1.y; // 東向差
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             let angleRad = Math.atan2(dy, dx);
@@ -380,36 +380,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 from: p1.id,
                 to: p2.id,
                 azimuth: angleDeg,
-                distance: distance,
-                dx: dx,
-                dy: dy
+                distance: distance
             });
 
-            resultText += `路段：${p1.id} ➔ ${p2.id}\n`;
-            resultText += `  ΔX (北向差): ${dx.toFixed(4)} m | ΔY (東向差): ${dy.toFixed(4)} m\n`;
-            resultText += `  距離: ${distance.toFixed(3)} 公尺\n`;
-            resultText += `  方位角: ${formatDMS(angleDeg)}\n\n`;
+            resultText += `邊長：${p1.id} ➔ ${p2.id} = ${distance.toFixed(3)} 公尺\n`;
         }
 
-        // 2. 計算轉折夾角（修正 180 度誤差）
+        // 2. 計算轉折夾角
         if (azList.length >= 2) {
-            resultText += "=== 導線轉折夾角計算 ===\n\n";
+            resultText += "\n=== 頂點夾角 (右角) 計算 ===\n\n";
             for (let i = 0; i < azList.length - 1; i++) {
-                const prevAz = azList[i].azimuth;     // 前一邊方位角
-                const nextAz = azList[i + 1].azimuth; // 後一邊方位角
-                const vertexPoint = azList[i].to;     // 夾角所在頂點
+                const prevAz = azList[i].azimuth;     
+                const nextAz = azList[i + 1].azimuth; 
+                const vertexPoint = azList[i].to;     
 
-                // 進入頂點的後退邊方位角須加上 180° (反方位角)
                 let backAz = prevAz + 180;
                 if (backAz >= 360) backAz -= 360;
 
-                // 右角 = 前進邊方位角 - 後退邊方位角
                 let rightAngle = nextAz - backAz;
                 if (rightAngle < 0) rightAngle += 360;
 
-                resultText += `頂點：${vertexPoint} 處夾角\n`;
-                resultText += `  右角: ${formatDMS(rightAngle)}\n`;
-                resultText += `  -----------------------------------------\n`;
+                resultText += `頂點 ${vertexPoint} 夾角：${formatDMS(rightAngle)}\n`;
             }
         }
 
