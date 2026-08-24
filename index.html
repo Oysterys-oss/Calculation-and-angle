@@ -391,25 +391,24 @@ document.addEventListener('DOMContentLoaded', function() {
             resultText += `  方位角: ${formatDMS(angleDeg)}\n\n`;
         }
 
-        // 2. 計算轉折夾角（若有 3 個點以上，即至少 2 個連續線段）
+        // 2. 計算轉折夾角（修正 180 度誤差）
         if (azList.length >= 2) {
-            resultText += "=== 導線轉折夾角計算 (依據連續線段反算) ===\n\n";
+            resultText += "=== 導線轉折夾角計算 ===\n\n";
             for (let i = 0; i < azList.length - 1; i++) {
                 const prevAz = azList[i].azimuth;     // 前一邊方位角
                 const nextAz = azList[i + 1].azimuth; // 後一邊方位角
                 const vertexPoint = azList[i].to;     // 夾角所在頂點
 
-                // 右角計算公式：後方位角 - 前方位角
-                let rightAngle = nextAz - prevAz;
+                // 進入頂點的後退邊方位角須加上 180° (反方位角)
+                let backAz = prevAz + 180;
+                if (backAz >= 360) backAz -= 360;
+
+                // 右角 = 前進邊方位角 - 後退邊方位角
+                let rightAngle = nextAz - backAz;
                 if (rightAngle < 0) rightAngle += 360;
 
-                // 內角（左側夾角或對應夾角，視導線前進方向而定，此處提供標準右角與補角供參）
-                let deflection = nextAz - prevAz;
-                // 轉角計算
-                let interiorAngle = 180 - Math.abs(nextAz - prevAz); // 簡易相對夾角
-
                 resultText += `頂點：${vertexPoint} 處夾角\n`;
-                resultText += `  右角 (Forward Az - Back Az): ${formatDMS(rightAngle)}\n`;
+                resultText += `  右角: ${formatDMS(rightAngle)}\n`;
                 resultText += `  -----------------------------------------\n`;
             }
         }
