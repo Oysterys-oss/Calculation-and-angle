@@ -1,34 +1,117 @@
-<div class="coordinate-container">
-    <h3>請輸入座標資料：</h3>
-    
-    <!-- 表格區域 -->
-    <div class="table-wrapper">
-        <table id="coordTable">
-            <thead>
-                <tr>
-                    <th style="width: 50px;">#</th>
-                    <th>點號 (Point ID)</th>
-                    <th>X 座標</th>
-                    <th>Y 座標</th>
-                    <th style="width: 60px;">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 預設顯示幾行空白列供使用者輸入 -->
-                <tr>
-                    <td class="row-index">1</td>
-                    <td><input type="text" class="input-id" placeholder="例: GU04"></td>
-                    <td><input type="number" step="any" class="input-x" placeholder="例: 2764649.9410"></td>
-                    <td><input type="number" step="any" class="input-y" placeholder="例: 308235.9495"></td>
-                    <td><button type="button" class="btn-delete" onclick="deleteRow(this)">刪除</button></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+document.addEventListener('DOMContentLoaded', function() {
+    const coordTable = document.getElementById('coordTable');
+    const tbody = coordTable.querySelector('tbody');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const calculateBtn = document.getElementById('calculateBtn');
 
-    <!-- 按鈕操作區 -->
-    <div class="button-group">
-        <button type="button" id="addRowBtn" class="btn-secondary">新增一行</button>
-        <button type="button" id="calculateBtn" class="btn-primary">開始計算導線</button>
-    </div>
-</div>
+    // 更新序號
+    function updateRowIndices() {
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row, index) => {
+            const indexCell = row.querySelector('.row-index');
+            if (indexCell) {
+                indexCell.textContent = index + 1;
+            }
+        });
+    }
+
+    // 新增空白列
+    function addRow(id = '', x = '', y = '') {
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="row-index"></td>
+            <td><input type="text" class="input-id" value="${id}" placeholder="例: GU04"></td>
+            <td><input type="number" step="any" class="input-x" value="${x}" placeholder="例: 308235.9495"></td>
+            <td><input type="number" step="any" class="input-y" value="${y}" placeholder="例: 2764649.9410"></td>
+            <td><button type="button" class="btn-delete">刪除</button></td>
+        `;
+        
+        // 綁定該行刪除按鈕事件
+        newRow.querySelector('.btn-delete').addEventListener('click', function() {
+            deleteRow(this);
+        });
+
+        tbody.appendChild(newRow);
+        updateRowIndices();
+    }
+
+    // 刪除列
+    function deleteRow(btn) {
+        const row = btn.closest('tr');
+        if (tbody.rows.length > 1) {
+            row.remove();
+            updateRowIndices();
+        } else {
+            // 如果只剩一行，則清空內容而不刪除
+            row.querySelector('.input-id').value = '';
+            row.querySelector('.input-x').value = '';
+            row.querySelector('.input-y').value = '';
+        }
+    }
+
+    // 為預設的第一行刪除按鈕綁定事件
+    const initialDeleteBtn = tbody.querySelector('.btn-delete');
+    if (initialDeleteBtn) {
+        initialDeleteBtn.addEventListener('click', function() {
+            deleteRow(this);
+        });
+    }
+
+    // 點擊「新增一行」按鈕
+    addRowBtn.addEventListener('click', function() {
+        addRow();
+    });
+
+    // 支援直接從 Excel 或文字複製貼上
+    coordTable.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const clipboardData = e.clipboardData || window.clipboardData;
+        const pastedData = clipboardData.getData('Text');
+        
+        const lines = pastedData.split(/\r\n|\n/);
+        let currentRow = e.target.closest('tr');
+        
+        lines.forEach((line) => {
+            if (!line.trim()) return;
+            const cols = line.trim().split(/\s+/);
+            if (cols.length >= 3) {
+                const id = cols[0];
+                const x = cols[1];
+                const y = cols[2];
+
+                if (currentRow) {
+                    currentRow.querySelector('.input-id').value = id;
+                    currentRow.querySelector('.input-x').value = x;
+                    currentRow.querySelector('.input-y').value = y;
+                    currentRow = currentRow.nextElementSibling;
+                } else {
+                    addRow(id, x, y);
+                }
+            }
+        });
+    });
+
+    // 點擊「開始計算導線」
+    calculateBtn.addEventListener('click', function() {
+        const rows = tbody.querySelectorAll('tr');
+        const coordinates = [];
+
+        rows.forEach(row => {
+            const id = row.querySelector('.input-id').value.trim();
+            const x = row.querySelector('.input-y').value.trim(); // 確保對應X/Y
+            const y = row.querySelector('.input-x').value.trim();
+
+            if (id !== '' || x !== '' || y !== '') {
+                coordinates.push({ id, x: parseFloat(x), y: parseFloat(y) });
+            }
+        });
+
+        if (coordinates.length === 0) {
+            alert('請至少輸入一筆有效的座標資料！');
+            return;
+        }
+
+        console.log('收集到的座標資料：', coordinates);
+        alert(`成功收集 ${coordinates.length} 筆座標！`);
+    });
+});
