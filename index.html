@@ -1,3 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測量導線與方位角計算工具</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger-color: #dc2626;
+            --danger-hover: #b91c1c;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --text-color: #1e293b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            flex: 2;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: var(--text-color);
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e1;
+        }
+
+        .btn-delete {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-delete:hover {
+            background-color: var(--danger-hover);
+        }
+
+        #resultArea {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .tip {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>測量導線與方位角計算工具</h1>
+    <p class="subtitle">座標系統：X 軸為北向、Y 軸為東向（方位角：北向 0° 順時針）</p>
+
+    <div class="tip">💡 提示：您可直接從 Excel 複製多行資料（包含：點號、X座標、Y座標），並點擊表格貼上。</div>
+
+    <div class="table-container">
+        <table id="coordTable">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">項次</th>
+                    <th style="width: 25%;">點號 (ID)</th>
+                    <th style="width: 30%;">X 座標 (北向)</th>
+                    <th style="width: 30%;">Y 座標 (東向)</th>
+                    <th style="width: 15%;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 預設兩行 -->
+                <tr>
+                    <td class="row-index">1</td>
+                    <td><input type="text" class="input-id" value="A1" placeholder="例: A1"></td>
+                    <td><input type="number" step="any" class="input-x" placeholder="例: 2500000.000"></td>
+                    <td><input type="number" step="any" class="input-y" placeholder="例: 200000.000"></td>
+                    <td><button type="button" class="btn-delete">刪除</button></td>
+                </tr>
+                <tr>
+                    <td class="row-index">2</td>
+                    <td><input type="text" class="input-id" value="A2" placeholder="例: A2"></td>
+                    <td><input type="number" step="any" class="input-x" placeholder="例: 2500100.000"></td>
+                    <td><input type="number" step="any" class="input-y" placeholder="例: 200050.000"></td>
+                    <td><button type="button" class="btn-delete">刪除</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn-group">
+        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
+        <button type="button" id="calculateBtn" class="btn-primary">開始計算導線</button>
+    </div>
+
+    <div id="resultArea"></div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const coordTable = document.getElementById('coordTable');
@@ -20,9 +221,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="row-index"></td>
-            <td><input type="text" class="input-id" value="${id}" placeholder="例: GU04"></td>
-            <td><input type="number" step="any" class="input-x" value="${x}" placeholder="例: X座標"></td>
-            <td><input type="number" step="any" class="input-y" value="${y}" placeholder="例: Y座標"></td>
+            <td><input type="text" class="input-id" value="${id}" placeholder="例: P01"></td>
+            <td><input type="number" step="any" class="input-x" value="${x}" placeholder="X座標"></td>
+            <td><input type="number" step="any" class="input-y" value="${y}" placeholder="Y座標"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
         newRow.querySelector('.btn-delete').addEventListener('click', function() {
@@ -44,6 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 綁定現有刪除按鈕
     tbody.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', function() {
             deleteRow(this);
@@ -54,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addRow();
     });
 
-    // 支援 Excel 貼上
+    // 支援 Excel 貼上功能
     coordTable.addEventListener('paste', function(e) {
         const clipboardData = e.clipboardData || window.clipboardData;
         const pastedData = clipboardData.getData('Text');
@@ -88,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRowIndices();
     });
 
-    // 點擊計算導線（採用測量學方位角公式：以北向為0度順時針）
+    // 計算邏輯
     calculateBtn.addEventListener('click', function() {
         const rows = tbody.querySelectorAll('tr');
         const coordinates = [];
@@ -121,16 +323,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const p2 = coordinates[i + 1];
 
             // 測量坐標差值：ΔX為北向差，ΔY為東向差
-            const dx = p2.x - p1.x; // 縱座標差 (北向)
-            const dy = p2.y - p1.y; // 橫座標差 (東向)
+            const dx = p2.x - p1.x; 
+            const dy = p2.y - p1.y; 
             
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            // 測量學方位角計算：以東向差(dy)與北向差(dx)帶入 atan2，並轉為度數
+            // 方位角計算：以東向差(dy)與北向差(dx)帶入
             let angleRad = Math.atan2(dy, dx);
             let angleDeg = angleRad * (180 / Math.PI);
             
-            // 統一轉為 0° ~ 360°
             if (angleDeg < 0) {
                 angleDeg += 360;
             }
@@ -152,3 +353,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+</body>
+</html>
