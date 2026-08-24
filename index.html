@@ -1,212 +1,34 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>專業測量導線計算工具 (N, E 座標)</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f7fa; color: #333; }
-        .container { max-width: 950px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
-        .instructions { background-color: #e8f5e9; border-left: 5px solid #2e7d32; padding: 15px; margin-bottom: 20px; border-radius: 4px; font-size: 14px; color: #1b5e20; }
-        .input-section { margin-bottom: 25px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        textarea { width: 100%; height: 180px; padding: 12px; box-sizing: border-box; border: 1px solid #ccd1d9; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 14px; resize: vertical; transition: border-color 0.3s; }
-        textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
-        button { width: 100%; background-color: #27ae60; color: white; padding: 15px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.3s, transform 0.1s; }
-        button:hover { background-color: #219150; }
-        button:active { transform: scale(0.98); }
-        .error-msg { color: #c0392b; background-color: #fadbd8; padding: 10px; border-radius: 4px; margin-top: 10px; display: none; font-size: 14px; }
-        
-        /* 表格樣式 */
-        #resultArea { margin-top: 30px; display: none; }
-        .summary { font-weight: bold; color: #2c3e50; margin-bottom: 15px; font-size: 16px; text-align: right; }
-        .table-container { overflow-x: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; background-color: #fff; }
-        th, td { text-align: left; padding: 16px; border-bottom: 1px solid #e1e4e8; }
-        th { background-color: #34495e; color: white; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
-        th:first-child { border-top-left-radius: 8px; }
-        th:last-child { border-top-right-radius: 8px; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: #f1f3f5; }
-        
-        /* 數字置右 */
-        td.num, th.num { text-align: right; }
-
-        /* 響應式調整 */
-        @media (max-width: 768px) {
-            body { padding: 10px; }
-            .container { padding: 20px; }
-            th, td { padding: 12px 8px; font-size: 13px; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>專業測量導線計算工具 (N, E 格式)</h2>
+<div class="coordinate-container">
+    <h3>請輸入座標資料：</h3>
     
-    <div class="instructions">
-        <strong>操作說明：</strong><br>
-        1. 請將 Excel 中的座標資料複製（只需複製「點名」、「N坐標」、「E坐標」三欄）。<br>
-        2. 直接貼到下方的文字框中。<br>
-        3. 確保資料為 **(點名, N坐標, E坐標)** 的順序，中間用空白或逗號分隔。<br>
-        4. 點擊「開始計算導線」按鈕。
+    <!-- 表格區域 -->
+    <div class="table-wrapper">
+        <table id="coordTable">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>點號 (Point ID)</th>
+                    <th>X 座標</th>
+                    <th>Y 座標</th>
+                    <th style="width: 60px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 預設顯示幾行空白列供使用者輸入 -->
+                <tr>
+                    <td class="row-index">1</td>
+                    <td><input type="text" class="input-id" placeholder="例: GU04"></td>
+                    <td><input type="number" step="any" class="input-x" placeholder="例: 2764649.9410"></td>
+                    <td><input type="number" step="any" class="input-y" placeholder="例: 308235.9495"></td>
+                    <td><button type="button" class="btn-delete" onclick="deleteRow(this)">刪除</button></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
-    <div class="input-section">
-        <label for="pointsInput"><strong>請貼入座標資料：</strong></label>
-        <textarea id="pointsInput" placeholder="例如:
-GU04 2764649.9410 308235.9495
-GU05 2764662.2183 308296.8343
-GU06 2764680.1234 308320.5678"></textarea>
-        <div id="errorMsg" class="error-msg"></div>
-    </div>
-
-    <button onclick="calculateSurvey()">開始計算導線</button>
-
-    <div id="resultArea">
-        <div class="summary" id="totalSummary"></div>
-        <div class="table-container">
-            <table id="resultTable">
-                <thead>
-                    <tr>
-                        <th>區段</th>
-                        <th>起點</th>
-                        <th>終點</th>
-                        <th class="num">水平距離 (m)</th>
-                        <th>方位角 (十進位)</th>
-                        <th>方位角 (DMS)</th>
-                    </tr>
-                </thead>
-                <tbody id="resultBody">
-                </tbody>
-            </table>
-        </div>
+    <!-- 按鈕操作區 -->
+    <div class="button-group">
+        <button type="button" id="addRowBtn" class="btn-secondary">新增一行</button>
+        <button type="button" id="calculateBtn" class="btn-primary">開始計算導線</button>
     </div>
 </div>
-
-<script>
-// 將十進位度數轉換為 度分秒 (DMS) 格式
-function degToDMS(deg) {
-    let d = Math.floor(deg);
-    let mFloat = (deg - d) * 60;
-    let m = Math.floor(mFloat);
-    let s = Math.round((mFloat - m) * 60); // 四捨五入到整秒
-
-    // 進位修正 (避免出現 60秒 或 60分)
-    if (s >= 60) { m += 1; s = 0; }
-    if (m >= 60) { d += 1; m = 0; }
-    
-    return `${d}° ${m}' ${s}"`;
-}
-
-// 核心計算邏輯
-function calculateSurvey() {
-    const rawText = document.getElementById('pointsInput').value.trim();
-    const errorBox = document.getElementById('errorMsg');
-    const resultArea = document.getElementById('resultArea');
-    const tbody = document.getElementById('resultBody');
-
-    // 隱藏上次結果並重置錯誤訊息
-    resultArea.style.display = 'none';
-    errorBox.style.display = 'none';
-    errorBox.innerHTML = '';
-    tbody.innerHTML = '';
-
-    if (!rawText) {
-        showError("⚠️ 請先在文字框中貼入座標資料！");
-        return;
-    }
-
-    const lines = rawText.split('\n');
-    const points = [];
-
-    // 解析每一行資料
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue; // 跳過空行
-
-        // 自動偵測分隔符號 (逗號, 空格, 或 Tab)
-        const parts = line.split(/[\s,]+/);
-
-        if (parts.length >= 3) {
-            const name = parts[0];
-            const nCoord = parseFloat(parts[1]); // 第一個數字視為 N
-            const eCoord = parseFloat(parts[2]); // 第二個數字視為 E
-            
-            if (!isNaN(nCoord) && !isNaN(eCoord)) {
-                points.push({ name: name, n: nCoord, e: eCoord });
-            } else {
-                showError(`❌ 第 ${i+1} 行的座標格式錯誤：無法解析為數字。`);
-                return;
-            }
-        } else {
-            showError(`❌ 第 ${i+1} 行資料不足：請確認包含「點名」、「N坐標」、「E坐標」。`);
-            return;
-        }
-    }
-
-    if (points.length < 2) {
-        showError("⚠️ 至少需要連續兩個點才能計算導線！");
-        return;
-    }
-
-    let totalDistance = 0;
-    let outputHtml = '';
-
-    // 依序計算每一段 (A->B, B->C, ...)
-    for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i+1];
-
-        // 計算坐標差 (針對 N, E 格式)
-        const dn = p2.n - p1.n; // 緯距 (ΔN)
-        const de = p2.e - p1.e; // 經距 (ΔE)
-
-        // 計算距離
-        const distance = Math.sqrt(dn * dn + de * de);
-        totalDistance += distance;
-
-        // 計算測量方位角 (以 N 為基準，順時針)
-        // 使用 atan2(de, dn)
-        let angleRad = Math.atan2(de, dn);
-        let angleDeg = angleRad * (180 / Math.PI);
-
-        // 將負角度轉為 0~360
-        if (angleDeg < 0) {
-            angleDeg += 360;
-        }
-
-        // 產生表格行
-        outputHtml += `<tr>
-            <td><strong>#${i+1}</strong></td>
-            <td>${p1.name}</td>
-            <td>${p2.name}</td>
-            <td class="num">${distance.toFixed(3)}</td>
-            <td>${angleDeg.toFixed(4)}°</td>
-            <td><strong>${degToDMS(angleDeg)}</strong></td>
-        </tr>`;
-    }
-
-    // 填入表格內容
-    tbody.innerHTML = outputHtml;
-    
-    // 顯示總結
-    document.getElementById('totalSummary').innerText = 
-        `總測點數：${points.length} 個 | 總導線長度：${totalDistance.toFixed(3)} 公尺`;
-    
-    // 顯示結果區域
-    resultArea.style.display = 'block';
-}
-
-// 顯示錯誤訊息的輔助函數
-function showError(message) {
-    const errorBox = document.getElementById('errorMsg');
-    errorBox.innerHTML = message;
-    errorBox.style.display = 'block';
-}
-</script>
-
-</body>
-</html>
