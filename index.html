@@ -286,13 +286,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         lines.forEach((line) => {
             if (!line.trim()) return;
-            // 改用正則表達式，支援任意空白字元（包含空格、多個空格、或 Tab）來切分欄位
-            const cols = line.trim().split(/\s+/);
             
+            // 支援用空格、Tab 或「數字加點」分隔
+            let cols = line.trim().split(/\s+/);
+            
+            // 如果第一欄帶有結尾句點（例如 "1."），把它去掉變成 "1"
             if (cols.length >= 3) {
-                const id = cols[0].trim();
-                const x = cols[1].trim();
-                const y = cols[2].trim();
+                let id = cols[0].trim().replace(/\.$/, '');
+                let x = cols[1].trim();
+                let y = cols[2].trim();
 
                 const firstRow = tbody.querySelector('tr');
                 const firstId = firstRow.querySelector('.input-id').value.trim();
