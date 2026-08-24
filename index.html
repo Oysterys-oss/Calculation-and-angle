@@ -59,13 +59,20 @@
 
         .batch-paste-box textarea {
             width: 100%;
-            height: 80px;
-            padding: 8px;
+            height: 90px;
+            padding: 10px;
             box-sizing: border-box;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             font-family: monospace;
             font-size: 0.9rem;
+            background-color: #ffffff;
+        }
+
+        .batch-paste-box textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
         .table-container {
@@ -171,8 +178,10 @@
     <h1>測量邊長與夾角計算工具</h1>
 
     <div class="batch-paste-box">
-        <label for="batchInput">📋 Excel 批次帶入區（請在此處按 Ctrl + V 貼上多行資料）：</label>
-        <textarea id="batchInput" placeholder="在此處點擊並按下 Ctrl + V，格式支援：點號 \t X座標 \t Y座標"></textarea>
+        <label for="batchInput">📋 批次輸入區（可直接手動打字，或按 Ctrl + V 貼上多行 Excel 資料）：</label>
+        <textarea id="batchInput" placeholder="格式範例：
+P01	250000.123	260000.456
+P02	250100.789	260100.123"></textarea>
         <button type="button" id="importBtn" class="btn-secondary" style="margin-top: 8px; width: 100%;">將上方文字追加至表格下方</button>
     </div>
 
@@ -268,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
     importBtn.addEventListener('click', function() {
         const text = batchInput.value.trim();
         if (!text) {
-            alert('請先在上方文字框貼上 Excel 資料！');
+            alert('請先在上方輸入框手動打字或貼上資料！');
             return;
         }
 
