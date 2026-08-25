@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>臨時測量邊長與夾角計算工具</title>
+    <!-- 引入 SheetJS (js-xlsx) 用於前端匯出 Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
             --primary-hover: #1d4ed8;
+            --success-color: #16a34a;
+            --success-hover: #15803d;
             --danger-color: #dc2626;
             --danger-hover: #b91c1c;
             --bg-color: #f8fafc;
@@ -133,18 +137,29 @@
             background-color: var(--primary-color);
             color: white;
             flex: 2;
-            min-width: 200px;
+            min-width: 180px;
         }
 
         .btn-primary:hover {
             background-color: var(--primary-hover);
         }
 
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+            flex: 1.5;
+            min-width: 150px;
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+        }
+
         .btn-secondary {
             background-color: #e2e8f0;
             color: var(--text-color);
             flex: 1;
-            min-width: 130px;
+            min-width: 120px;
         }
 
         .btn-secondary:hover {
@@ -156,7 +171,7 @@
             color: var(--danger-color);
             border: 1px solid var(--danger-color);
             flex: 1;
-            min-width: 130px;
+            min-width: 120px;
         }
 
         .btn-danger-outline:hover {
@@ -221,6 +236,7 @@ P02 2765004.9392 307489.7117"></textarea>
         <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
         <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空全部資料</button>
         <button type="button" id="calculateBtn" class="btn-primary">計算邊長與夾角</button>
+        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出 Excel</button>
     </div>
 
     <div id="resultArea"></div>
@@ -232,6 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addRowBtn = document.getElementById('addRowBtn');
     const clearBtn = document.getElementById('clearBtn');
     const calculateBtn = document.getElementById('calculateBtn');
+    const exportExcelBtn = document.getElementById('exportExcelBtn');
     const resultArea = document.getElementById('resultArea');
     const batchInput = document.getElementById('batchInput');
     const importBtn = document.getElementById('importBtn');
@@ -271,12 +288,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
 
-        // 綁定輸入即時儲存
         newRow.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', saveData);
         });
 
-        // 綁定刪除按鈕
         newRow.querySelector('.btn-delete').addEventListener('click', function() {
             deleteRow(this);
         });
@@ -301,7 +316,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 初始化：讀取儲存的資料，若無則給一筆空白列
     function loadSavedData() {
         const saved = localStorage.getItem('temp_survey_data');
         if (saved) {
@@ -310,7 +324,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (Array.isArray(data) && data.length > 0) {
                     tbody.innerHTML = '';
                     data.forEach(item => {
-                        // 相容舊的 x/y 欄位名稱
                         addRow(item.id, item.n !== undefined ? item.n : item.x, item.e !== undefined ? item.e : item.y);
                     });
                     return;
@@ -319,7 +332,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("載入儲存資料失敗", e);
             }
         }
-        // 預設給一筆
         addRow();
     }
 
@@ -345,14 +357,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const lines = text.split(/\r\n|\n/);
+        const lines = text.split(/
+|
+/);
         let importedCount = 0;
 
         lines.forEach((line) => {
             if (!line.trim()) return;
-            
             let cols = line.trim().split(/\s+/);
-            
             if (cols.length >= 3) {
                 let id = cols[0].trim().replace(/\.$/, '');
                 let n = cols[1].trim();
@@ -395,7 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${deg}° ${min}′ ${sec}″`;
     }
 
-    calculateBtn.addEventListener('click', function() {
+    // 取得當前有效的座標陣列與計算結果
+    function getSurveyData() {
         const rows = tbody.querySelectorAll('tr');
         const coordinates = [];
 
@@ -414,20 +427,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        return coordinates;
+    }
 
-        if (coordinates.length < 2) {
-            alert('請至少輸入兩筆有效的座標（包含縱座標與橫座標）才能計算！');
-            return;
-        }
+    function performCalculation() {
+        const coordinates = getSurveyData();
+        if (coordinates.length < 2) return null;
 
         let azList = [];
-        let resultText = "=== 導線邊長計算 ===\n\n";
-        
+        let distances = [];
         for (let i = 0; i < coordinates.length - 1; i++) {
             const p1 = coordinates[i];
             const p2 = coordinates[i + 1];
 
-            // 測量計算方位角：dx 對應 縱座標差(ΔN)，dy 對應 橫座標差(ΔE)
             const dn = p2.n - p1.n;
             const de = p2.e - p1.e;
             const distance = Math.sqrt(dn * dn + de * de);
@@ -442,12 +454,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 azimuth: angleDeg,
                 distance: distance
             });
-
-            resultText += `邊長：${p1.id} ➔ ${p2.id} = ${distance.toFixed(3)} 公尺\n`;
+            distances.push({ from: p1.id, to: p2.id, distance, dn, de });
         }
 
+        let angles = [];
         if (azList.length >= 2) {
-            resultText += "\n=== 頂點夾角 (右角) 計算 ===\n\n";
             for (let i = 0; i < azList.length - 1; i++) {
                 const prevAz = azList[i].azimuth;     
                 const nextAz = azList[i + 1].azimuth; 
@@ -459,13 +470,83 @@ document.addEventListener('DOMContentLoaded', function() {
                 let rightAngle = nextAz - backAz;
                 if (rightAngle < 0) rightAngle += 360;
 
-                resultText += `頂點 ${vertexPoint} 夾角：${formatDMS(rightAngle)}\n`;
+                angles.push({ vertex: vertexPoint, angleText: formatDMS(rightAngle), angleDeg: rightAngle });
             }
+        }
+
+        return { coordinates, distances, angles };
+    }
+
+    calculateBtn.addEventListener('click', function() {
+        const data = performCalculation();
+        if (!data || data.coordinates.length < 2) {
+            alert('請至少輸入兩筆有效的座標（包含縱座標與橫座標）才能計算！');
+            return;
+        }
+
+        let resultText = "=== 導線邊長計算 ===\n\n";
+        data.distances.forEach(d => {
+            resultText += `邊長：${d.from} ➔ ${d.to} = ${d.distance.toFixed(3)} 公尺\n`;
+        });
+
+        if (data.angles.length > 0) {
+            resultText += "\n=== 頂點夾角 (右角) 計算 ===\n\n";
+            data.angles.forEach(a => {
+                resultText += `頂點 ${a.vertex} 夾角：${a.angleText}\n`;
+            });
         }
 
         resultArea.style.display = 'block';
         resultArea.textContent = resultText;
         resultArea.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // 匯出 Excel 功能 (使用 SheetJS 建立多工作表或分頁)
+    exportExcelBtn.addEventListener('click', function() {
+        const data = performCalculation();
+        if (!data || data.coordinates.length < 2) {
+            alert('請先輸入至少兩筆有效座標，並確保資料正確才能匯出 Excel！');
+            return;
+        }
+
+        // 建立一個新的活頁簿
+        const wb = XLSX.utils.book_new();
+
+        // 工作表 1：座標點位資料
+        const coordRows = [
+            ["項次", "點號 (ID)", "縱座標 (N)", "橫座標 (E)"]
+        ];
+        data.coordinates.forEach((c, idx) => {
+            coordRows.push([idx + 1, c.id, c.n, c.e]);
+        });
+        const wsCoord = XLSX.utils.aoa_to_sheet(coordRows);
+        XLSX.utils.book_append_sheet(wb, wsCoord, "座標資料");
+
+        // 工作表 2：邊長計算結果
+        const distRows = [
+            ["起點", "終點", "縱座標差 ΔN (m)", "橫座標差 ΔE (m)", "邊長 (m)"]
+        ];
+        data.distances.forEach(d => {
+            distRows.push([d.from, d.to, Number(d.dn.toFixed(4)), Number(d.de.toFixed(4)), Number(d.distance.toFixed(3))]);
+        });
+        const wsDist = XLSX.utils.aoa_to_sheet(distRows);
+        XLSX.utils.book_append_sheet(wb, wsDist, "邊長計算");
+
+        // 工作表 3：頂點夾角計算結果
+        if (data.angles.length > 0) {
+            const angleRows = [
+                ["頂點", "夾角 (度分秒)", "夾角 (十進位度)"]
+            ];
+            data.angles.forEach(a => {
+                angleRows.push([a.vertex, a.angleText, Number(a.angleDeg.toFixed(4))]);
+            });
+            const wsAngle = XLSX.utils.aoa_to_sheet(angleRows);
+            XLSX.utils.book_append_sheet(wb, wsAngle, "頂點夾角");
+        }
+
+        // 下載 Excel 檔案
+        const filename = `測量計算報告_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, filename);
     });
 });
 </script>
