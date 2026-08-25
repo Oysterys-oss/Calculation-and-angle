@@ -210,8 +210,8 @@
     <div class="batch-paste-box">
         <label for="batchInput">📋 批次輸入區（可直接手動打字或貼上，欄位間用空白或 Tab 分隔）：</label>
         <textarea id="batchInput" placeholder="格式範例：點號 縱座標 (N)  橫座標 (E)
-P01 2764584.3300 306320.6540
-P02 2765004.9392 307489.7117"></textarea>
+YY17A 2764584.3300 306320.6540
+YY18A 2765004.9392 307489.7117"></textarea>
         <button type="button" id="importBtn" class="btn-secondary" style="margin-top: 8px; width: 100%;">將上方文字追加至表格下方</button>
     </div>
 
@@ -236,7 +236,7 @@ P02 2765004.9392 307489.7117"></textarea>
         <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
         <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空全部資料</button>
         <button type="button" id="calculateBtn" class="btn-primary">計算邊長與夾角</button>
-        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出 Excel</button>
+        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出 Excel (含邊長與夾角)</button>
     </div>
 
     <div id="resultArea"></div>
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (Array.isArray(data) && data.length > 0) {
                     tbody.innerHTML = '';
                     data.forEach(item => {
-                        addRow(item.id, item.n !== undefined ? item.n : item.x, item.e !== undefined ? item.e : item.y);
+                        addRow(item.id, item.n !== undefined ? item.n : '', item.e !== undefined ? item.e : '');
                     });
                     return;
                 }
@@ -347,6 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // 修正後的批次匯入功能
     importBtn.addEventListener('click', function() {
         const text = batchInput.value.trim();
         if (!text) {
@@ -361,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!line.trim()) return;
             let cols = line.trim().split(/\s+/);
             if (cols.length >= 3) {
-                let id = cols[0].trim().replace(/\.$/, '');
+                let id = cols[0].trim();
                 let n = cols[1].trim();
                 let e = cols[2].trim();
 
@@ -504,6 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const wb = XLSX.utils.book_new();
 
+        // 1. 座標資料工作表
         const coordRows = [
             ["項次", "點號 (ID)", "縱座標 (N)", "橫座標 (E)"]
         ];
@@ -513,6 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const wsCoord = XLSX.utils.aoa_to_sheet(coordRows);
         XLSX.utils.book_append_sheet(wb, wsCoord, "座標資料");
 
+        // 2. 邊長計算工作表
         const distRows = [
             ["起點", "終點", "縱座標差 ΔN (m)", "橫座標差 ΔE (m)", "邊長 (m)"]
         ];
@@ -522,6 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const wsDist = XLSX.utils.aoa_to_sheet(distRows);
         XLSX.utils.book_append_sheet(wb, wsDist, "邊長計算");
 
+        // 3. 頂點夾角工作表
         if (data.angles.length > 0) {
             const angleRows = [
                 ["頂點", "夾角 (度分秒)", "夾角 (十進位度)"]
