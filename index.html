@@ -195,8 +195,8 @@
     <div class="batch-paste-box">
         <label for="batchInput">📋 批次輸入區（可直接手動打字或貼上，欄位間用空白或 Tab 分隔）：</label>
         <textarea id="batchInput" placeholder="格式範例：
-P01 250000.123 260000.456
-P02 250100.789 260100.123"></textarea>
+P01 2764584.3300 306320.6540
+P02 2765004.9392 307489.7117"></textarea>
         <button type="button" id="importBtn" class="btn-secondary" style="margin-top: 8px; width: 100%;">將上方文字追加至表格下方</button>
     </div>
 
@@ -206,8 +206,8 @@ P02 250100.789 260100.123"></textarea>
                 <tr>
                     <th style="width: 10%;">項次</th>
                     <th style="width: 25%;">點號 (ID)</th>
-                    <th style="width: 30%;">X 座標 (北向)</th>
-                    <th style="width: 30%;">Y 座標 (東向)</th>
+                    <th style="width: 30%;">縱座標 (N)</th>
+                    <th style="width: 30%;">橫座標 (E)</th>
                     <th style="width: 15%;">操作</th>
                 </tr>
             </thead>
@@ -242,9 +242,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = [];
         rows.forEach(row => {
             const id = row.querySelector('.input-id').value;
-            const x = row.querySelector('.input-x').value;
-            const y = row.querySelector('.input-y').value;
-            data.push({ id, x, y });
+            const n = row.querySelector('.input-n').value;
+            const e = row.querySelector('.input-e').value;
+            data.push({ id, n, e });
         });
         localStorage.setItem('temp_survey_data', JSON.stringify(data));
     }
@@ -261,13 +261,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 新增列並綁定即時自動儲存事件
-    function addRow(id = '', x = '', y = '') {
+    function addRow(id = '', n = '', e = '') {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="row-index"></td>
             <td><input type="text" class="input-id" value="${id}" placeholder="例: P01"></td>
-            <td><input type="number" step="any" class="input-x" value="${x}" placeholder="X座標"></td>
-            <td><input type="number" step="any" class="input-y" value="${y}" placeholder="Y座標"></td>
+            <td><input type="number" step="any" class="input-n" value="${n}" placeholder="縱座標(N)"></td>
+            <td><input type="number" step="any" class="input-e" value="${e}" placeholder="橫座標(E)"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
 
@@ -295,8 +295,8 @@ document.addEventListener('DOMContentLoaded', function() {
             saveData();
         } else {
             row.querySelector('.input-id').value = '';
-            row.querySelector('.input-x').value = '';
-            row.querySelector('.input-y').value = '';
+            row.querySelector('.input-n').value = '';
+            row.querySelector('.input-e').value = '';
             saveData();
         }
     }
@@ -310,7 +310,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (Array.isArray(data) && data.length > 0) {
                     tbody.innerHTML = '';
                     data.forEach(item => {
-                        addRow(item.id, item.x, item.y);
+                        // 相容舊的 x/y 欄位名稱
+                        addRow(item.id, item.n !== undefined ? item.n : item.x, item.e !== undefined ? item.e : item.y);
                     });
                     return;
                 }
@@ -354,20 +355,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (cols.length >= 3) {
                 let id = cols[0].trim().replace(/\.$/, '');
-                let x = cols[1].trim();
-                let y = cols[2].trim();
+                let n = cols[1].trim();
+                let e = cols[2].trim();
 
                 const firstRow = tbody.querySelector('tr');
                 const firstId = firstRow ? firstRow.querySelector('.input-id').value.trim() : '';
-                const firstX = firstRow ? firstRow.querySelector('.input-x').value.trim() : '';
-                const firstY = firstRow ? firstRow.querySelector('.input-y').value.trim() : '';
+                const firstN = firstRow ? firstRow.querySelector('.input-n').value.trim() : '';
+                const firstE = firstRow ? firstRow.querySelector('.input-e').value.trim() : '';
 
-                if (firstRow && !firstId && !firstX && !firstY && importedCount === 0) {
+                if (firstRow && !firstId && !firstN && !firstE && importedCount === 0) {
                     firstRow.querySelector('.input-id').value = id;
-                    firstRow.querySelector('.input-x').value = x;
-                    firstRow.querySelector('.input-y').value = y;
+                    firstRow.querySelector('.input-n').value = n;
+                    firstRow.querySelector('.input-e').value = e;
                 } else {
-                    addRow(id, x, y);
+                    addRow(id, n, e);
                 }
                 importedCount++;
             }
@@ -379,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert(`成功追加匯入 ${importedCount} 筆座標資料！`);
             batchInput.value = '';
         } else {
-            alert('格式有誤！每行請包含：點號、X座標、Y座標（欄位之間請用空格或 Tab 隔開）。');
+            alert('格式有誤！每行請包含：點號、縱座標(N)、橫座標(E)（欄位之間請用空格或 Tab 隔開）。');
         }
     });
 
@@ -400,22 +401,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         rows.forEach((row, idx) => {
             const idInput = row.querySelector('.input-id');
-            const xInput = row.querySelector('.input-x');
-            const yInput = row.querySelector('.input-y');
+            const nInput = row.querySelector('.input-n');
+            const eInput = row.querySelector('.input-e');
 
-            if (idInput && xInput && yInput) {
+            if (idInput && nInput && eInput) {
                 const id = idInput.value.trim() || `P${idx + 1}`;
-                const x = parseFloat(xInput.value);
-                const y = parseFloat(yInput.value);
+                const n = parseFloat(nInput.value);
+                const e = parseFloat(eInput.value);
 
-                if (!isNaN(x) && !isNaN(y)) {
-                    coordinates.push({ id, x, y });
+                if (!isNaN(n) && !isNaN(e)) {
+                    coordinates.push({ id, n, e });
                 }
             }
         });
 
         if (coordinates.length < 2) {
-            alert('請至少輸入兩筆有效的座標（包含X與Y）才能計算！');
+            alert('請至少輸入兩筆有效的座標（包含縱座標與橫座標）才能計算！');
             return;
         }
 
@@ -426,11 +427,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const p1 = coordinates[i];
             const p2 = coordinates[i + 1];
 
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            // 測量計算方位角：dx 對應 縱座標差(ΔN)，dy 對應 橫座標差(ΔE)
+            const dn = p2.n - p1.n;
+            const de = p2.e - p1.e;
+            const distance = Math.sqrt(dn * dn + de * de);
 
-            let angleRad = Math.atan2(dy, dx);
+            let angleRad = Math.atan2(de, dn);
             let angleDeg = angleRad * (180 / Math.PI);
             if (angleDeg < 0) angleDeg += 360;
 
