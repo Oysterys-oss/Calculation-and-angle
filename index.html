@@ -236,7 +236,7 @@ YY18A 2765004.9392 307489.7117"></textarea>
         <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
         <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空全部資料</button>
         <button type="button" id="calculateBtn" class="btn-primary">計算邊長與夾角</button>
-        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出 Excel (含邊長與夾角)</button>
+        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出完整 Excel 報表</button>
     </div>
 
     <div id="resultArea"></div>
@@ -347,7 +347,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 修正後的批次匯入功能
     importBtn.addEventListener('click', function() {
         const text = batchInput.value.trim();
         if (!text) {
@@ -503,41 +502,43 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const wb = XLSX.utils.book_new();
+        // 將所有區塊組合成同一個工作表的資料陣列（上下排列）
+        const combinedRows = [];
 
-        // 1. 座標資料工作表
-        const coordRows = [
-            ["項次", "點號 (ID)", "縱座標 (N)", "橫座標 (E)"]
-        ];
+        // 1. 座標資料區塊
+        combinedRows.push(["【一、 座標資料清單】"]);
+        combinedRows.push(["項次", "點號 (ID)", "縱座標 (N)", "橫座標 (E)"]);
         data.coordinates.forEach((c, idx) => {
-            coordRows.push([idx + 1, c.id, c.n, c.e]);
+            combinedRows.push([idx + 1, c.id, c.n, c.e]);
         });
-        const wsCoord = XLSX.utils.aoa_to_sheet(coordRows);
-        XLSX.utils.book_append_sheet(wb, wsCoord, "座標資料");
 
-        // 2. 邊長計算工作表
-        const distRows = [
-            ["起點", "終點", "縱座標差 ΔN (m)", "橫座標差 ΔE (m)", "邊長 (m)"]
-        ];
+        combinedRows.push([]); // 空行區隔
+        combinedRows.push([]); 
+
+        // 2. 邊長計算區塊
+        combinedRows.push(["【二、 導線邊長計算】"]);
+        combinedRows.push(["起點", "終點", "縱座標差 ΔN (m)", "橫座標差 ΔE (m)", "邊長 (m)"]);
         data.distances.forEach(d => {
-            distRows.push([d.from, d.to, Number(d.dn.toFixed(4)), Number(d.de.toFixed(4)), Number(d.distance.toFixed(3))]);
+            combinedRows.push([d.from, d.to, Number(d.dn.toFixed(4)), Number(d.de.toFixed(4)), Number(d.distance.toFixed(3))]);
         });
-        const wsDist = XLSX.utils.aoa_to_sheet(distRows);
-        XLSX.utils.book_append_sheet(wb, wsDist, "邊長計算");
 
-        // 3. 頂點夾角工作表
         if (data.angles.length > 0) {
-            const angleRows = [
-                ["頂點", "夾角 (度分秒)", "夾角 (十進位度)"]
-            ];
+            combinedRows.push([]); // 空行區隔
+            combinedRows.push([]); 
+
+            // 3. 頂點夾角區塊
+            combinedRows.push(["【三、 頂點夾角計算 (右角)】"]);
+            combinedRows.push(["頂點", "夾角 (度分秒)", "夾角 (十進位度)"]);
             data.angles.forEach(a => {
-                angleRows.push([a.vertex, a.angleText, Number(a.angleDeg.toFixed(4))]);
+                combinedRows.push([a.vertex, a.angleText, Number(a.angleDeg.toFixed(4))]);
             });
-            const wsAngle = XLSX.utils.aoa_to_sheet(angleRows);
-            XLSX.utils.book_append_sheet(wb, wsAngle, "頂點夾角");
         }
 
-        const filename = `測量計算報告_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(combinedRows);
+        XLSX.utils.book_append_sheet(wb, ws, "測量計算綜合報表");
+
+        const filename = `測量計算綜合報告_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, filename);
     });
 });
