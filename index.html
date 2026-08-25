@@ -236,7 +236,7 @@ YY18A 2765004.9392 307489.7117"></textarea>
         <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
         <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空全部資料</button>
         <button type="button" id="calculateBtn" class="btn-primary">計算邊長與夾角</button>
-        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出完整 Excel 報表</button>
+        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出對齊格式 Excel</button>
     </div>
 
     <div id="resultArea"></div>
@@ -391,17 +391,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function formatDMS(angleDeg) {
-        if (angleDeg < 0) angleDeg += 360;
-        if (angleDeg >= 360) angleDeg %= 360;
-
-        const deg = Math.floor(angleDeg);
-        const minFloat = (angleDeg - deg) * 60;
-        const min = Math.floor(minFloat);
-        const sec = ((minFloat - min) * 60).toFixed(1);
-        return `${deg}° ${min}′ ${sec}″`;
-    }
-
     function getSurveyData() {
         const rows = tbody.querySelectorAll('tr');
         const coordinates = [];
@@ -464,7 +453,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 let rightAngle = nextAz - backAz;
                 if (rightAngle < 0) rightAngle += 360;
 
-                angles.push({ vertex: vertexPoint, angleText: formatDMS(rightAngle), angleDeg: rightAngle });
+                const deg = Math.floor(rightAngle);
+                const minFloat = (rightAngle - deg) * 60;
+                const min = Math.floor(minFloat);
+                const sec = Number(((minFloat - min) * 60).toFixed(1));
+
+                angles.push({ vertex: vertexPoint, deg, min, sec });
             }
         }
 
@@ -486,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.angles.length > 0) {
             resultText += "\n=== 頂點夾角 (右角) 計算 ===\n\n";
             data.angles.forEach(a => {
-                resultText += `頂點 ${a.vertex} 夾角：${a.angleText}\n`;
+                resultText += `頂點 ${a.vertex} 夾角：${a.deg}° ${a.min}′ ${a.sec}″\n`;
             });
         }
 
@@ -502,43 +496,45 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // 將所有區塊組合成同一個工作表的資料陣列（上下排列）
-        const combinedRows = [];
-
-        // 1. 座標資料區塊
-        combinedRows.push(["【一、 座標資料清單】"]);
-        combinedRows.push(["項次", "點號 (ID)", "縱座標 (N)", "橫座標 (E)"]);
-        data.coordinates.forEach((c, idx) => {
-            combinedRows.push([idx + 1, c.id, c.n, c.e]);
-        });
-
-        combinedRows.push([]); // 空行區隔
-        combinedRows.push([]); 
-
-        // 2. 邊長計算區塊
-        combinedRows.push(["【二、 導線邊長計算】"]);
-        combinedRows.push(["起點", "終點", "縱座標差 ΔN (m)", "橫座標差 ΔE (m)", "邊長 (m)"]);
+        // 建立對應對照表
+        const distMap = {};
         data.distances.forEach(d => {
-            combinedRows.push([d.from, d.to, Number(d.dn.toFixed(4)), Number(d.de.toFixed(4)), Number(d.distance.toFixed(3))]);
+            distMap[d.from] = d.distance;
         });
 
-        if (data.angles.length > 0) {
-            combinedRows.push([]); // 空行區隔
-            combinedRows.push([]); 
+        const angleMap = {};
+        data.angles.forEach(a => {
+            angleMap[a.vertex] = { deg: a.deg, min: a.min, sec: a.sec };
+        });
 
-            // 3. 頂點夾角區塊
-            combinedRows.push(["【三、 頂點夾角計算 (右角)】"]);
-            combinedRows.push(["頂點", "夾角 (度分秒)", "夾角 (十進位度)"]);
-            data.angles.forEach(a => {
-                combinedRows.push([a.vertex, a.angleText, Number(a.angleDeg.toFixed(4))]);
-            });
-        }
+        // 建立對齊格式的表頭（兩列）
+        const excelRows = [
+            ["點號 (ID)", "縱座標 (N)", "橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", ""],
+            ["", "", "", "", "°", "'", "\""]
+        ];
+
+        // 填入每一列點號資料
+        data.coordinates.forEach(c => {
+            const dist = distMap[c.id] !== undefined ? Number(distMap[c.id].toFixed(3)) : "";
+            const ang = angleMap[c.id];
+            const deg = ang ? ang.deg : "";
+            const min = ang ? ang.min : "";
+            const sec = ang ? ang.sec : "";
+
+            excelRows.push([c.id, c.n, c.e, dist, deg, min, sec]);
+        });
 
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(combinedRows);
-        XLSX.utils.book_append_sheet(wb, ws, "測量計算綜合報表");
+        const ws = XLSX.utils.aoa_to_sheet(excelRows);
 
-        const filename = `測量計算綜合報告_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        // 設定儲存格合併（讓「夾角 (度分秒)」標題跨三欄）
+        ws['!merges'] = [
+            { s: { r: 0, c: 4 }, e: { r: 0, c: 6 } }
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, "導線計算表");
+
+        const filename = `測量導線計算表_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, filename);
     });
 });
