@@ -253,7 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const batchInput = document.getElementById('batchInput');
     const importBtn = document.getElementById('importBtn');
 
-    // 儲存資料至 LocalStorage
     function saveData() {
         const rows = tbody.querySelectorAll('tr');
         const data = [];
@@ -266,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('temp_survey_data', JSON.stringify(data));
     }
 
-    // 更新項次編號
     function updateRowIndices() {
         const rows = tbody.querySelectorAll('tr');
         rows.forEach((row, index) => {
@@ -277,7 +275,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 新增列並綁定即時自動儲存事件
     function addRow(id = '', n = '', e = '') {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
@@ -357,9 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const lines = text.split(/
-|
-/);
+        const lines = text.split(/\r?\n/);
         let importedCount = 0;
 
         lines.forEach((line) => {
@@ -407,7 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${deg}° ${min}′ ${sec}″`;
     }
 
-    // 取得當前有效的座標陣列與計算結果
     function getSurveyData() {
         const rows = tbody.querySelectorAll('tr');
         const coordinates = [];
@@ -501,7 +495,6 @@ document.addEventListener('DOMContentLoaded', function() {
         resultArea.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // 匯出 Excel 功能 (使用 SheetJS 建立多工作表或分頁)
     exportExcelBtn.addEventListener('click', function() {
         const data = performCalculation();
         if (!data || data.coordinates.length < 2) {
@@ -509,10 +502,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // 建立一個新的活頁簿
         const wb = XLSX.utils.book_new();
 
-        // 工作表 1：座標點位資料
         const coordRows = [
             ["項次", "點號 (ID)", "縱座標 (N)", "橫座標 (E)"]
         ];
@@ -522,7 +513,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const wsCoord = XLSX.utils.aoa_to_sheet(coordRows);
         XLSX.utils.book_append_sheet(wb, wsCoord, "座標資料");
 
-        // 工作表 2：邊長計算結果
         const distRows = [
             ["起點", "終點", "縱座標差 ΔN (m)", "橫座標差 ΔE (m)", "邊長 (m)"]
         ];
@@ -532,7 +522,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const wsDist = XLSX.utils.aoa_to_sheet(distRows);
         XLSX.utils.book_append_sheet(wb, wsDist, "邊長計算");
 
-        // 工作表 3：頂點夾角計算結果
         if (data.angles.length > 0) {
             const angleRows = [
                 ["頂點", "夾角 (度分秒)", "夾角 (十進位度)"]
@@ -544,7 +533,6 @@ document.addEventListener('DOMContentLoaded', function() {
             XLSX.utils.book_append_sheet(wb, wsAngle, "頂點夾角");
         }
 
-        // 下載 Excel 檔案
         const filename = `測量計算報告_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, filename);
     });
