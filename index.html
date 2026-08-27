@@ -54,6 +54,22 @@
             margin-top: 0;
             font-size: 1.1rem;
             color: #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-box h3 .toggle-icon {
+            font-size: 0.9rem;
+            color: #64748b;
+            transition: transform 0.2s;
+        }
+
+        .collapsible-content {
+            display: none; /* 預設收合 */
+            margin-top: 10px;
         }
 
         .hint-text {
@@ -183,7 +199,7 @@
     <!-- 起始後視點與設站點 -->
     <div class="section-box">
         <h3>📍 起始導線起算點與第一站實測資料 (第 1 站)</h3>
-        <div class="grid-2">
+        <div class="grid-2" style="margin-top: 10px;">
             <div class="form-group">
                 <label>初始後視點 點號 (BS):</label>
                 <input type="text" id="bsId" value="" placeholder="例: Y254A">
@@ -216,32 +232,37 @@
         </div>
     </div>
 
-    <!-- 已知點座標資料庫 -->
+    <!-- 已知點座標資料庫 (可收合) -->
     <div class="section-box">
-        <h3>📂 已知點座標資料庫</h3>
-        <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料，點擊下方任一輸入框後按下 <b>Ctrl + V</b> 即可整批貼上！資料會自動儲存且不會被清空按鈕影響。</div>
-        <div class="table-container">
-            <table id="knownDbTable">
-                <thead>
-                    <tr>
-                        <th style="width: 30%;">已知點號 (ID)</th>
-                        <th style="width: 30%;">已知 N 座標</th>
-                        <th style="width: 30%;">已知 E 座標</th>
-                        <th style="width: 10%;">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- 動態生成已知點 -->
-                </tbody>
-            </table>
+        <h3 id="toggleKnownDbHeader">
+            <span>📂 已知點座標資料庫 (點擊可展開/收合)</span>
+            <span class="toggle-icon" id="toggleIcon">▼ 展開</span>
+        </h3>
+        <div class="collapsible-content" id="knownDbContent">
+            <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料，點擊下方任一輸入框後按下 <b>Ctrl + V</b> 即可整批貼上！資料會自動儲存且不會被清空按鈕影響。</div>
+            <div class="table-container">
+                <table id="knownDbTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">已知點號 (ID)</th>
+                            <th style="width: 30%;">已知 N 座標</th>
+                            <th style="width: 30%;">已知 E 座標</th>
+                            <th style="width: 10%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 動態生成已知點 -->
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" id="addKnownRowBtn" class="btn-secondary">＋ 新增已知點資料庫項目</button>
         </div>
-        <button type="button" id="addKnownRowBtn" class="btn-secondary">＋ 新增已知點資料庫項目</button>
     </div>
 
     <!-- 連續導線點輸入表格 -->
     <div class="section-box">
         <h3>📊 導線前瞻點序列 (依序輸入各站點之邊長與夾角)</h3>
-        <div class="table-container">
+        <div class="table-container" style="margin-top: 10px;">
             <table id="traverseTable">
                 <thead>
                     <tr>
@@ -282,6 +303,21 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 摺疊展開控制
+    const toggleHeader = document.getElementById('toggleKnownDbHeader');
+    const knownContent = document.getElementById('knownDbContent');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    toggleHeader.addEventListener('click', function() {
+        if (knownContent.style.display === 'block') {
+            knownContent.style.display = 'none';
+            toggleIcon.textContent = '▼ 展開';
+        } else {
+            knownContent.style.display = 'block';
+            toggleIcon.textContent = '▲ 收合';
+        }
+    });
+
     const knownTbody = document.querySelector('#knownDbTable tbody');
     const addKnownRowBtn = document.getElementById('addKnownRowBtn');
     
