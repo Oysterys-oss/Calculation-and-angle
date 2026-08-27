@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多站連續導線座標計算與管理工具 (含後視點與距離)</title>
+    <title>多站連續導線座標計算與管理工具 (距離下移版)</title>
     <!-- 引入 SheetJS 用於前端匯出 Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -448,21 +448,21 @@ document.addEventListener('DOMContentLoaded', function() {
             ["", "", "", "", "°", "'", "\""]
         ];
 
-        // 1. 放入初始後視點 (BS)，並在邊長欄位填入與設站點的距離
+        // 1. 放入初始後視點 (BS)（邊長保持空白）
         excelRows.push([
             data.initialBsId,
             Number(data.initialBsN.toFixed(4)),
             Number(data.initialBsE.toFixed(4)),
-            Number(bsToStDist.toFixed(4)),
-            "", "", ""
+            "", "", "", ""
         ]);
 
-        // 2. 放入初始設站點 (ST)
+        // 2. 放入初始設站點 (ST)，並將距離移到這一列的邊長欄位
         excelRows.push([
             data.initialStId,
             Number(data.initialStN.toFixed(4)),
             Number(data.initialStE.toFixed(4)),
-            "", "", "", ""
+            Number(bsToStDist.toFixed(4)),
+            "", "", ""
         ]);
 
         // 3. 依序放入各導線前瞻點
