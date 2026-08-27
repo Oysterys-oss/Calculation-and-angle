@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多站連續導線座標計算與管理工具 (距離下移版)</title>
+    <title>多站連續導線座標計算與管理工具 (預設空白版)</title>
     <!-- 引入 SheetJS 用於前端匯出 Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -164,33 +164,33 @@
 <div class="container">
     <h1>多站連續導線座標計算與管理工具</h1>
 
-    <!-- 起始後視點與設站點 -->
+    <!-- 起始後視點與設站點 (預設空白) -->
     <div class="section-box">
         <h3>📍 起始導線起算點 (第 1 站)</h3>
         <div class="grid-2">
             <div class="form-group">
                 <label>初始後視點 點號 (BS):</label>
-                <input type="text" id="bsId" value="YY17A">
+                <input type="text" id="bsId" value="" placeholder="例: YY17A">
             </div>
             <div class="form-group">
                 <label>初始設站點 點號 (ST):</label>
-                <input type="text" id="stId" value="YY18A">
+                <input type="text" id="stId" value="" placeholder="例: YY18A">
             </div>
             <div class="form-group">
                 <label>後視點 縱座標 (N):</label>
-                <input type="number" step="any" id="bsN" value="2764584">
+                <input type="number" step="any" id="bsN" value="" placeholder="請輸入 N 坐標">
             </div>
             <div class="form-group">
                 <label>設站點 縱座標 (N):</label>
-                <input type="number" step="any" id="stN" value="2765005">
+                <input type="number" step="any" id="stN" value="" placeholder="請輸入 N 坐標">
             </div>
             <div class="form-group">
                 <label>後視點 橫座標 (E):</label>
-                <input type="number" step="any" id="bsE" value="306320.7">
+                <input type="number" step="any" id="bsE" value="" placeholder="請輸入 E 坐標">
             </div>
             <div class="form-group">
                 <label>設站點 橫座標 (E):</label>
-                <input type="number" step="any" id="stE" value="307489.7">
+                <input type="number" step="any" id="stE" value="" placeholder="請輸入 E 坐標">
             </div>
         </div>
     </div>
@@ -307,14 +307,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 預設帶入測點範例
-    addRow('YY19', '724.459', '205', '29', '47.3');
-    addRow('YY21', '1131.947', '353', '0', '46.7');
+    // 初始化時預設帶入一行空白輸入列
+    addRow();
 
     addRowBtn.addEventListener('click', () => addRow());
 
     clearBtn.addEventListener('click', function() {
         if (confirm('確定清空所有資料嗎？')) {
+            document.getElementById('bsId').value = '';
+            document.getElementById('stId').value = '';
+            document.getElementById('bsN').value = '';
+            document.getElementById('stN').value = '';
+            document.getElementById('bsE').value = '';
+            document.getElementById('stE').value = '';
             tbody.innerHTML = '';
             addRow();
             resultArea.style.display = 'none';
@@ -440,7 +445,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = runTraverseCalculation();
         if (!data) return;
 
-        // 計算後視點 (BS) 與設站點 (ST) 之間的距離
         const bsToStDist = pol(data.initialBsN, data.initialBsE, data.initialStN, data.initialStE, 1);
 
         const excelRows = [
@@ -448,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ["", "", "", "", "°", "'", "\""]
         ];
 
-        // 1. 放入初始後視點 (BS)（邊長保持空白）
+        // 1. 放入初始後視點 (BS)
         excelRows.push([
             data.initialBsId,
             Number(data.initialBsN.toFixed(4)),
@@ -456,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "", "", "", ""
         ]);
 
-        // 2. 放入初始設站點 (ST)，並將距離移到這一列的邊長欄位
+        // 2. 放入初始設站點 (ST)，並將 BS 到 ST 的距離填在邊長欄位
         excelRows.push([
             data.initialStId,
             Number(data.initialStN.toFixed(4)),
