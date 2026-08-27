@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多站連續導線座標計算與管理工具 (完整修正版)</title>
+    <title>多站連續導線座標計算與管理工具 (含後視點與距離)</title>
     <!-- 引入 SheetJS 用於前端匯出 Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -225,7 +225,7 @@
                 </tbody>
             </table>
         </div>
-        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新導線延伸點</button>
+        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
     </div>
 
     <div class="btn-group">
@@ -440,12 +440,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = runTraverseCalculation();
         if (!data) return;
 
+        // 計算後視點 (BS) 與設站點 (ST) 之間的距離
+        const bsToStDist = pol(data.initialBsN, data.initialBsE, data.initialStN, data.initialStE, 1);
+
         const excelRows = [
             ["點號 (ID)", "縱座標 (N)", "橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", ""],
             ["", "", "", "", "°", "'", "\""]
         ];
 
-        // 起始設站點
+        // 1. 放入初始後視點 (BS)，並在邊長欄位填入與設站點的距離
+        excelRows.push([
+            data.initialBsId,
+            Number(data.initialBsN.toFixed(4)),
+            Number(data.initialBsE.toFixed(4)),
+            Number(bsToStDist.toFixed(4)),
+            "", "", ""
+        ]);
+
+        // 2. 放入初始設站點 (ST)
         excelRows.push([
             data.initialStId,
             Number(data.initialStN.toFixed(4)),
@@ -453,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "", "", "", ""
         ]);
 
-        // 各導線前瞻點（確保 0 能完整輸出）
+        // 3. 依序放入各導線前瞻點
         data.legs.forEach((r) => {
             excelRows.push([
                 r.targetId,
