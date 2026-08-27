@@ -56,6 +56,12 @@
             color: #334155;
         }
 
+        .hint-text {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -207,7 +213,8 @@
 
     <!-- 已知點座標資料庫 -->
     <div class="section-box">
-        <h3>📂 已知點座標資料庫 (輸入點號與已知座標後，下方導線點號若相符將自動帶入比對)</h3>
+        <h3>📂 已知點座標資料庫</h3>
+        <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料，點擊下方任一輸入框後按下 <b>Ctrl + V</b> 即可整批貼上！資料也會自動儲存。</div>
         <div class="table-container">
             <table id="knownDbTable">
                 <thead>
@@ -256,7 +263,7 @@
                 </tbody>
             </table>
         </div>
-        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新導線延伸點</button>
+        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
     </div>
 
     <div class="btn-group">
@@ -318,16 +325,47 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><input type="number" step="any" class="known-e" value="${e}" placeholder="已知 E"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
+
+        // 支援從 Excel 貼上多行多欄資料
+        const idInput = row.querySelector('.known-id');
+        idInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            let clipboardData = e.clipboardData || window.clipboardData;
+            let pastedData = clipboardData.getData('Text');
+            let rows = pastedData.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
+            
+            let currentRow = row;
+            rows.forEach((line, index) => {
+                let cols = line.split('\t');
+                let pId = cols[0] ? cols[0].trim() : '';
+                let pN = cols[1] ? cols[1].trim() : '';
+                let pE = cols[2] ? cols[2].trim() : '';
+
+                if (index === 0) {
+                    currentRow.querySelector('.known-id').value = pId;
+                    if(pN) currentRow.querySelector('.known-n').value = pN;
+                    if(pE) currentRow.querySelector('.known-e').value = pE;
+                } else {
+                    addKnownRow(pId, pN, pE);
+                }
+            });
+            saveDataToLocalStorage();
+            updateKnownStatusUI();
+        });
+
         row.querySelector('.btn-delete').addEventListener('click', () => {
             row.remove();
             saveDataToLocalStorage();
+            updateKnownStatusUI();
         });
+
         row.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', () => {
                 saveDataToLocalStorage();
                 updateKnownStatusUI();
             });
         });
+
         knownTbody.appendChild(row);
     }
 
@@ -481,12 +519,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 監聽初始起算點變更即時儲存
     document.querySelectorAll('.section-box .grid-2 input').forEach(input => {
         input.addEventListener('input', saveDataToLocalStorage);
     });
 
-    // 啟動時載入儲存的資料
     loadDataFromLocalStorage();
 
     addKnownRowBtn.addEventListener('click', () => {
@@ -659,7 +695,6 @@ document.addEventListener('DOMContentLoaded', function() {
             ["", "", "", "", "°", "'", "\"", "", "", "", ""]
         ];
 
-        // 1. 放入初始後視點 (BS)
         excelRows.push([
             data.initialBsId,
             Number(data.initialBsN.toFixed(4)),
@@ -667,7 +702,6 @@ document.addEventListener('DOMContentLoaded', function() {
             "", "", "", "", "", "", "", ""
         ]);
 
-        // 2. 放入初始設站點 (ST)
         excelRows.push([
             data.initialStId,
             Number(data.initialStN.toFixed(4)),
@@ -676,7 +710,6 @@ document.addEventListener('DOMContentLoaded', function() {
             "", "", "", "", "", "", ""
         ]);
 
-        // 3. 依序放入各導線前瞻點與資料庫自動對應的已知座標、差值
         data.legs.forEach((r) => {
             excelRows.push([
                 r.targetId,
