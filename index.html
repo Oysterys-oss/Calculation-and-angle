@@ -182,15 +182,15 @@
 
     <!-- 起始後視點與設站點 -->
     <div class="section-box">
-        <h3>📍 起始導線起算點 (第 1 站)</h3>
+        <h3>📍 起始導線起算點與第一站實測資料 (第 1 站)</h3>
         <div class="grid-2">
             <div class="form-group">
                 <label>初始後視點 點號 (BS):</label>
-                <input type="text" id="bsId" value="" placeholder="例: 點號">
+                <input type="text" id="bsId" value="" placeholder="例: Y254A">
             </div>
             <div class="form-group">
                 <label>初始設站點 點號 (ST):</label>
-                <input type="text" id="stId" value="" placeholder="例: 點號">
+                <input type="text" id="stId" value="" placeholder="例: Y254">
             </div>
             <div class="form-group">
                 <label>後視點 縱座標 (N):</label>
@@ -207,6 +207,21 @@
             <div class="form-group">
                 <label>設站點 橫座標 (E):</label>
                 <input type="number" step="any" id="stE" value="" placeholder="請輸入 E 坐標">
+            </div>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 15px 0;">
+        <div class="grid-2">
+            <div class="form-group">
+                <label>後視點至設站點 實測邊長 (m):</label>
+                <input type="number" step="any" id="bsToStDist" value="" placeholder="請輸入實測邊長">
+            </div>
+            <div class="form-group">
+                <label>後視點至設站點 實測夾角 (度分秒):</label>
+                <div class="angle-inputs">
+                    <input type="number" id="bsToStDeg" value="" placeholder="度">
+                    <input type="number" id="bsToStMin" value="" placeholder="分">
+                    <input type="number" id="bsToStSec" value="" placeholder="秒">
+                </div>
             </div>
         </div>
     </div>
@@ -451,6 +466,10 @@ document.addEventListener('DOMContentLoaded', function() {
             stN: document.getElementById('stN').value,
             bsE: document.getElementById('bsE').value,
             stE: document.getElementById('stE').value,
+            bsToStDist: document.getElementById('bsToStDist').value,
+            bsToStDeg: document.getElementById('bsToStDeg').value,
+            bsToStMin: document.getElementById('bsToStMin').value,
+            bsToStSec: document.getElementById('bsToStSec').value,
             knownDb: [],
             traverse: []
         };
@@ -492,6 +511,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('stN').value = data.stN || '';
             document.getElementById('bsE').value = data.bsE || '';
             document.getElementById('stE').value = data.stE || '';
+            document.getElementById('bsToStDist').value = data.bsToStDist || '';
+            document.getElementById('bsToStDeg').value = data.bsToStDeg || '';
+            document.getElementById('bsToStMin').value = data.bsToStMin || '';
+            document.getElementById('bsToStSec').value = data.bsToStSec || '';
 
             if (data.knownDb && data.knownDb.length > 0) {
                 data.knownDb.forEach(k => addKnownRow(k.id, k.n, k.e));
@@ -512,8 +535,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    document.querySelectorAll('.section-box .grid-2 input').forEach(input => {
-        input.addEventListener('input', saveDataToLocalStorage);
+    document.querySelectorAll('.section-box input').forEach(input => {
+        if (!input.classList.contains('known-id') && !input.classList.contains('known-n') && 
+            !input.classList.contains('known-e') && !input.classList.contains('input-id') && 
+            !input.classList.contains('input-dist') && !input.classList.contains('input-deg') && 
+            !input.classList.contains('input-min') && !input.classList.contains('input-sec')) {
+            input.addEventListener('input', saveDataToLocalStorage);
+        }
     });
 
     loadDataFromLocalStorage();
@@ -536,6 +564,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('stN').value = '';
             document.getElementById('bsE').value = '';
             document.getElementById('stE').value = '';
+            document.getElementById('bsToStDist').value = '';
+            document.getElementById('bsToStDeg').value = '';
+            document.getElementById('bsToStMin').value = '';
+            document.getElementById('bsToStSec').value = '';
             
             tbody.innerHTML = '';
             addRow();
@@ -552,6 +584,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentStE = parseFloat(document.getElementById('stE').value);
         let bsId = document.getElementById('bsId').value.trim() || 'BS';
         let stId = document.getElementById('stId').value.trim() || 'ST';
+
+        let bsToStDistVal = document.getElementById('bsToStDist').value;
+        let bsToStDegVal = document.getElementById('bsToStDeg').value;
+        let bsToStMinVal = document.getElementById('bsToStMin').value;
+        let bsToStSecVal = document.getElementById('bsToStSec').value;
 
         if (isNaN(currentBsN) || isNaN(currentBsE) || isNaN(currentStN) || isNaN(currentStE)) {
             alert('請完整輸入初始起算點座標！');
@@ -593,19 +630,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const PI_VAL = Math.PI;
 
-        legs.forEach((leg) => {
+        return {
+            initialBsId: initialBsId,
+            initialBsN: currentBsN,
+            initialBsE: currentBsE,
+            initialStId: stId,
+            initialStN: currentStN,
+            initialStE: currentStE,
+            bsToStDist: bsToStDistVal !== '' ? parseFloat(bsToStDistVal) : '',
+            bsToStDeg: bsToStDegVal !== '' ? parseFloat(bsToStDegVal) : '',
+            bsToStMin: bsToStMinVal !== '' ? parseFloat(bsToStMinVal) : '',
+            bsToStSec: bsToStSecVal !== '' ? parseFloat(bsToStSecVal) : '',
+            legs: legs
+        };
+    }
+
+    function calculateAllResults() {
+        const raw = runTraverseCalculation();
+        if (!raw) return null;
+
+        let results = [];
+        let activeBsN = raw.initialBsN;
+        let activeBsE = raw.initialBsE;
+        let activeStN = raw.initialStN;
+        let activeStE = raw.initialStE;
+        let activeStId = raw.initialStId;
+        const PI_VAL = Math.PI;
+
+        raw.legs.forEach((leg) => {
             let distVal = typeof leg.dist === 'number' ? leg.dist : 0;
             let dDeg = typeof leg.deg === 'number' ? leg.deg : 0;
             let dMin = typeof leg.min === 'number' ? leg.min : 0;
             let dSec = typeof leg.sec === 'number' ? leg.sec : 0;
 
             let azimuthBS = pol(activeStN, activeStE, activeBsN, activeBsE, 2);
-            let azimuthST_BS = azimuthBS;
-
             let angleDeg = dDeg + (dMin / 60) + (dSec / 3600);
             let angleRad = angleDeg * PI_VAL / 180;
             
-            let fwdAzRad = azimuthST_BS + angleRad;
+            let fwdAzRad = azimuthBS + angleRad;
             while (fwdAzRad < 0) fwdAzRad += 2 * PI_VAL;
             while (fwdAzRad >= 2 * PI_VAL) fwdAzRad -= 2 * PI_VAL;
 
@@ -614,7 +676,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let targetN = activeStN + dN;
             let targetE = activeStE + dE;
-
             let fwdAzDeg = fwdAzRad * 180 / PI_VAL;
 
             let diffN = (leg.knownN !== null) ? (targetN - leg.knownN) * 1000 : null;
@@ -638,32 +699,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
             activeBsN = activeStN;
             activeBsE = activeStE;
-
             activeStN = targetN;
             activeStE = targetE;
             activeStId = leg.id;
         });
 
-        return {
-            initialBsId: initialBsId,
-            initialBsN: currentBsN,
-            initialBsE: currentBsE,
-            initialStId: stId,
-            initialStN: currentStN,
-            initialStE: currentStE,
-            legs: results
-        };
+        raw.legsCalculated = results;
+        return raw;
     }
 
     calculateBtn.addEventListener('click', function() {
-        const data = runTraverseCalculation();
+        const data = calculateAllResults();
         if (!data) return;
 
         let text = `=== 多站連續導線座標與自動比對結果 ===\n`;
         text += `後視點 [${data.initialBsId}] N = ${data.initialBsN.toFixed(4)}, E = ${data.initialBsE.toFixed(4)}\n`;
         text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(4)}, E = ${data.initialStE.toFixed(4)}\n\n`;
 
-        data.legs.forEach((r, idx) => {
+        data.legsCalculated.forEach((r, idx) => {
             text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | 計算 N = ${r.n.toFixed(4)}, E = ${r.e.toFixed(4)}\n`;
             if (r.knownN !== null || r.knownE !== null) {
                 let dnStr = r.diffN !== null ? (r.diffN >= 0 ? '+' + r.diffN.toFixed(2) : r.diffN.toFixed(2)) : 'N/A';
@@ -678,10 +731,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     exportExcelBtn.addEventListener('click', function() {
-        const data = runTraverseCalculation();
+        const data = calculateAllResults();
         if (!data) return;
-
-        const bsToStDist = pol(data.initialBsN, data.initialBsE, data.initialStN, data.initialStE, 1);
 
         const excelRows = [
             ["點號 (ID)", "計算縱座標 (N)", "計算橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", "", "已知縱座標 (N)", "已知橫座標 (E)", "差值 ΔN (計-已)*1000", "差值 ΔE (計-已)*1000"],
@@ -699,11 +750,14 @@ document.addEventListener('DOMContentLoaded', function() {
             data.initialStId,
             Number(data.initialStN.toFixed(4)),
             Number(data.initialStE.toFixed(4)),
-            Number(bsToStDist.toFixed(4)),
-            "", "", "", "", "", "", ""
+            data.bsToStDist !== '' ? data.bsToStDist : "",
+            data.bsToStDeg !== '' ? data.bsToStDeg : "",
+            data.bsToStMin !== '' ? data.bsToStMin : "",
+            data.bsToStSec !== '' ? data.bsToStSec : "",
+            "", "", "", ""
         ]);
 
-        data.legs.forEach((r) => {
+        data.legsCalculated.forEach((r) => {
             excelRows.push([
                 r.targetId,
                 Number(r.n.toFixed(4)),
