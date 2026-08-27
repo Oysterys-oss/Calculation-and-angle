@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>臨時測量邊長與夾角計算工具</title>
-    <!-- 引入 SheetJS (js-xlsx) 用於前端匯出 Excel -->
+    <title>多站連續導線座標計算與管理工具 (Excel 格式對齊版)</title>
+    <!-- 引入 SheetJS 用於前端匯出 Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
             --success-color: #16a34a;
-            --success-hover: #15803d;
             --danger-color: #dc2626;
-            --danger-hover: #b91c1c;
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --border-color: #cbd5e1;
@@ -30,12 +27,12 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
             background-color: var(--card-bg);
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
         h1 {
@@ -45,35 +42,48 @@
             text-align: center;
         }
 
-        .batch-paste-box {
+        .section-box {
             background-color: #f1f5f9;
-            border: 1px dashed var(--border-color);
+            border: 1px solid var(--border-color);
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 1.5rem;
         }
 
-        .batch-paste-box label {
+        .section-box h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: #334155;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
             display: block;
             font-weight: 600;
             margin-bottom: 5px;
             font-size: 0.9rem;
-            color: #334155;
         }
 
-        .batch-paste-box textarea {
+        input[type="text"], input[type="number"] {
             width: 100%;
-            height: 90px;
-            padding: 10px;
+            padding: 8px;
             box-sizing: border-box;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-family: monospace;
-            font-size: 0.9rem;
-            background-color: #ffffff;
+            font-size: 0.95rem;
+            background-color: #fff;
         }
 
-        .batch-paste-box textarea:focus {
+        input:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -91,29 +101,27 @@
         }
 
         th, td {
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 1px solid var(--border-color);
             text-align: center;
+            font-size: 0.9rem;
+            vertical-align: middle;
         }
 
         th {
-            background-color: #f1f5f9;
+            background-color: #e2e8f0;
             font-weight: 600;
         }
 
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.95rem;
+        .angle-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 4px;
         }
 
-        input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        .angle-inputs input {
+            text-align: center;
+            padding: 6px 4px;
         }
 
         .btn-group {
@@ -130,64 +138,13 @@
             font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
         }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-            flex: 2;
-            min-width: 180px;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-success {
-            background-color: var(--success-color);
-            color: white;
-            flex: 1.5;
-            min-width: 150px;
-        }
-
-        .btn-success:hover {
-            background-color: var(--success-hover);
-        }
-
-        .btn-secondary {
-            background-color: #e2e8f0;
-            color: var(--text-color);
-            flex: 1;
-            min-width: 120px;
-        }
-
-        .btn-secondary:hover {
-            background-color: #cbd5e1;
-        }
-
-        .btn-danger-outline {
-            background-color: #fff;
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
-            flex: 1;
-            min-width: 120px;
-        }
-
-        .btn-danger-outline:hover {
-            background-color: #ffeeef;
-        }
-
-        .btn-delete {
-            background-color: var(--danger-color);
-            color: white;
-            padding: 6px 12px;
-            font-size: 0.85rem;
-        }
-
-        .btn-delete:hover {
-            background-color: var(--danger-hover);
-        }
+        .btn-primary { background-color: var(--primary-color); color: white; flex: 2; }
+        .btn-success { background-color: var(--success-color); color: white; flex: 1.5; }
+        .btn-secondary { background-color: #e2e8f0; color: var(--text-color); flex: 1; }
+        .btn-danger-outline { background-color: #fff; color: var(--danger-color); border: 1px solid var(--danger-color); flex: 1; }
+        .btn-delete { background-color: var(--danger-color); color: white; padding: 6px 12px; font-size: 0.85rem; }
 
         #resultArea {
             background-color: #f8fafc;
@@ -205,38 +162,76 @@
 <body>
 
 <div class="container">
-    <h1>臨時測量邊長與夾角計算工具</h1>
+    <h1>多站連續導線座標計算與管理工具</h1>
 
-    <div class="batch-paste-box">
-        <label for="batchInput">📋 批次輸入區（可直接手動打字或貼上，欄位間用空白或 Tab 分隔）：</label>
-        <textarea id="batchInput" placeholder="格式範例：點號 縱座標 (N)  橫座標 (E)
-YY17A 2764584.3300 306320.6540
-YY18A 2765004.9392 307489.7117"></textarea>
-        <button type="button" id="importBtn" class="btn-secondary" style="margin-top: 8px; width: 100%;">將上方文字追加至表格下方</button>
+    <!-- 起始後視點與設站點 -->
+    <div class="section-box">
+        <h3>📍 起始導線起算點 (第 1 站)</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>初始後視點 點號 (BS):</label>
+                <input type="text" id="bsId" value="YY17A">
+            </div>
+            <div class="form-group">
+                <label>初始設站點 點號 (ST):</label>
+                <input type="text" id="stId" value="YY18A">
+            </div>
+            <div class="form-group">
+                <label>後視點 縱座標 (N):</label>
+                <input type="number" step="any" id="bsN" value="2764584">
+            </div>
+            <div class="form-group">
+                <label>設站點 縱座標 (N):</label>
+                <input type="number" step="any" id="stN" value="2765005">
+            </div>
+            <div class="form-group">
+                <label>後視點 橫座標 (E):</label>
+                <input type="number" step="any" id="bsE" value="306320.7">
+            </div>
+            <div class="form-group">
+                <label>設站點 橫座標 (E):</label>
+                <input type="number" step="any" id="stE" value="307489.7">
+            </div>
+        </div>
     </div>
 
-    <div class="table-container">
-        <table id="coordTable">
-            <thead>
-                <tr>
-                    <th style="width: 10%;">項次</th>
-                    <th style="width: 25%;">點號 (ID)</th>
-                    <th style="width: 30%;">縱座標 (N)</th>
-                    <th style="width: 30%;">橫座標 (E)</th>
-                    <th style="width: 15%;">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 內容會由 JavaScript 自動載入或初始化 -->
-            </tbody>
-        </table>
+    <!-- 連續導線點輸入表格 -->
+    <div class="section-box">
+        <h3>📊 導線前瞻點序列 (依序輸入各站點之邊長與夾角)</h3>
+        <div class="table-container">
+            <table id="traverseTable">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">站序</th>
+                        <th style="width: 18%;">目標點號 (ID)</th>
+                        <th style="width: 22%;">邊長 (m)</th>
+                        <th style="width: 40%;">夾角 (度分秒)</th>
+                        <th style="width: 12%;">操作</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 0.8rem; color: #475569;">
+                                <span>°</span><span>'</span><span>"</span>
+                            </div>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 動態生成 -->
+                </tbody>
+            </table>
+        </div>
+        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
     </div>
 
     <div class="btn-group">
-        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線點</button>
-        <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空全部資料</button>
-        <button type="button" id="calculateBtn" class="btn-primary">計算邊長與夾角</button>
-        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出對齊格式 Excel</button>
+        <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空所有點</button>
+        <button type="button" id="calculateBtn" class="btn-primary">計算連續導線座標</button>
+        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出完整 Excel 報表</button>
     </div>
 
     <div id="resultArea"></div>
@@ -244,298 +239,242 @@ YY18A 2765004.9392 307489.7117"></textarea>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const tbody = document.querySelector('#coordTable tbody');
+    const tbody = document.querySelector('#traverseTable tbody');
     const addRowBtn = document.getElementById('addRowBtn');
     const clearBtn = document.getElementById('clearBtn');
     const calculateBtn = document.getElementById('calculateBtn');
     const exportExcelBtn = document.getElementById('exportExcelBtn');
     const resultArea = document.getElementById('resultArea');
-    const batchInput = document.getElementById('batchInput');
-    const importBtn = document.getElementById('importBtn');
 
-    function saveData() {
-        const rows = tbody.querySelectorAll('tr');
-        const data = [];
-        rows.forEach(row => {
-            const id = row.querySelector('.input-id').value;
-            const n = row.querySelector('.input-n').value;
-            const e = row.querySelector('.input-e').value;
-            data.push({ id, n, e });
+    function degToDMS(degDecimal) {
+        let d = Math.floor(degDecimal);
+        let remainderMin = (degDecimal - d) * 60;
+        let m = Math.floor(remainderMin);
+        let s = (remainderMin - m) * 60;
+        return `${d}° ${String(m).padStart(2, '0')}' ${s.toFixed(2)}''`;
+    }
+
+    function pol(n1, e1, n2, e2, p) {
+        const PI_VAL = Math.PI;
+        let r = Math.pow(Math.pow(n2 - n1, 2) + Math.pow(e2 - e1, 2), 0.5);
+        if (p === 1) {
+            return r;
+        } else {
+            let az = 0;
+            if (e2 - e1 === 0) {
+                az = (n2 - n1 > 0) ? 0 : PI_VAL;
+            } else {
+                let a = Math.atan((n2 - n1) / (e2 - e1));
+                if (e2 - e1 > 0) {
+                    az = PI_VAL / 2 - a;
+                } else {
+                    az = PI_VAL * 3 / 2 - a;
+                }
+            }
+            return az;
+        }
+    }
+
+    function addRow(id = '', dist = '', deg = '', min = '', sec = '') {
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="row-index"></td>
+            <td><input type="text" class="input-id" value="${id}" placeholder="例: YY19"></td>
+            <td><input type="number" step="any" class="input-dist" value="${dist}" placeholder="邊長(m)"></td>
+            <td>
+                <div class="angle-inputs">
+                    <input type="number" class="input-deg" value="${deg}" placeholder="度">
+                    <input type="number" class="input-min" value="${min}" placeholder="分">
+                    <input type="number" class="input-sec" value="${sec}" placeholder="秒">
+                </div>
+            </td>
+            <td><button type="button" class="btn-delete">刪除</button></td>
+        `;
+
+        newRow.querySelector('.btn-delete').addEventListener('click', function() {
+            newRow.remove();
+            updateRowIndices();
         });
-        localStorage.setItem('temp_survey_data', JSON.stringify(data));
+
+        tbody.appendChild(newRow);
+        updateRowIndices();
     }
 
     function updateRowIndices() {
         const rows = tbody.querySelectorAll('tr');
         rows.forEach((row, index) => {
-            const indexCell = row.querySelector('.row-index');
-            if (indexCell) {
-                indexCell.textContent = index + 1;
-            }
+            row.querySelector('.row-index').textContent = index + 1;
         });
     }
 
-    function addRow(id = '', n = '', e = '') {
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td class="row-index"></td>
-            <td><input type="text" class="input-id" value="${id}" placeholder="例: P01"></td>
-            <td><input type="number" step="any" class="input-n" value="${n}" placeholder="縱座標(N)"></td>
-            <td><input type="number" step="any" class="input-e" value="${e}" placeholder="橫座標(E)"></td>
-            <td><button type="button" class="btn-delete">刪除</button></td>
-        `;
+    // 預設帶入截圖中的測試資料
+    addRow('YY19', '724.459', '205', '29', '47.3');
+    addRow('YY21', '1131.947', '', '', '');
 
-        newRow.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', saveData);
-        });
-
-        newRow.querySelector('.btn-delete').addEventListener('click', function() {
-            deleteRow(this);
-        });
-
-        tbody.appendChild(newRow);
-        updateRowIndices();
-        saveData();
-        return newRow;
-    }
-
-    function deleteRow(btn) {
-        const row = btn.closest('tr');
-        if (tbody.rows.length > 1) {
-            row.remove();
-            updateRowIndices();
-            saveData();
-        } else {
-            row.querySelector('.input-id').value = '';
-            row.querySelector('.input-n').value = '';
-            row.querySelector('.input-e').value = '';
-            saveData();
-        }
-    }
-
-    function loadSavedData() {
-        const saved = localStorage.getItem('temp_survey_data');
-        if (saved) {
-            try {
-                const data = JSON.parse(saved);
-                if (Array.isArray(data) && data.length > 0) {
-                    tbody.innerHTML = '';
-                    data.forEach(item => {
-                        addRow(item.id, item.n !== undefined ? item.n : '', item.e !== undefined ? item.e : '');
-                    });
-                    return;
-                }
-            } catch (e) {
-                console.error("載入儲存資料失敗", e);
-            }
-        }
-        addRow();
-    }
-
-    loadSavedData();
-
-    addRowBtn.addEventListener('click', function() {
-        addRow();
-    });
+    addRowBtn.addEventListener('click', () => addRow());
 
     clearBtn.addEventListener('click', function() {
-        if (confirm('確定要清空所有表格資料嗎？')) {
-            localStorage.removeItem('temp_survey_data');
+        if (confirm('確定清空所有資料嗎？')) {
             tbody.innerHTML = '';
             addRow();
             resultArea.style.display = 'none';
         }
     });
 
-    importBtn.addEventListener('click', function() {
-        const text = batchInput.value.trim();
-        if (!text) {
-            alert('請先在上方輸入框手動打字或貼上資料！');
-            return;
+    function runTraverseCalculation() {
+        let currentBsN = parseFloat(document.getElementById('bsN').value);
+        let currentBsE = parseFloat(document.getElementById('bsE').value);
+        let currentStN = parseFloat(document.getElementById('stN').value);
+        let currentStE = parseFloat(document.getElementById('stE').value);
+        let bsId = document.getElementById('bsId').value.trim() || 'BS';
+        let stId = document.getElementById('stId').value.trim() || 'ST';
+
+        if (isNaN(currentBsN) || isNaN(currentBsE) || isNaN(currentStN) || isNaN(currentStE)) {
+            alert('請完整輸入初始起算點座標！');
+            return null;
         }
 
-        const lines = text.split(/\r?\n/);
-        let importedCount = 0;
-
-        lines.forEach((line) => {
-            if (!line.trim()) return;
-            let cols = line.trim().split(/\s+/);
-            if (cols.length >= 3) {
-                let id = cols[0].trim();
-                let n = cols[1].trim();
-                let e = cols[2].trim();
-
-                const firstRow = tbody.querySelector('tr');
-                const firstId = firstRow ? firstRow.querySelector('.input-id').value.trim() : '';
-                const firstN = firstRow ? firstRow.querySelector('.input-n').value.trim() : '';
-                const firstE = firstRow ? firstRow.querySelector('.input-e').value.trim() : '';
-
-                if (firstRow && !firstId && !firstN && !firstE && importedCount === 0) {
-                    firstRow.querySelector('.input-id').value = id;
-                    firstRow.querySelector('.input-n').value = n;
-                    firstRow.querySelector('.input-e').value = e;
-                } else {
-                    addRow(id, n, e);
-                }
-                importedCount++;
-            }
-        });
-
-        if (importedCount > 0) {
-            updateRowIndices();
-            saveData();
-            alert(`成功追加匯入 ${importedCount} 筆座標資料！`);
-            batchInput.value = '';
-        } else {
-            alert('格式有誤！每行請包含：點號、縱座標(N)、橫座標(E)（欄位之間請用空格或 Tab 隔開）。');
-        }
-    });
-
-    function getSurveyData() {
         const rows = tbody.querySelectorAll('tr');
-        const coordinates = [];
-
+        let legs = [];
         rows.forEach((row, idx) => {
-            const idInput = row.querySelector('.input-id');
-            const nInput = row.querySelector('.input-n');
-            const eInput = row.querySelector('.input-e');
-
-            if (idInput && nInput && eInput) {
-                const id = idInput.value.trim() || `P${idx + 1}`;
-                const n = parseFloat(nInput.value);
-                const e = parseFloat(eInput.value);
-
-                if (!isNaN(n) && !isNaN(e)) {
-                    coordinates.push({ id, n, e });
-                }
-            }
+            const id = row.querySelector('.input-id').value.trim() || `P${idx+1}`;
+            const dist = parseFloat(row.querySelector('.input-dist').value) || 0;
+            const deg = parseFloat(row.querySelector('.input-deg').value) || 0;
+            const min = parseFloat(row.querySelector('.input-min').value) || 0;
+            const sec = parseFloat(row.querySelector('.input-sec').value) || 0;
+            legs.push({ id, dist, deg, min, sec });
         });
-        return coordinates;
-    }
 
-    function performCalculation() {
-        const coordinates = getSurveyData();
-        if (coordinates.length < 2) return null;
+        if (legs.length === 0) return null;
 
-        let azList = [];
-        let distances = [];
-        for (let i = 0; i < coordinates.length - 1; i++) {
-            const p1 = coordinates[i];
-            const p2 = coordinates[i + 1];
+        let results = [];
+        let activeBsN = currentBsN;
+        let activeBsE = currentBsE;
+        let activeStN = currentStN;
+        let activeStE = currentStE;
+        let activeStId = stId;
+        let activeBsId = bsId;
 
-            const dn = p2.n - p1.n;
-            const de = p2.e - p1.e;
-            const distance = Math.sqrt(dn * dn + de * de);
+        const PI_VAL = Math.PI;
 
-            let angleRad = Math.atan2(de, dn);
-            let angleDeg = angleRad * (180 / Math.PI);
-            if (angleDeg < 0) angleDeg += 360;
+        // 記錄初始後視點作為報表第一筆
+        let initialList = [{
+            stationId: "-",
+            targetId: activeBsId,
+            n: activeBsN,
+            e: activeBsE,
+            dist: "",
+            deg: "",
+            min: "",
+            sec: "",
+            fwdAzDMS: "-"
+        }, {
+            stationId: activeBsId,
+            targetId: activeStId,
+            n: activeStN,
+            e: activeStE,
+            dist: pol(activeBsN, activeBsE, activeStN, activeStE, 1),
+            deg: "",
+            min: "",
+            sec: "",
+            fwdAzDMS: degToDMS(pol(activeBsN, activeBsE, activeStN, activeStE, 2) * 180 / PI_VAL)
+        }];
 
-            azList.push({
-                from: p1.id,
-                to: p2.id,
-                azimuth: angleDeg,
-                distance: distance
+        results.push(...initialList);
+
+        legs.forEach((leg, index) => {
+            let azimuthBS = pol(activeStN, activeStE, activeBsN, activeBsE, 2);
+            let azimuthST_BS = azimuthBS;
+
+            let angleDeg = leg.deg + (leg.min / 60) + (leg.sec / 3600);
+            let angleRad = angleDeg * PI_VAL / 180;
+            
+            let fwdAzRad = azimuthST_BS + angleRad;
+            while (fwdAzRad < 0) fwdAzRad += 2 * PI_VAL;
+            while (fwdAzRad >= 2 * PI_VAL) fwdAzRad -= 2 * PI_VAL;
+
+            let dN = leg.dist * Math.cos(fwdAzRad);
+            let dE = leg.dist * Math.sin(fwdAzRad);
+
+            let targetN = activeStN + dN;
+            let targetE = activeStE + dE;
+
+            let fwdAzDeg = fwdAzRad * 180 / PI_VAL;
+
+            results.push({
+                stationId: activeStId,
+                targetId: leg.id,
+                n: targetN,
+                e: targetE,
+                dist: leg.dist,
+                deg: leg.deg !== 0 ? leg.deg : "",
+                min: leg.min !== 0 ? leg.min : "",
+                sec: leg.sec !== 0 ? leg.sec : "",
+                fwdAzDeg: fwdAzDeg,
+                fwdAzDMS: degToDMS(fwdAzDeg)
             });
-            distances.push({ from: p1.id, to: p2.id, distance, dn, de });
-        }
 
-        let angles = [];
-        if (azList.length >= 2) {
-            for (let i = 0; i < azList.length - 1; i++) {
-                const prevAz = azList[i].azimuth;     
-                const nextAz = azList[i + 1].azimuth; 
-                const vertexPoint = azList[i].to;     
+            activeBsN = activeStN;
+            activeBsE = activeStE;
 
-                let backAz = prevAz + 180;
-                if (backAz >= 360) backAz -= 360;
+            activeStN = targetN;
+            activeStE = targetE;
+            activeStId = leg.id;
+        });
 
-                let rightAngle = nextAz - backAz;
-                if (rightAngle < 0) rightAngle += 360;
-
-                const deg = Math.floor(rightAngle);
-                const minFloat = (rightAngle - deg) * 60;
-                const min = Math.floor(minFloat);
-                const sec = Number(((minFloat - min) * 60).toFixed(1));
-
-                angles.push({ vertex: vertexPoint, deg, min, sec });
-            }
-        }
-
-        return { coordinates, distances, angles };
+        return results;
     }
 
     calculateBtn.addEventListener('click', function() {
-        const data = performCalculation();
-        if (!data || data.coordinates.length < 2) {
-            alert('請至少輸入兩筆有效的座標（包含縱座標與橫座標）才能計算！');
-            return;
-        }
+        const results = runTraverseCalculation();
+        if (!results) return;
 
-        let resultText = "=== 導線邊長計算 ===\n\n";
-        data.distances.forEach(d => {
-            resultText += `邊長：${d.from} ➔ ${d.to} = ${d.distance.toFixed(3)} 公尺\n`;
+        let text = `=== 多站連續導線計算結果 ===\n`;
+        results.forEach((r, idx) => {
+            text += `[目標: ${r.targetId.padEnd(6)}] N = ${r.n.toFixed(4)}, E = ${r.e.toFixed(4)} | 邊長: ${r.dist !== "" ? r.dist + "m" : "---"} | 夾角: ${r.deg !== "" ? r.deg+"°"+r.min+"'"+r.sec+"\"" : "---"}\n`;
         });
 
-        if (data.angles.length > 0) {
-            resultText += "\n=== 頂點夾角 (右角) 計算 ===\n\n";
-            data.angles.forEach(a => {
-                resultText += `頂點 ${a.vertex} 夾角：${a.deg}° ${a.min}′ ${a.sec}″\n`;
-            });
-        }
-
         resultArea.style.display = 'block';
-        resultArea.textContent = resultText;
+        resultArea.textContent = text;
         resultArea.scrollIntoView({ behavior: 'smooth' });
     });
 
     exportExcelBtn.addEventListener('click', function() {
-        const data = performCalculation();
-        if (!data || data.coordinates.length < 2) {
-            alert('請先輸入至少兩筆有效座標，並確保資料正確才能匯出 Excel！');
-            return;
-        }
+        const results = runTraverseCalculation();
+        if (!results) return;
 
-        // 建立對應對照表
-        const distMap = {};
-        data.distances.forEach(d => {
-            distMap[d.from] = d.distance;
-        });
-
-        const angleMap = {};
-        data.angles.forEach(a => {
-            angleMap[a.vertex] = { deg: a.deg, min: a.min, sec: a.sec };
-        });
-
-        // 建立對齊格式的表頭（兩列）
+        // 建立符合截圖要求的雙行表頭結構
         const excelRows = [
             ["點號 (ID)", "縱座標 (N)", "橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", ""],
             ["", "", "", "", "°", "'", "\""]
         ];
 
-        // 填入每一列點號資料
-        data.coordinates.forEach(c => {
-            const dist = distMap[c.id] !== undefined ? Number(distMap[c.id].toFixed(3)) : "";
-            const ang = angleMap[c.id];
-            const deg = ang ? ang.deg : "";
-            const min = ang ? ang.min : "";
-            const sec = ang ? ang.sec : "";
-
-            excelRows.push([c.id, c.n, c.e, dist, deg, min, sec]);
+        results.forEach((r) => {
+            excelRows.push([
+                r.targetId,
+                Number(r.n.toFixed(4)),
+                Number(r.e.toFixed(4)),
+                r.dist !== "" ? Number(r.dist) : "",
+                r.deg !== "" ? r.deg : "",
+                r.min !== "" ? r.min : "",
+                r.sec !== "" ? r.sec : ""
+            ]);
         });
 
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(excelRows);
 
-        // 設定儲存格合併（讓「夾角 (度分秒)」標題跨三欄）
+        // 設定合併儲存格以精準還原截圖表頭外觀
         ws['!merges'] = [
-            { s: { r: 0, c: 4 }, e: { r: 0, c: 6 } }
+            { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, // 點號 (ID)
+            { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, // 縱座標 (N)
+            { s: { r: 0, c: 2 }, e: { r: 1, c: 2 } }, // 橫座標 (E)
+            { s: { r: 0, c: 3 }, e: { r: 1, c: 3 } }, // 邊長 (m)
+            { s: { r: 0, c: 4 }, e: { r: 0, c: 6 } }  // 夾角 (度分秒) 跨 3 欄
         ];
 
-        XLSX.utils.book_append_sheet(wb, ws, "導線計算表");
-
-        const filename = `測量導線計算表_${new Date().toISOString().slice(0, 10)}.xlsx`;
-        XLSX.writeFile(wb, filename);
+        XLSX.utils.book_append_sheet(wb, ws, "連續導線計算表");
+        XLSX.writeFile(wb, `多站連續導線計算表_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
 });
 </script>
