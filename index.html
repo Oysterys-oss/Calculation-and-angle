@@ -214,7 +214,7 @@
     <!-- 已知點座標資料庫 -->
     <div class="section-box">
         <h3>📂 已知點座標資料庫</h3>
-        <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料，點擊下方任一輸入框後按下 <b>Ctrl + V</b> 即可整批貼上！資料也會自動儲存。</div>
+        <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料，點擊下方任一輸入框後按下 <b>Ctrl + V</b> 即可整批貼上！資料會自動儲存且不會被清空按鈕影響。</div>
         <div class="table-container">
             <table id="knownDbTable">
                 <thead>
@@ -267,7 +267,7 @@
     </div>
 
     <div class="btn-group">
-        <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空所有資料</button>
+        <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空導線與起算點 (保留已知點資料庫)</button>
         <button type="button" id="calculateBtn" class="btn-primary">計算連續導線座標與自動比對</button>
         <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出完整 Excel 報表</button>
     </div>
@@ -326,7 +326,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
 
-        // 支援從 Excel 貼上多行多欄資料
         const idInput = row.querySelector('.known-id');
         idInput.addEventListener('paste', function(e) {
             e.preventDefault();
@@ -418,7 +417,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 取得目前的已知點資料庫對應表 (Map)
     function getKnownDatabase() {
         const db = {};
         const rows = knownTbody.querySelectorAll('tr');
@@ -433,7 +431,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return db;
     }
 
-    // 即時檢查並顯示是否有對應到資料庫
     function updateKnownStatusUI() {
         const db = getKnownDatabase();
         const rows = tbody.querySelectorAll('tr');
@@ -448,7 +445,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 儲存資料到瀏覽器 LocalStorage
     function saveDataToLocalStorage() {
         const data = {
             bsId: document.getElementById('bsId').value,
@@ -482,7 +478,6 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('traverse_tool_data', JSON.stringify(data));
     }
 
-    // 從瀏覽器 LocalStorage 載入資料
     function loadDataFromLocalStorage() {
         const saved = localStorage.getItem('traverse_tool_data');
         if (!saved) {
@@ -535,19 +530,20 @@ document.addEventListener('DOMContentLoaded', function() {
         saveDataToLocalStorage();
     });
 
+    // 修改清除按鈕：只清除起算點與導線序列，保留已知點資料庫
     clearBtn.addEventListener('click', function() {
-        if (confirm('確定清空所有資料嗎？這會一併清除儲存的紀錄。')) {
-            localStorage.removeItem('traverse_tool_data');
+        if (confirm('確定清空初始起算點與導線前瞻點嗎？（已知點座標資料庫將會被完整保留）')) {
             document.getElementById('bsId').value = '';
             document.getElementById('stId').value = '';
             document.getElementById('bsN').value = '';
             document.getElementById('stN').value = '';
             document.getElementById('bsE').value = '';
             document.getElementById('stE').value = '';
-            knownTbody.innerHTML = '';
+            
             tbody.innerHTML = '';
-            addKnownRow();
             addRow();
+            saveDataToLocalStorage();
+            updateKnownStatusUI();
             resultArea.style.display = 'none';
         }
     });
