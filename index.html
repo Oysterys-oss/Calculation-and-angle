@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多站連續導線座標計算與管理工具 (Excel 格式對齊版)</title>
+    <title>多站連續導線座標計算與管理工具 (完整修正版)</title>
     <!-- 引入 SheetJS 用於前端匯出 Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -225,7 +225,7 @@
                 </tbody>
             </table>
         </div>
-        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
+        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新導線延伸點</button>
     </div>
 
     <div class="btn-group">
@@ -307,9 +307,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 預設帶入截圖中的測試資料
+    // 預設帶入測點範例
     addRow('YY19', '724.459', '205', '29', '47.3');
-    addRow('YY21', '1131.947', '', '', '');
+    addRow('YY21', '1131.947', '353', '0', '46.7');
 
     addRowBtn.addEventListener('click', () => addRow());
 
@@ -338,11 +338,18 @@ document.addEventListener('DOMContentLoaded', function() {
         let legs = [];
         rows.forEach((row, idx) => {
             const id = row.querySelector('.input-id').value.trim() || `P${idx+1}`;
-            const dist = parseFloat(row.querySelector('.input-dist').value) || 0;
-            const deg = parseFloat(row.querySelector('.input-deg').value) || 0;
-            const min = parseFloat(row.querySelector('.input-min').value) || 0;
-            const sec = parseFloat(row.querySelector('.input-sec').value) || 0;
-            legs.push({ id, dist, deg, min, sec });
+            const distInput = row.querySelector('.input-dist').value;
+            const degInput = row.querySelector('.input-deg').value;
+            const minInput = row.querySelector('.input-min').value;
+            const secInput = row.querySelector('.input-sec').value;
+
+            legs.push({
+                id,
+                dist: distInput !== '' ? parseFloat(distInput) : '',
+                deg: degInput !== '' ? parseFloat(degInput) : '',
+                min: minInput !== '' ? parseFloat(minInput) : '',
+                sec: secInput !== '' ? parseFloat(secInput) : ''
+            });
         });
 
         if (legs.length === 0) return null;
@@ -353,48 +360,28 @@ document.addEventListener('DOMContentLoaded', function() {
         let activeStN = currentStN;
         let activeStE = currentStE;
         let activeStId = stId;
-        let activeBsId = bsId;
+        let initialBsId = bsId;
 
         const PI_VAL = Math.PI;
 
-        // 記錄初始後視點作為報表第一筆
-        let initialList = [{
-            stationId: "-",
-            targetId: activeBsId,
-            n: activeBsN,
-            e: activeBsE,
-            dist: "",
-            deg: "",
-            min: "",
-            sec: "",
-            fwdAzDMS: "-"
-        }, {
-            stationId: activeBsId,
-            targetId: activeStId,
-            n: activeStN,
-            e: activeStE,
-            dist: pol(activeBsN, activeBsE, activeStN, activeStE, 1),
-            deg: "",
-            min: "",
-            sec: "",
-            fwdAzDMS: degToDMS(pol(activeBsN, activeBsE, activeStN, activeStE, 2) * 180 / PI_VAL)
-        }];
-
-        results.push(...initialList);
-
         legs.forEach((leg, index) => {
+            let distVal = typeof leg.dist === 'number' ? leg.dist : 0;
+            let dDeg = typeof leg.deg === 'number' ? leg.deg : 0;
+            let dMin = typeof leg.min === 'number' ? leg.min : 0;
+            let dSec = typeof leg.sec === 'number' ? leg.sec : 0;
+
             let azimuthBS = pol(activeStN, activeStE, activeBsN, activeBsE, 2);
             let azimuthST_BS = azimuthBS;
 
-            let angleDeg = leg.deg + (leg.min / 60) + (leg.sec / 3600);
+            let angleDeg = dDeg + (dMin / 60) + (dSec / 3600);
             let angleRad = angleDeg * PI_VAL / 180;
             
             let fwdAzRad = azimuthST_BS + angleRad;
             while (fwdAzRad < 0) fwdAzRad += 2 * PI_VAL;
             while (fwdAzRad >= 2 * PI_VAL) fwdAzRad -= 2 * PI_VAL;
 
-            let dN = leg.dist * Math.cos(fwdAzRad);
-            let dE = leg.dist * Math.sin(fwdAzRad);
+            let dN = distVal * Math.cos(fwdAzRad);
+            let dE = distVal * Math.sin(fwdAzRad);
 
             let targetN = activeStN + dN;
             let targetE = activeStE + dE;
@@ -407,10 +394,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 n: targetN,
                 e: targetE,
                 dist: leg.dist,
-                deg: leg.deg !== 0 ? leg.deg : "",
-                min: leg.min !== 0 ? leg.min : "",
-                sec: leg.sec !== 0 ? leg.sec : "",
-                fwdAzDeg: fwdAzDeg,
+                deg: leg.deg,
+                min: leg.min,
+                sec: leg.sec,
                 fwdAzDMS: degToDMS(fwdAzDeg)
             });
 
@@ -422,16 +408,27 @@ document.addEventListener('DOMContentLoaded', function() {
             activeStId = leg.id;
         });
 
-        return results;
+        return {
+            initialBsId: initialBsId,
+            initialBsN: currentBsN,
+            initialBsE: currentBsE,
+            initialStId: stId,
+            initialStN: currentStN,
+            initialStE: currentStE,
+            legs: results
+        };
     }
 
     calculateBtn.addEventListener('click', function() {
-        const results = runTraverseCalculation();
-        if (!results) return;
+        const data = runTraverseCalculation();
+        if (!data) return;
 
         let text = `=== 多站連續導線計算結果 ===\n`;
-        results.forEach((r, idx) => {
-            text += `[目標: ${r.targetId.padEnd(6)}] N = ${r.n.toFixed(4)}, E = ${r.e.toFixed(4)} | 邊長: ${r.dist !== "" ? r.dist + "m" : "---"} | 夾角: ${r.deg !== "" ? r.deg+"°"+r.min+"'"+r.sec+"\"" : "---"}\n`;
+        text += `後視點 [${data.initialBsId}] N = ${data.initialBsN.toFixed(3)}, E = ${data.initialBsE.toFixed(3)}\n`;
+        text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(3)}, E = ${data.initialStE.toFixed(3)}\n\n`;
+
+        data.legs.forEach((r, idx) => {
+            text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | N = ${r.n.toFixed(3)}, E = ${r.e.toFixed(3)} | 邊長: ${r.dist}m | 夾角: ${r.deg}° ${r.min}' ${r.sec}"\n`;
         });
 
         resultArea.style.display = 'block';
@@ -440,41 +437,40 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     exportExcelBtn.addEventListener('click', function() {
-        const results = runTraverseCalculation();
-        if (!results) return;
+        const data = runTraverseCalculation();
+        if (!data) return;
 
-        // 建立符合截圖要求的雙行表頭結構
         const excelRows = [
             ["點號 (ID)", "縱座標 (N)", "橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", ""],
             ["", "", "", "", "°", "'", "\""]
         ];
 
-        results.forEach((r) => {
+        // 起始設站點
+        excelRows.push([
+            data.initialStId,
+            Number(data.initialStN.toFixed(4)),
+            Number(data.initialStE.toFixed(4)),
+            "", "", "", ""
+        ]);
+
+        // 各導線前瞻點（確保 0 能完整輸出）
+        data.legs.forEach((r) => {
             excelRows.push([
                 r.targetId,
                 Number(r.n.toFixed(4)),
                 Number(r.e.toFixed(4)),
-                r.dist !== "" ? Number(r.dist) : "",
-                r.deg !== "" ? r.deg : "",
-                r.min !== "" ? r.min : "",
-                r.sec !== "" ? r.sec : ""
+                r.dist !== '' ? r.dist : "",
+                r.deg !== '' ? r.deg : "",
+                r.min !== '' ? r.min : "",
+                r.sec !== '' ? r.sec : ""
             ]);
         });
 
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(excelRows);
 
-        // 設定合併儲存格以精準還原截圖表頭外觀
-        ws['!merges'] = [
-            { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, // 點號 (ID)
-            { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, // 縱座標 (N)
-            { s: { r: 0, c: 2 }, e: { r: 1, c: 2 } }, // 橫座標 (E)
-            { s: { r: 0, c: 3 }, e: { r: 1, c: 3 } }, // 邊長 (m)
-            { s: { r: 0, c: 4 }, e: { r: 0, c: 6 } }  // 夾角 (度分秒) 跨 3 欄
-        ];
-
-        XLSX.utils.book_append_sheet(wb, ws, "連續導線計算表");
-        XLSX.writeFile(wb, `多站連續導線計算表_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "座標計算表");
+        XLSX.writeFile(wb, `連續導線座標計算表_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
 });
 </script>
