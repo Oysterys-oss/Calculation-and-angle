@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多站連續導線座標計算與管理工具 (點號範例更新版)</title>
+    <title>多站連續導線座標計算與管理工具</title>
     <!-- 引入 SheetJS 用於前端匯出 Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -164,17 +164,17 @@
 <div class="container">
     <h1>多站連續導線座標計算與管理工具</h1>
 
-    <!-- 起始後視點與設站點 (預設空白) -->
+    <!-- 起始後視點與設站點 -->
     <div class="section-box">
         <h3>📍 起始導線起算點 (第 1 站)</h3>
         <div class="grid-2">
             <div class="form-group">
                 <label>初始後視點 點號 (BS):</label>
-                <input type="text" id="bsId" value="" placeholder="例: YY17">
+                <input type="text" id="bsId" value="" placeholder="例: 點號">
             </div>
             <div class="form-group">
                 <label>初始設站點 點號 (ST):</label>
-                <input type="text" id="stId" value="" placeholder="例: YY18">
+                <input type="text" id="stId" value="" placeholder="例: 點號">
             </div>
             <div class="form-group">
                 <label>後視點 縱座標 (N):</label>
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="row-index"></td>
-            <td><input type="text" class="input-id" value="${id}" placeholder="例: YY19"></td>
+            <td><input type="text" class="input-id" value="${id}" placeholder="例: 點號"></td>
             <td><input type="number" step="any" class="input-dist" value="${dist}" placeholder="邊長(m)"></td>
             <td>
                 <div class="angle-inputs">
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 初始化時預設帶入一行空白輸入列
+    // 初始化預設帶入一行空白輸入列
     addRow();
 
     addRowBtn.addEventListener('click', () => addRow());
