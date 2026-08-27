@@ -316,7 +316,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 新增已知點資料庫列
     function addKnownRow(id = '', n = '', e = '') {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -368,7 +367,6 @@ document.addEventListener('DOMContentLoaded', function() {
         knownTbody.appendChild(row);
     }
 
-    // 新增導線點列
     function addRow(id = '', dist = '', deg = '', min = '', sec = '') {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
@@ -530,7 +528,6 @@ document.addEventListener('DOMContentLoaded', function() {
         saveDataToLocalStorage();
     });
 
-    // 修改清除按鈕：只清除起算點與導線序列，保留已知點資料庫
     clearBtn.addEventListener('click', function() {
         if (confirm('確定清空初始起算點與導線前瞻點嗎？（已知點座標資料庫將會被完整保留）')) {
             document.getElementById('bsId').value = '';
@@ -620,8 +617,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let fwdAzDeg = fwdAzRad * 180 / PI_VAL;
 
-            let diffN = (leg.knownN !== null) ? (targetN - leg.knownN) : null;
-            let diffE = (leg.knownE !== null) ? (targetE - leg.knownE) : null;
+            let diffN = (leg.knownN !== null) ? (targetN - leg.knownN) * 1000 : null;
+            let diffE = (leg.knownE !== null) ? (targetE - leg.knownE) * 1000 : null;
 
             results.push({
                 stationId: activeStId,
@@ -663,15 +660,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!data) return;
 
         let text = `=== 多站連續導線座標與自動比對結果 ===\n`;
-        text += `後視點 [${data.initialBsId}] N = ${data.initialBsN.toFixed(3)}, E = ${data.initialBsE.toFixed(3)}\n`;
-        text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(3)}, E = ${data.initialStE.toFixed(3)}\n\n`;
+        text += `後視點 [${data.initialBsId}] N = ${data.initialBsN.toFixed(4)}, E = ${data.initialBsE.toFixed(4)}\n`;
+        text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(4)}, E = ${data.initialStE.toFixed(4)}\n\n`;
 
         data.legs.forEach((r, idx) => {
-            text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | 計算 N = ${r.n.toFixed(3)}, E = ${r.e.toFixed(3)}\n`;
+            text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | 計算 N = ${r.n.toFixed(4)}, E = ${r.e.toFixed(4)}\n`;
             if (r.knownN !== null || r.knownE !== null) {
-                let dnStr = r.diffN !== null ? (r.diffN >= 0 ? '+' + r.diffN.toFixed(3) : r.diffN.toFixed(3)) : 'N/A';
-                let deStr = r.diffE !== null ? (r.diffE >= 0 ? '+' + r.diffE.toFixed(3) : r.diffE.toFixed(3)) : 'N/A';
-                text += `   └─ [資料庫對應] 已知: N=${r.knownN.toFixed(3)}, E=${r.knownE.toFixed(3)} | 差值(計-已): ΔN = ${dnStr}, ΔE = ${deStr}\n`;
+                let dnStr = r.diffN !== null ? (r.diffN >= 0 ? '+' + r.diffN.toFixed(2) : r.diffN.toFixed(2)) : 'N/A';
+                let deStr = r.diffE !== null ? (r.diffE >= 0 ? '+' + r.diffE.toFixed(2) : r.diffE.toFixed(2)) : 'N/A';
+                text += `   └─ [資料庫對應] 已知: N=${r.knownN.toFixed(4)}, E=${r.knownE.toFixed(4)} | 差值(計-已): ΔN = ${dnStr}, ΔE = ${deStr}\n`;
             }
         });
 
@@ -687,7 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const bsToStDist = pol(data.initialBsN, data.initialBsE, data.initialStN, data.initialStE, 1);
 
         const excelRows = [
-            ["點號 (ID)", "計算縱座標 (N)", "計算橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", "", "已知縱座標 (N)", "已知橫座標 (E)", "差值 ΔN (計-已)", "差值 ΔE (計-已)"],
+            ["點號 (ID)", "計算縱座標 (N)", "計算橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", "", "已知縱座標 (N)", "已知橫座標 (E)", "差值 ΔN (計-已)*1000", "差值 ΔE (計-已)*1000"],
             ["", "", "", "", "°", "'", "\"", "", "", "", ""]
         ];
 
@@ -717,8 +714,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 r.sec !== '' ? r.sec : "",
                 r.knownN !== null ? Number(r.knownN.toFixed(4)) : "",
                 r.knownE !== null ? Number(r.knownE.toFixed(4)) : "",
-                r.diffN !== null ? Number(r.diffN.toFixed(4)) : "",
-                r.diffE !== null ? Number(r.diffE.toFixed(4)) : ""
+                r.diffN !== null ? Number(r.diffN.toFixed(2)) : "",
+                r.diffE !== null ? Number(r.diffE.toFixed(2)) : ""
             ]);
         });
 
