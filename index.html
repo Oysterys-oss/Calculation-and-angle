@@ -91,7 +91,7 @@
 
         .table-container {
             overflow-x: auto;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         table {
@@ -146,6 +146,16 @@
         .btn-danger-outline { background-color: #fff; color: var(--danger-color); border: 1px solid var(--danger-color); flex: 1; }
         .btn-delete { background-color: var(--danger-color); color: white; padding: 6px 12px; font-size: 0.85rem; }
 
+        .known-tag {
+            font-size: 0.8rem;
+            color: #16a34a;
+            background: #dcfce7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
         #resultArea {
             background-color: #f8fafc;
             border: 1px solid var(--border-color);
@@ -195,20 +205,39 @@
         </div>
     </div>
 
+    <!-- 已知點座標資料庫 -->
+    <div class="section-box">
+        <h3>📂 已知點座標資料庫 (輸入點號與已知座標後，下方導線點號若相符將自動帶入比對)</h3>
+        <div class="table-container">
+            <table id="knownDbTable">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">已知點號 (ID)</th>
+                        <th style="width: 30%;">已知 N 座標</th>
+                        <th style="width: 30%;">已知 E 座標</th>
+                        <th style="width: 10%;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 動態生成已知點 -->
+                </tbody>
+            </table>
+        </div>
+        <button type="button" id="addKnownRowBtn" class="btn-secondary">＋ 新增已知點資料庫項目</button>
+    </div>
+
     <!-- 連續導線點輸入表格 -->
     <div class="section-box">
-        <h3>📊 導線前瞻點序列 (依序輸入各站點之邊長、夾角與已知座標供比對)</h3>
+        <h3>📊 導線前瞻點序列 (依序輸入各站點之邊長與夾角)</h3>
         <div class="table-container">
             <table id="traverseTable">
                 <thead>
                     <tr>
-                        <th style="width: 6%;">站序</th>
-                        <th style="width: 15%;">目標點號 (ID)</th>
-                        <th style="width: 15%;">邊長 (m)</th>
-                        <th style="width: 25%;">夾角 (度分秒)</th>
-                        <th style="width: 15%;">已知 N 座標 (選填)</th>
-                        <th style="width: 15%;">已知 E 座標 (選填)</th>
-                        <th style="width: 9%;">操作</th>
+                        <th style="width: 8%;">站序</th>
+                        <th style="width: 22%;">目標點號 (ID)</th>
+                        <th style="width: 25%;">邊長 (m)</th>
+                        <th style="width: 35%;">夾角 (度分秒)</th>
+                        <th style="width: 10%;">操作</th>
                     </tr>
                     <tr>
                         <th></th>
@@ -219,8 +248,6 @@
                                 <span>°</span><span>'</span><span>"</span>
                             </div>
                         </th>
-                        <th></th>
-                        <th></th>
                         <th></th>
                     </tr>
                 </thead>
@@ -234,7 +261,7 @@
 
     <div class="btn-group">
         <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空所有點</button>
-        <button type="button" id="calculateBtn" class="btn-primary">計算連續導線座標與差值</button>
+        <button type="button" id="calculateBtn" class="btn-primary">計算連續導線座標與自動比對</button>
         <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出完整 Excel 報表</button>
     </div>
 
@@ -243,6 +270,9 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const knownTbody = document.querySelector('#knownDbTable tbody');
+    const addKnownRowBtn = document.getElementById('addKnownRowBtn');
+    
     const tbody = document.querySelector('#traverseTable tbody');
     const addRowBtn = document.getElementById('addRowBtn');
     const clearBtn = document.getElementById('clearBtn');
@@ -279,11 +309,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function addRow(id = '', dist = '', deg = '', min = '', sec = '', knownN = '', knownE = '') {
+    // 新增已知點資料庫列
+    function addKnownRow(id = '', n = '', e = '') {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="text" class="known-id" value="${id}" placeholder="已知點號"></td>
+            <td><input type="number" step="any" class="known-n" value="${n}" placeholder="已知 N"></td>
+            <td><input type="number" step="any" class="known-e" value="${e}" placeholder="已知 E"></td>
+            <td><button type="button" class="btn-delete">刪除</button></td>
+        `;
+        row.querySelector('.btn-delete').addEventListener('click', () => row.remove());
+        knownTbody.appendChild(row);
+    }
+
+    // 新增導線點列
+    function addRow(id = '', dist = '', deg = '', min = '', sec = '') {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="row-index"></td>
-            <td><input type="text" class="input-id" value="${id}" placeholder="例: 點號"></td>
+            <td>
+                <input type="text" class="input-id" value="${id}" placeholder="例: 點號">
+                <div class="known-status"></div>
+            </td>
             <td><input type="number" step="any" class="input-dist" value="${dist}" placeholder="邊長(m)"></td>
             <td>
                 <div class="angle-inputs">
@@ -292,10 +339,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" class="input-sec" value="${sec}" placeholder="秒">
                 </div>
             </td>
-            <td><input type="number" step="any" class="input-known-n" value="${knownN}" placeholder="已知 N"></td>
-            <td><input type="number" step="any" class="input-known-e" value="${knownE}" placeholder="已知 E"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
+
+        const idInput = newRow.querySelector('.input-id');
+        idInput.addEventListener('input', updateKnownStatusUI);
 
         newRow.querySelector('.btn-delete').addEventListener('click', function() {
             newRow.remove();
@@ -313,10 +361,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 初始化預設帶入一行空白輸入列
+    // 取得目前的已知點資料庫對應表 (Map)
+    function getKnownDatabase() {
+        const db = {};
+        const rows = knownTbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const id = row.querySelector('.known-id').value.trim();
+            const n = parseFloat(row.querySelector('.known-n').value);
+            const e = parseFloat(row.querySelector('.known-e').value);
+            if (id && !isNaN(n) && !isNaN(e)) {
+                db[id] = { n, e };
+            }
+        });
+        return db;
+    }
+
+    // 即時檢查並顯示是否有對應到資料庫
+    function updateKnownStatusUI() {
+        const db = getKnownDatabase();
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const id = row.querySelector('.input-id').value.trim();
+            const statusDiv = row.querySelector('.known-status');
+            if (id && db[id]) {
+                statusDiv.innerHTML = `<span class="known-tag">✓ 已對應已知點</span>`;
+            } else {
+                statusDiv.innerHTML = '';
+            }
+        });
+    }
+
+    // 初始化預設帶入
+    addKnownRow();
     addRow();
 
+    addKnownRowBtn.addEventListener('click', () => addKnownRow());
     addRowBtn.addEventListener('click', () => addRow());
+
+    // 監聽已知點資料庫變更時，即時更新下方標籤
+    knownTbody.addEventListener('input', updateKnownStatusUI);
 
     clearBtn.addEventListener('click', function() {
         if (confirm('確定清空所有資料嗎？')) {
@@ -326,7 +409,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('stN').value = '';
             document.getElementById('bsE').value = '';
             document.getElementById('stE').value = '';
+            knownTbody.innerHTML = '';
             tbody.innerHTML = '';
+            addKnownRow();
             addRow();
             resultArea.style.display = 'none';
         }
@@ -345,6 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
 
+        const knownDb = getKnownDatabase();
         const rows = tbody.querySelectorAll('tr');
         let legs = [];
         rows.forEach((row, idx) => {
@@ -353,8 +439,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const degInput = row.querySelector('.input-deg').value;
             const minInput = row.querySelector('.input-min').value;
             const secInput = row.querySelector('.input-sec').value;
-            const knownNInput = row.querySelector('.input-known-n').value;
-            const knownEInput = row.querySelector('.input-known-e').value;
+
+            // 自動從已知點資料庫對應
+            let known = knownDb[id] || null;
 
             legs.push({
                 id,
@@ -362,8 +449,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 deg: degInput !== '' ? parseFloat(degInput) : '',
                 min: minInput !== '' ? parseFloat(minInput) : '',
                 sec: secInput !== '' ? parseFloat(secInput) : '',
-                knownN: knownNInput !== '' ? parseFloat(knownNInput) : null,
-                knownE: knownEInput !== '' ? parseFloat(knownEInput) : null
+                knownN: known ? known.n : null,
+                knownE: known ? known.e : null
             });
         });
 
@@ -403,7 +490,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let fwdAzDeg = fwdAzRad * 180 / PI_VAL;
 
-            // 計算與已知座標的差值 (計算值 - 已知值 或 已知值 - 計算值，此處採用「計算值 - 已知值」)
             let diffN = (leg.knownN !== null) ? (targetN - leg.knownN) : null;
             let diffE = (leg.knownE !== null) ? (targetE - leg.knownE) : null;
 
@@ -446,18 +532,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = runTraverseCalculation();
         if (!data) return;
 
-        let text = `=== 多站連續導線計算與差值結果 ===\n`;
+        let text = `=== 多站連續導線座標與自動比對結果 ===\n`;
         text += `後視點 [${data.initialBsId}] N = ${data.initialBsN.toFixed(3)}, E = ${data.initialBsE.toFixed(3)}\n`;
         text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(3)}, E = ${data.initialStE.toFixed(3)}\n\n`;
 
         data.legs.forEach((r, idx) => {
             text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | 計算 N = ${r.n.toFixed(3)}, E = ${r.e.toFixed(3)}\n`;
             if (r.knownN !== null || r.knownE !== null) {
-                let nStr = r.knownN !== null ? r.knownN.toFixed(3) : '無';
-                let eStr = r.knownE !== null ? r.knownE.toFixed(3) : '無';
                 let dnStr = r.diffN !== null ? (r.diffN >= 0 ? '+' + r.diffN.toFixed(3) : r.diffN.toFixed(3)) : 'N/A';
                 let deStr = r.diffE !== null ? (r.diffE >= 0 ? '+' + r.diffE.toFixed(3) : r.diffE.toFixed(3)) : 'N/A';
-                text+ `   └─ 已知座標: N = ${nStr}, E = ${eStr} | 差值(計-已): ΔN = ${dnStr}, ΔE = ${deStr}\n`;
+                text += `   └─ [資料庫對應] 已知: N=${r.knownN.toFixed(3)}, E=${r.knownE.toFixed(3)} | 差值(計-已): ΔN = ${dnStr}, ΔE = ${deStr}\n`;
             }
         });
 
@@ -494,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "", "", "", "", "", "", ""
         ]);
 
-        // 3. 依序放入各導線前瞻點與已知座標、差值
+        // 3. 依序放入各導線前瞻點與資料庫自動對應的已知座標、差值
         data.legs.forEach((r) => {
             excelRows.push([
                 r.targetId,
