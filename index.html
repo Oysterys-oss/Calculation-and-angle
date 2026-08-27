@@ -27,7 +27,7 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1250px;
             margin: 0 auto;
             background-color: var(--card-bg);
             padding: 30px;
@@ -197,16 +197,18 @@
 
     <!-- 連續導線點輸入表格 -->
     <div class="section-box">
-        <h3>📊 導線前瞻點序列 (依序輸入各站點之邊長與夾角)</h3>
+        <h3>📊 導線前瞻點序列 (依序輸入各站點之邊長、夾角與已知座標供比對)</h3>
         <div class="table-container">
             <table id="traverseTable">
                 <thead>
                     <tr>
-                        <th style="width: 8%;">站序</th>
-                        <th style="width: 18%;">目標點號 (ID)</th>
-                        <th style="width: 22%;">邊長 (m)</th>
-                        <th style="width: 40%;">夾角 (度分秒)</th>
-                        <th style="width: 12%;">操作</th>
+                        <th style="width: 6%;">站序</th>
+                        <th style="width: 15%;">目標點號 (ID)</th>
+                        <th style="width: 15%;">邊長 (m)</th>
+                        <th style="width: 25%;">夾角 (度分秒)</th>
+                        <th style="width: 15%;">已知 N 座標 (選填)</th>
+                        <th style="width: 15%;">已知 E 座標 (選填)</th>
+                        <th style="width: 9%;">操作</th>
                     </tr>
                     <tr>
                         <th></th>
@@ -217,6 +219,8 @@
                                 <span>°</span><span>'</span><span>"</span>
                             </div>
                         </th>
+                        <th></th>
+                        <th></th>
                         <th></th>
                     </tr>
                 </thead>
@@ -230,7 +234,7 @@
 
     <div class="btn-group">
         <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空所有點</button>
-        <button type="button" id="calculateBtn" class="btn-primary">計算連續導線座標</button>
+        <button type="button" id="calculateBtn" class="btn-primary">計算連續導線座標與差值</button>
         <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出完整 Excel 報表</button>
     </div>
 
@@ -275,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function addRow(id = '', dist = '', deg = '', min = '', sec = '') {
+    function addRow(id = '', dist = '', deg = '', min = '', sec = '', knownN = '', knownE = '') {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="row-index"></td>
@@ -288,6 +292,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" class="input-sec" value="${sec}" placeholder="秒">
                 </div>
             </td>
+            <td><input type="number" step="any" class="input-known-n" value="${knownN}" placeholder="已知 N"></td>
+            <td><input type="number" step="any" class="input-known-e" value="${knownE}" placeholder="已知 E"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
 
@@ -347,13 +353,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const degInput = row.querySelector('.input-deg').value;
             const minInput = row.querySelector('.input-min').value;
             const secInput = row.querySelector('.input-sec').value;
+            const knownNInput = row.querySelector('.input-known-n').value;
+            const knownEInput = row.querySelector('.input-known-e').value;
 
             legs.push({
                 id,
                 dist: distInput !== '' ? parseFloat(distInput) : '',
                 deg: degInput !== '' ? parseFloat(degInput) : '',
                 min: minInput !== '' ? parseFloat(minInput) : '',
-                sec: secInput !== '' ? parseFloat(secInput) : ''
+                sec: secInput !== '' ? parseFloat(secInput) : '',
+                knownN: knownNInput !== '' ? parseFloat(knownNInput) : null,
+                knownE: knownEInput !== '' ? parseFloat(knownEInput) : null
             });
         });
 
@@ -369,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const PI_VAL = Math.PI;
 
-        legs.forEach((leg, index) => {
+        legs.forEach((leg) => {
             let distVal = typeof leg.dist === 'number' ? leg.dist : 0;
             let dDeg = typeof leg.deg === 'number' ? leg.deg : 0;
             let dMin = typeof leg.min === 'number' ? leg.min : 0;
@@ -393,6 +403,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let fwdAzDeg = fwdAzRad * 180 / PI_VAL;
 
+            // 計算與已知座標的差值 (計算值 - 已知值 或 已知值 - 計算值，此處採用「計算值 - 已知值」)
+            let diffN = (leg.knownN !== null) ? (targetN - leg.knownN) : null;
+            let diffE = (leg.knownE !== null) ? (targetE - leg.knownE) : null;
+
             results.push({
                 stationId: activeStId,
                 targetId: leg.id,
@@ -402,6 +416,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 deg: leg.deg,
                 min: leg.min,
                 sec: leg.sec,
+                knownN: leg.knownN,
+                knownE: leg.knownE,
+                diffN: diffN,
+                diffE: diffE,
                 fwdAzDMS: degToDMS(fwdAzDeg)
             });
 
@@ -428,12 +446,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = runTraverseCalculation();
         if (!data) return;
 
-        let text = `=== 多站連續導線計算結果 ===\n`;
+        let text = `=== 多站連續導線計算與差值結果 ===\n`;
         text += `後視點 [${data.initialBsId}] N = ${data.initialBsN.toFixed(3)}, E = ${data.initialBsE.toFixed(3)}\n`;
         text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(3)}, E = ${data.initialStE.toFixed(3)}\n\n`;
 
         data.legs.forEach((r, idx) => {
-            text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | N = ${r.n.toFixed(3)}, E = ${r.e.toFixed(3)} | 邊長: ${r.dist}m | 夾角: ${r.deg}° ${r.min}' ${r.sec}"\n`;
+            text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | 計算 N = ${r.n.toFixed(3)}, E = ${r.e.toFixed(3)}\n`;
+            if (r.knownN !== null || r.knownE !== null) {
+                let nStr = r.knownN !== null ? r.knownN.toFixed(3) : '無';
+                let eStr = r.knownE !== null ? r.knownE.toFixed(3) : '無';
+                let dnStr = r.diffN !== null ? (r.diffN >= 0 ? '+' + r.diffN.toFixed(3) : r.diffN.toFixed(3)) : 'N/A';
+                let deStr = r.diffE !== null ? (r.diffE >= 0 ? '+' + r.diffE.toFixed(3) : r.diffE.toFixed(3)) : 'N/A';
+                text+ `   └─ 已知座標: N = ${nStr}, E = ${eStr} | 差值(計-已): ΔN = ${dnStr}, ΔE = ${deStr}\n`;
+            }
         });
 
         resultArea.style.display = 'block';
@@ -448,8 +473,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const bsToStDist = pol(data.initialBsN, data.initialBsE, data.initialStN, data.initialStE, 1);
 
         const excelRows = [
-            ["點號 (ID)", "縱座標 (N)", "橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", ""],
-            ["", "", "", "", "°", "'", "\""]
+            ["點號 (ID)", "計算縱座標 (N)", "計算橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", "", "已知縱座標 (N)", "已知橫座標 (E)", "差值 ΔN (計-已)", "差值 ΔE (計-已)"],
+            ["", "", "", "", "°", "'", "\"", "", "", "", ""]
         ];
 
         // 1. 放入初始後視點 (BS)
@@ -457,19 +482,19 @@ document.addEventListener('DOMContentLoaded', function() {
             data.initialBsId,
             Number(data.initialBsN.toFixed(4)),
             Number(data.initialBsE.toFixed(4)),
-            "", "", "", ""
+            "", "", "", "", "", "", "", ""
         ]);
 
-        // 2. 放入初始設站點 (ST)，並將 BS 到 ST 的距離填在邊長欄位
+        // 2. 放入初始設站點 (ST)
         excelRows.push([
             data.initialStId,
             Number(data.initialStN.toFixed(4)),
             Number(data.initialStE.toFixed(4)),
             Number(bsToStDist.toFixed(4)),
-            "", "", ""
+            "", "", "", "", "", "", ""
         ]);
 
-        // 3. 依序放入各導線前瞻點
+        // 3. 依序放入各導線前瞻點與已知座標、差值
         data.legs.forEach((r) => {
             excelRows.push([
                 r.targetId,
@@ -478,15 +503,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 r.dist !== '' ? r.dist : "",
                 r.deg !== '' ? r.deg : "",
                 r.min !== '' ? r.min : "",
-                r.sec !== '' ? r.sec : ""
+                r.sec !== '' ? r.sec : "",
+                r.knownN !== null ? Number(r.knownN.toFixed(4)) : "",
+                r.knownE !== null ? Number(r.knownE.toFixed(4)) : "",
+                r.diffN !== null ? Number(r.diffN.toFixed(4)) : "",
+                r.diffE !== null ? Number(r.diffE.toFixed(4)) : ""
             ]);
         });
 
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(excelRows);
 
-        XLSX.utils.book_append_sheet(wb, ws, "座標計算表");
-        XLSX.writeFile(wb, `連續導線座標計算表_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "座標計算與差值表");
+        XLSX.writeFile(wb, `連續導線座標與差值報表_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
 });
 </script>
