@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let bsId = document.getElementById('bsId').value.trim() || 'BS';
         let stId = document.getElementById('stId').value.trim() || 'ST';
 
-        let bsToStDistVal = parseFloat(document.getElementById('bsToStDist').value);
+        let bsToStDistVal = document.getElementById('bsToStDist').value;
 
         if (isNaN(currentBsN) || isNaN(currentBsE) || isNaN(currentStN) || isNaN(currentStE)) {
             alert('請完整輸入初始起算點座標！');
@@ -605,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
             initialStId: stId,
             initialStN: currentStN,
             initialStE: currentStE,
-            bsToStDist: isNaN(bsToStDistVal) ? '' : bsToStDistVal,
+            bsToStDist: bsToStDistVal !== '' ? parseFloat(bsToStDistVal) : '',
             legs: legs
         };
     }
@@ -622,15 +622,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let activeStId = raw.initialStId;
         const PI_VAL = Math.PI;
 
-        raw.legs.forEach((leg, index) => {
-            // 第 1 站的邊長若上方有填寫「後視點至設站點 實測邊長」，則優先採用；否則用表格輸入的邊長
-            let distVal = 0;
-            if (index === 0 && raw.bsToStDist !== '') {
-                distVal = raw.bsToStDist;
-            } else {
-                distVal = typeof leg.dist === 'number' ? leg.dist : 0;
-            }
-
+        raw.legs.forEach((leg) => {
+            let distVal = typeof leg.dist === 'number' ? leg.dist : 0;
             let dDeg = typeof leg.deg === 'number' ? leg.deg : 0;
             let dMin = typeof leg.min === 'number' ? leg.min : 0;
             let dSec = typeof leg.sec === 'number' ? leg.sec : 0;
@@ -658,7 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 targetId: leg.id,
                 n: targetN,
                 e: targetE,
-                dist: (index === 0 && raw.bsToStDist !== '') ? raw.bsToStDist : leg.dist,
+                dist: leg.dist,
                 deg: leg.deg,
                 min: leg.min,
                 sec: leg.sec,
@@ -689,7 +682,7 @@ document.addEventListener('DOMContentLoaded', function() {
         text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(4)}, E = ${data.initialStE.toFixed(4)}\n\n`;
 
         data.legsCalculated.forEach((r, idx) => {
-            text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | 採用邊長 = ${r.dist} | 計算 N = ${r.n.toFixed(4)}, E = ${r.e.toFixed(4)}\n`;
+            text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | 計算 N = ${r.n.toFixed(4)}, E = ${r.e.toFixed(4)}\n`;
             if (r.knownN !== null || r.knownE !== null) {
                 let dnStr = r.diffN !== null ? (r.diffN >= 0 ? '+' + r.diffN.toFixed(2) : r.diffN.toFixed(2)) : 'N/A';
                 let deStr = r.diffE !== null ? (r.diffE >= 0 ? '+' + r.diffE.toFixed(2) : r.diffE.toFixed(2)) : 'N/A';
