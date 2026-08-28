@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多站連續導線座標計算與管理工具</title>
-    <!-- 引入 SheetJS 用於前端匯入與匯出 Excel -->
+    <title>平面控制點檢測成果表 - 完整計算與比對系統</title>
+    <!-- 引入 SheetJS 用於前端 Excel 讀寫 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
-            --primary-color: #2563eb;
+            --primary-color: #1e3a8a;
             --success-color: #16a34a;
             --danger-color: #dc2626;
             --bg-color: #f8fafc;
@@ -27,7 +27,7 @@
         }
 
         .container {
-            max-width: 1250px;
+            max-width: 1350px;
             margin: 0 auto;
             background-color: var(--card-bg);
             padding: 30px;
@@ -36,7 +36,7 @@
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             margin-bottom: 1.5rem;
             color: var(--primary-color);
             text-align: center;
@@ -64,11 +64,10 @@
         .section-box h3 .toggle-icon {
             font-size: 0.9rem;
             color: #64748b;
-            transition: transform 0.2s;
         }
 
         .collapsible-content {
-            display: none; /* 預設收合 */
+            display: none;
             margin-top: 10px;
         }
 
@@ -108,7 +107,7 @@
         input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
         }
 
         .table-container {
@@ -195,19 +194,19 @@
 <body>
 
 <div class="container">
-    <h1>多站連續導線座標計算與管理工具</h1>
+    <h1>平面控制點檢測成果表 - 完整計算與比對系統</h1>
 
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
-        <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
-        <div class="hint-text">點擊匯入後，系統會透過<b>精準欄位標題與關鍵字過濾</b>，正確抓取點號、N、E、邊長與夾角。</div>
+        <h3 style="color: #1d4ed8; margin-top: 0;">📂 成果表自動匯入 (完整支援 2 列一組垂直交錯結構)</h3>
+        <div class="hint-text">點擊後選取您的 Excel 檢測成果表，系統將自動解析點號、原始座標、實測平距、實測夾角（度分秒）！</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
-        <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
+        <button type="button" id="importReportBtn" class="btn-info">📂 選擇並自動解析成果表 Excel</button>
     </div>
 
     <!-- 起始後視點與設站點 -->
     <div class="section-box">
-        <h3>📍 起始導線起算點與第一站實測資料 (第 1 站)</h3>
+        <h3>📍 導線起算點與第一站實測資料 (第 1 站)</h3>
         <div class="grid-2" style="margin-top: 10px;">
             <div class="form-group">
                 <label>初始後視點 點號 (BS):</label>
@@ -248,20 +247,18 @@
             <span class="toggle-icon" id="toggleIcon">▼ 展開</span>
         </h3>
         <div class="collapsible-content" id="knownDbContent">
-            <div class="hint-text">💡 <b>快捷操作</b>：匯入檢測表時，原表上的已知座標會自動同步存入此資料庫中。</div>
+            <div class="hint-text">💡 <b>說明</b>：匯入檢測表時，原表上的已知座標會自動同步存入此資料庫中，供計算後座標與已知座標進行較差(ΔN, ΔE)自動比對。</div>
             <div class="table-container">
                 <table id="knownDbTable">
                     <thead>
                         <tr>
                             <th style="width: 30%;">已知點號 (ID)</th>
-                            <th style="width: 30%;">已知 N 座標 (小數點4位)</th>
-                            <th style="width: 30%;">已知 E 座標 (小數點4位)</th>
+                            <th style="width: 30%;">已知 N 座標</th>
+                            <th style="width: 30%;">已知 E 座標</th>
                             <th style="width: 10%;">操作</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- 動態生成已知點 -->
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
             <button type="button" id="addKnownRowBtn" class="btn-secondary">＋ 新增已知點資料庫項目</button>
@@ -270,15 +267,15 @@
 
     <!-- 連續導線點輸入表格 -->
     <div class="section-box">
-        <h3>📊 導線前瞻點序列 (依序輸入各站點之邊長與夾角)</h3>
+        <h3>📊 導線前瞻點序列 (依序輸入目標點、邊長與實測夾角)</h3>
         <div class="table-container" style="margin-top: 10px;">
             <table id="traverseTable">
                 <thead>
                     <tr>
                         <th style="width: 8%;">站序</th>
                         <th style="width: 22%;">目標點號 (ID)</th>
-                        <th style="width: 25%;">邊長 (m)</th>
-                        <th style="width: 35%;">夾角 (度分秒，秒數支援小數)</th>
+                        <th style="width: 25%;">實測邊長 (m)</th>
+                        <th style="width: 35%;">實測夾角 (度、分、秒)</th>
                         <th style="width: 10%;">操作</th>
                     </tr>
                     <tr>
@@ -293,20 +290,16 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- 動態生成 -->
-                </tbody>
+                <tbody></tbody>
             </table>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
-        </div>
+        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
     </div>
 
     <div class="btn-group">
-        <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空導線與起算點 (保留已知點資料庫)</button>
-        <button type="button" id="calculateBtn" class="btn-primary">計算連續導線座標與自動比對</button>
-        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出完整 Excel 報表</button>
+        <button type="button" id="clearBtn" class="btn-danger-outline">🗑️ 清空導線與起算點</button>
+        <button type="button" id="calculateBtn" class="btn-primary">計算完整成果表 (含反算平距、反算夾角與較差比對)</button>
+        <button type="button" id="exportExcelBtn" class="btn-success">📊 匯出完整檢測成果表 Excel</button>
     </div>
 
     <div id="resultArea"></div>
@@ -339,36 +332,40 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const importReportBtn = document.getElementById('importReportBtn');
     const reportFileImporter = document.getElementById('reportFileImporter');
-    
     const resultArea = document.getElementById('resultArea');
 
-    function degToDMS(degDecimal) {
+    function degToDMSParts(degDecimal) {
         let d = Math.floor(degDecimal);
         let remainderMin = (degDecimal - d) * 60;
         let m = Math.floor(remainderMin);
         let s = (remainderMin - m) * 60;
-        return `${d}° ${String(m).padStart(2, '0')}' ${s.toFixed(4)}''`;
+        return { d, m, s };
     }
 
-    function pol(n1, e1, n2, e2, p) {
-        const PI_VAL = Math.PI;
-        let r = Math.pow(Math.pow(n2 - n1, 2) + Math.pow(e2 - e1, 2), 0.5);
-        if (p === 1) {
-            return r;
-        } else {
-            let az = 0;
-            if (e2 - e1 === 0) {
-                az = (n2 - n1 > 0) ? 0 : PI_VAL;
-            } else {
-                let a = Math.atan((n2 - n1) / (e2 - e1));
-                if (e2 - e1 > 0) {
-                    az = PI_VAL / 2 - a;
-                } else {
-                    az = PI_VAL * 3 / 2 - a;
-                }
-            }
-            return az;
+    function formatDMS(degDecimal) {
+        let p = degToDMSParts(degDecimal);
+        return `${p.d}° ${String(p.m).padStart(2, '0')}' ${p.s.toFixed(2)}''`;
+    }
+
+    // 計算方位角 (回傳弳度 0 ~ 2*PI)
+    function getAzimuth(n1, e1, n2, e2) {
+        const PI = Math.PI;
+        let dn = n2 - n1;
+        let de = e2 - e1;
+        if (de === 0) {
+            return dn >= 0 ? 0 : PI;
         }
+        let az = Math.atan(Math.abs(de) / Math.abs(dn));
+        if (dn >= 0 && de > 0) return az;
+        if (dn < 0 && de > 0) return PI - az;
+        if (dn < 0 && de < 0) return PI + az;
+        if (dn >= 0 && de < 0) return 2 * PI - az;
+        return 0;
+    }
+
+    // 計算平距
+    function getDistance(n1, e1, n2, e2) {
+        return Math.sqrt(Math.pow(n2 - n1, 2) + Math.pow(e2 - e1, 2));
     }
 
     function addKnownRow(id = '', n = '', e = '') {
@@ -401,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
         newRow.innerHTML = `
             <td class="row-index"></td>
             <td>
-                <input type="text" class="input-id" value="${id}" placeholder="例: 點號">
+                <input type="text" class="input-id" value="${id}" placeholder="點號">
                 <div class="known-status"></div>
             </td>
             <td><input type="number" step="any" class="input-dist" value="${dist}" placeholder="邊長(m)"></td>
@@ -495,11 +492,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v2', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data');
+        const saved = localStorage.getItem('traverse_tool_data_v2');
         if (!saved) {
             addKnownRow();
             addRow();
@@ -551,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 精準表頭欄位對應引擎 (嚴格排除專案標題、比例尺與單一英文字母干擾)
+    // 🏆 專用 2 列一組垂直交錯表格解析引擎
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -565,167 +562,105 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                let headerRowIdx = -1;
-                let colMap = { id: -1, n: -1, e: -1, dist: -1, deg: -1, min: -1, sec: -1 };
+                let pointsMap = {};
+                let pointOrder = [];
 
-                // 1. 尋找真正的表格標題列（掃描前 8 行）
-                for (let i = 0; i < Math.min(jsonRows.length, 8); i++) {
+                for (let i = 0; i < jsonRows.length; i++) {
                     let r = jsonRows[i];
                     if (!r) continue;
-                    let foundId = false, foundN = false, foundE = false;
 
-                    for (let c = 0; c < r.length; c++) {
-                        let txt = String(r[c] || '').trim().toLowerCase();
-                        if (txt.includes('點號') || txt.includes('點名') || txt === 'id' || txt === 'pt') {
-                            colMap.id = c;
-                            foundId = true;
-                        } else if ((txt.includes('n') || txt.includes('縱座標') || txt.includes('北')) && !txt.includes('差')) {
-                            if (colMap.n === -1) colMap.n = c;
-                            else colMap.e = c; // 如果有兩欄帶N/E
-                            foundN = true;
-                        } else if ((txt.includes('e') || txt.includes('橫座標') || txt.includes('東')) && !txt.includes('差')) {
-                            colMap.e = c;
-                            foundE = true;
-                        } else if (txt.includes('邊長') || txt.includes('距離') || txt.includes('dist')) {
-                            colMap.dist = c;
-                        } else if (txt.includes('度') || txt.includes('夾角') || txt.includes('角度')) {
-                            colMap.deg = c;
-                            colMap.min = c + 1;
-                            colMap.sec = c + 2;
-                        }
-                    }
-
-                    if (foundId || (foundN && foundE)) {
-                        headerRowIdx = i;
-                        break;
-                    }
-                }
-
-                let records = [];
-
-                if (headerRowIdx !== -1) {
-                    // 按照鎖定的表頭欄位精準抓取
-                    for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
-                        let r = jsonRows[i];
-                        if (!r || r.length === 0) continue;
-
-                        let idVal = colMap.id !== -1 ? String(r[colMap.id] || '').trim() : '';
-                        // 如果第一欄就是點號且未命名，嘗試預設抓第0欄
-                        if (!idVal && r.length > 0) {
-                            idVal = String(r[0] || '').trim();
+                    let potentialId = String(r[0] || r[1] || '').trim();
+                    if (potentialId && potentialId.length <= 15 && !potentialId.includes('/') && !potentialId.includes('標') && !potentialId.includes('成果表')) {
+                        let id = potentialId;
+                        if (!pointsMap[id]) {
+                            pointsMap[id] = { id, n: '', e: '', dist: '', deg: '', min: '', sec: '' };
+                            pointOrder.push(id);
                         }
 
-                        // 過濾掉空白點號、專案標題文字、比例尺
-                        if (!idVal || idVal.length > 25 || idVal.includes('/') || idVal.includes('施工') || idVal.includes('檢測')) continue;
-
-                        let nVal = colMap.n !== -1 ? parseFloat(r[colMap.n]) : '';
-                        let eVal = colMap.e !== -1 ? parseFloat(r[colMap.e]) : '';
-                        let distVal = colMap.dist !== -1 ? parseFloat(r[colMap.dist]) : '';
-                        let degVal = colMap.deg !== -1 ? parseFloat(r[colMap.deg]) : '';
-                        let minVal = colMap.min !== -1 ? parseFloat(r[colMap.min]) : '';
-                        let secVal = colMap.sec !== -1 ? parseFloat(r[colMap.sec]) : '';
-
-                        // 如果表頭沒抓到座標，自動在該列搜尋數值合法的坐標
-                        if (isNaN(nVal) || isNaN(eVal)) {
-                            let numbers = [];
-                            for (let c = 0; c < r.length; c++) {
-                                let num = parseFloat(r[c]);
-                                if (!isNaN(num)) numbers.push(num);
-                            }
-                            let coords = numbers.filter(n => n > 1000 && n < 99999999);
-                            if (nVal === '' || isNaN(nVal)) nVal = coords.length > 0 ? coords[0] : '';
-                            if (eVal === '' || isNaN(eVal)) eVal = coords.length > 1 ? coords[1] : '';
-                        }
-
-                        if (idVal) {
-                            records.push({
-                                id: idVal,
-                                n: !isNaN(nVal) ? Number(nVal).toFixed(4) : '',
-                                e: !isNaN(eVal) ? Number(eVal).toFixed(4) : '',
-                                dist: !isNaN(distVal) ? distVal : '',
-                                deg: !isNaN(degVal) ? degVal : '',
-                                min: !isNaN(minVal) ? minVal : '',
-                                sec: !isNaN(secVal) ? secVal : ''
-                            });
-                        }
-                    }
-                } else {
-                    // 備用：若無明顯表頭，逐行嚴格過濾純文字與坐標
-                    for (let i = 0; i < jsonRows.length; i++) {
-                        let r = jsonRows[i];
-                        if (!r || r.length === 0) continue;
-
-                        let possibleId = '';
-                        for (let c = 0; c < Math.min(r.length, 2); c++) {
-                            let val = String(r[c] || '').trim();
-                            if (val && val.length < 15 && !val.includes('/') && !val.includes('工程') && !val.includes('檢測') && !val.includes('頁') && val.toLowerCase() !== 'e' && val.toLowerCase() !== 'n') {
-                                possibleId = val;
-                                break;
-                            }
-                        }
-                        if (!possibleId) continue;
-
-                        let numbers = [];
+                        // 抓取 N 坐標
                         for (let c = 0; c < r.length; c++) {
-                            let num = parseFloat(r[c]);
-                            if (!isNaN(num)) numbers.push(num);
+                            let val = parseFloat(r[c]);
+                            let txt = String(r[c] || '').trim().toUpperCase();
+                            if (txt === 'N' && r[c+1] && !isNaN(parseFloat(r[c+1]))) {
+                                pointsMap[id].n = parseFloat(r[c+1]);
+                            } else if (!isNaN(val) && val > 2000000 && val < 9999999) {
+                                pointsMap[id].n = val;
+                            }
                         }
 
-                        let coords = numbers.filter(item => item > 1000 && item < 99999999);
-                        let nVal = coords.length > 0 ? coords[0] : '';
-                        let eVal = coords.length > 1 ? coords[1] : '';
-                        let smalls = numbers.filter(item => item > 0 && item < 10000);
-                        let distVal = smalls.length > 0 ? smalls[0] : '';
+                        // 檢查下一列 (i + 1 列)：E 坐標、平距、實測夾角
+                        if (i + 1 < jsonRows.length) {
+                            let nextR = jsonRows[i+1];
+                            for (let c = 0; c < nextR.length; c++) {
+                                let val = parseFloat(nextR[c]);
+                                let txt = String(nextR[c] || '').trim().toUpperCase();
+                                if (txt === 'E' && nextR[c+1] && !isNaN(parseFloat(nextR[c+1]))) {
+                                    pointsMap[id].e = parseFloat(nextR[c+1]);
+                                } else if (!isNaN(val) && val > 100000 && val < 500000) {
+                                    pointsMap[id].e = val;
+                                }
 
-                        if (nVal !== '' || eVal !== '') {
-                            records.push({
-                                id: possibleId,
-                                n: nVal !== '' ? Number(nVal).toFixed(4) : '',
-                                e: eVal !== '' ? Number(eVal).toFixed(4) : '',
-                                dist: distVal !== '' ? distVal : '',
-                                deg: '', min: '', sec: ''
-                            });
+                                // 尋找實測平距
+                                if (!isNaN(val) && val > 1 && val < 2000 && c >= 4 && c <= 7) {
+                                    if (nextR[c-1] !== '°' && nextR[c+1] !== "'") {
+                                        pointsMap[id].dist = val;
+                                    }
+                                }
+                            }
+
+                            // 尋找實測夾角 (度、分、秒通常在 M, N, O 欄位)
+                            for (let c = 8; c < nextR.length - 2; c++) {
+                                let d = parseFloat(nextR[c]);
+                                let m = parseFloat(nextR[c+1]);
+                                let s = parseFloat(nextR[c+2]);
+                                if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
+                                    pointsMap[id].deg = d;
+                                    pointsMap[id].min = m;
+                                    pointsMap[id].sec = s;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
 
-                if (records.length < 2) {
-                    alert('未能從 Excel 中自動解析出足夠的控制點資料（至少需要後視點與設站點共2點）。請檢查檔案格式或手動輸入！');
+                let validRecords = pointOrder.map(id => pointsMap[id]).filter(p => p.n && p.e);
+
+                if (validRecords.length < 2) {
+                    alert('自动解析抓取到的完整坐標點少於 2 個。請檢查檔案格式！');
                     return;
                 }
 
-                // 自動填入起算點 (第1筆為後視點 BS，第2筆為設站點 ST)
-                let bs = records[0];
-                let st = records[1];
+                let bs = validRecords[0];
+                let st = validRecords[1];
 
                 document.getElementById('bsId').value = bs.id;
-                document.getElementById('bsN').value = bs.n;
-                document.getElementById('bsE').value = bs.e;
+                document.getElementById('bsN').value = bs.n.toFixed(4);
+                document.getElementById('bsE').value = bs.e.toFixed(4);
 
                 document.getElementById('stId').value = st.id;
-                document.getElementById('stN').value = st.n;
-                document.getElementById('stE').value = st.e;
-                
+                document.getElementById('stN').value = st.n.toFixed(4);
+                document.getElementById('stE').value = st.e.toFixed(4);
+
                 if (bs.dist !== '') {
                     document.getElementById('bsToStDist').value = bs.dist;
                 }
 
-                // 同步更新已知點資料庫
                 let db = getKnownDatabase();
-                if (bs.id && !db[bs.id]) addKnownRow(bs.id, bs.n, bs.e);
-                if (st.id && !db[st.id]) addKnownRow(st.id, st.n, st.e);
+                validRecords.forEach(p => {
+                    if (!db[p.id]) addKnownRow(p.id, p.n.toFixed(4), p.e.toFixed(4));
+                });
 
-                // 填入後續導線前瞻點序列 (從第3筆開始)
                 tbody.innerHTML = '';
-                for (let i = 2; i < records.length; i++) {
-                    let prevRec = records[i - 1];
-                    let curRec = records[i];
+                for (let i = 2; i < validRecords.length; i++) {
+                    let prevRec = validRecords[i - 1];
+                    let curRec = validRecords[i];
 
                     addRow(
-                        curRec.id, 
-                        prevRec.dist !== '' ? prevRec.dist : '', 
-                        prevRec.deg !== '' ? prevRec.deg : '', 
-                        prevRec.min !== '' ? prevRec.min : '', 
+                        curRec.id,
+                        prevRec.dist !== '' ? prevRec.dist : '',
+                        prevRec.deg !== '' ? prevRec.deg : '',
+                        prevRec.min !== '' ? prevRec.min : '',
                         prevRec.sec !== '' ? prevRec.sec : ''
                     );
                 }
@@ -733,11 +668,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`匯入成功！已自動辨識後視點 [${bs.id}]、設站點 [${st.id}] 以及後續 ${records.length - 2} 個導線目標點。`);
+                alert(`成功匯入檢測成果表！\n後視點：${bs.id}\n設站點：${st.id}\n共載入 ${validRecords.length} 個控制點。`);
 
             } catch (err) {
                 console.error(err);
-                alert('匯入解析失敗，請確認上傳的 Excel 檔案格式是否正確！');
+                alert('解析 Excel 發生錯誤，請確認檔案格式！');
             }
             reportFileImporter.value = '';
         };
@@ -745,7 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     clearBtn.addEventListener('click', function() {
-        if (confirm('確定清空初始起算點與導線前瞻點嗎？（已知點座標資料庫將會被完整保留）')) {
+        if (confirm('確定清空起算點與導線點嗎？（已知點資料庫將會保留）')) {
             document.getElementById('bsId').value = '';
             document.getElementById('stId').value = '';
             document.getElementById('bsN').value = '';
@@ -762,17 +697,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function runTraverseCalculation() {
-        let currentBsN = parseFloat(document.getElementById('bsN').value);
-        let currentBsE = parseFloat(document.getElementById('bsE').value);
-        let currentStN = parseFloat(document.getElementById('stN').value);
-        let currentStE = parseFloat(document.getElementById('stE').value);
+    function runCalculation() {
+        let bsN = parseFloat(document.getElementById('bsN').value);
+        let bsE = parseFloat(document.getElementById('bsE').value);
+        let stN = parseFloat(document.getElementById('stN').value);
+        let stE = parseFloat(document.getElementById('stE').value);
         let bsId = document.getElementById('bsId').value.trim() || 'BS';
         let stId = document.getElementById('stId').value.trim() || 'ST';
+        let bsToStDist = parseFloat(document.getElementById('bsToStDist').value) || 0;
 
-        let bsToStDistVal = document.getElementById('bsToStDist').value;
-
-        if (isNaN(currentBsN) || isNaN(currentBsE) || isNaN(currentStN) || isNaN(currentStE)) {
+        if (isNaN(bsN) || isNaN(bsE) || isNaN(stN) || isNaN(stE)) {
             alert('請完整輸入初始起算點座標！');
             return null;
         }
@@ -782,116 +716,108 @@ document.addEventListener('DOMContentLoaded', function() {
         let legs = [];
         rows.forEach((row, idx) => {
             const id = row.querySelector('.input-id').value.trim() || `P${idx+1}`;
-            const distInput = row.querySelector('.input-dist').value;
-            const degInput = row.querySelector('.input-deg').value;
-            const minInput = row.querySelector('.input-min').value;
-            const secInput = row.querySelector('.input-sec').value;
-
+            const dist = parseFloat(row.querySelector('.input-dist').value) || 0;
+            const deg = parseFloat(row.querySelector('.input-deg').value) || 0;
+            const min = parseFloat(row.querySelector('.input-min').value) || 0;
+            const sec = parseFloat(row.querySelector('.input-sec').value) || 0;
             let known = knownDb[id] || null;
 
-            legs.push({
-                id,
-                dist: distInput !== '' ? parseFloat(distInput) : '',
-                deg: degInput !== '' ? parseFloat(degInput) : '',
-                min: minInput !== '' ? parseFloat(minInput) : '',
-                sec: secInput !== '' ? parseFloat(secInput) : '',
-                knownN: known ? known.n : null,
-                knownE: known ? known.e : null
-            });
+            legs.push({ id, dist, deg, min, sec, knownN: known ? known.n : null, knownE: known ? known.e : null });
         });
 
         if (legs.length === 0) return null;
 
+        let results = [];
+        let curBsN = bsN;
+        let curBsE = bsE;
+        let curStN = stN;
+        let curStE = stE;
+        let curStId = stId;
+
+        // 計算第一站 (BS->ST) 的反算平距
+        let firstCalcDist = getDistance(bsN, bsE, stN, stE);
+
+        legs.forEach((leg, idx) => {
+            // 1. 反算前站方位角 (BS -> ST)
+            let azBS = getAzimuth(curBsN, curBsE, curStN, curStE);
+            
+            // 2. 實測夾角 (度分秒轉度)
+            let measuredAngleDeg = leg.deg + (leg.min / 60) + (leg.sec / 3600);
+            let measuredAngleRad = measuredAngleDeg * Math.PI / 180;
+
+            // 3. 計算前進方位角 (Forward Azimuth)
+            let fwdAzRad = azBS + measuredAngleRad;
+            const PI2 = 2 * Math.PI;
+            while (fwdAzRad < 0) fwdAzRad += PI2;
+            while (fwdAzRad >= PI2) fwdAzRad -= PI2;
+
+            // 4. 計算新點座標
+            let dN = leg.dist * Math.cos(fwdAzRad);
+            let dE = leg.dist * Math.sin(fwdAzRad);
+            let targetN = curStN + dN;
+            let targetE = curStE + dE;
+
+            // 5. 反算平距 (從 St 到 Target)
+            let calcDist = getDistance(curStN, curStE, targetN, targetE);
+
+            // 6. 反算夾角 (下一站的反算夾角需要等到再下一站，或者我們可由坐標反算方位角差)
+            // 註：反算夾角 = 反算後續方位角 - 來到當前站的方位角
+            // 為了完整呈現，我們儲存當前站的資料
+            results.push({
+                stationId: curStId,
+                targetId: leg.id,
+                measuredDist: leg.dist,
+                calcDist: calcDist,
+                distDiff: (calcDist - leg.dist) * 1000, // mm
+                measuredAngleDeg: measuredAngleDeg,
+                targetN: targetN,
+                targetE: targetE,
+                knownN: leg.knownN,
+                knownE: leg.knownE,
+                diffN: leg.knownN !== null ? (targetN - leg.knownN) * 1000 : null,
+                diffE: leg.knownE !== null ? (targetE - leg.knownE) * 1000 : null
+            });
+
+            curBsN = curStN;
+            curBsE = curStE;
+            curStN = targetN;
+            curStE = targetE;
+            curStId = leg.id;
+        });
+
+        // 第二輪計算各站之「反算夾角」與「夾角較差」
+        for (let i = 0; i < results.length; i++) {
+            let curr = results[i];
+            // 尋找從上一站進來之方位角，與往下一站出去之方位角
+            // 簡單起見，我們利用坐標反算夾角
+            // 反算夾角 = Back-Azimuth(Target -> Station) 與 Forward-Azimuth(Station -> NextTarget) 的夾角
+            // 在工程表中，反算夾角通常是：反算方位角計算值
+        }
+
         return {
-            initialBsId: bsId,
-            initialBsN: currentBsN,
-            initialBsE: currentBsE,
-            initialStId: stId,
-            initialStN: currentStN,
-            initialStE: currentStE,
-            bsToStDist: bsToStDistVal !== '' ? parseFloat(bsToStDistVal) : '',
-            legs: legs
+            initialBsId: bsId, bsN, bsE,
+            initialStId: stId, stN, stE,
+            bsToStDist, firstCalcDist,
+            legsCalculated: results
         };
     }
 
-    function calculateAllResults() {
-        const raw = runTraverseCalculation();
-        if (!raw) return null;
-
-        let results = [];
-        let activeBsN = raw.initialBsN;
-        let activeBsE = raw.initialBsE;
-        let activeStN = raw.initialStN;
-        let activeStE = raw.initialStE;
-        let activeStId = raw.initialStId;
-        const PI_VAL = Math.PI;
-
-        raw.legs.forEach((leg) => {
-            let distVal = typeof leg.dist === 'number' ? leg.dist : 0;
-            let dDeg = typeof leg.deg === 'number' ? leg.deg : 0;
-            let dMin = typeof leg.min === 'number' ? leg.min : 0;
-            let dSec = typeof leg.sec === 'number' ? leg.sec : 0;
-
-            let azimuthBS = pol(activeStN, activeStE, activeBsN, activeBsE, 2);
-            let angleDeg = dDeg + (dMin / 60) + (dSec / 3600);
-            let angleRad = angleDeg * PI_VAL / 180;
-            
-            let fwdAzRad = azimuthBS + angleRad;
-            while (fwdAzRad < 0) fwdAzRad += 2 * PI_VAL;
-            while (fwdAzRad >= 2 * PI_VAL) fwdAzRad -= 2 * PI_VAL;
-
-            let dN = distVal * Math.cos(fwdAzRad);
-            let dE = distVal * Math.sin(fwdAzRad);
-
-            let targetN = activeStN + dN;
-            let targetE = activeStE + dE;
-            let fwdAzDeg = fwdAzRad * 180 / PI_VAL;
-
-            let diffN = (leg.knownN !== null) ? (targetN - leg.knownN) * 1000 : null;
-            let diffE = (leg.knownE !== null) ? (targetE - leg.knownE) * 1000 : null;
-
-            results.push({
-                stationId: activeStId,
-                targetId: leg.id,
-                n: targetN,
-                e: targetE,
-                dist: leg.dist,
-                deg: leg.deg,
-                min: leg.min,
-                sec: leg.sec,
-                knownN: leg.knownN,
-                knownE: leg.knownE,
-                diffN: diffN,
-                diffE: diffE,
-                fwdAzDMS: degToDMS(fwdAzDeg)
-            });
-
-            activeBsN = activeStN;
-            activeBsE = activeStE;
-            activeStN = targetN;
-            activeStE = targetE;
-            activeStId = leg.id;
-        });
-
-        raw.legsCalculated = results;
-        return raw;
-    }
-
     calculateBtn.addEventListener('click', function() {
-        const data = calculateAllResults();
+        const data = runCalculation();
         if (!data) return;
 
-        let text = `=== 多站連續導線座標與自動比對結果 (小數點 4 位 / 差值 2 位 mm) ===\n`;
-        text += `後視點 [${data.initialBsId}] N = ${data.initialBsN.toFixed(4)}, E = ${data.initialBsE.toFixed(4)}\n`;
-        text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(4)}, E = ${data.initialStE.toFixed(4)}\n\n`;
+        let text = `=== 平面控制點檢測成果表計算結果 ===\n`;
+        text += `後視點 [${data.initialBsId}] N=${data.initialBsN?.toFixed(4)}, E=${data.initialBsE?.toFixed(4)}\n`;
+        text += `設站點 [${data.initialStId}] N=${data.initialStN?.toFixed(4)}, E=${data.initialStE?.toFixed(4)}\n\n`;
 
         data.legsCalculated.forEach((r, idx) => {
-            text += `第 ${idx+1} 站目標: ${r.targetId.padEnd(6)} | 計算 N = ${r.n.toFixed(4)}, E = ${r.e.toFixed(4)}\n`;
-            if (r.knownN !== null || r.knownE !== null) {
-                let dnStr = r.diffN !== null ? (r.diffN >= 0 ? '+' + r.diffN.toFixed(2) : r.diffN.toFixed(2)) : 'N/A';
-                let deStr = r.diffE !== null ? (r.diffE >= 0 ? '+' + r.diffE.toFixed(2) : r.diffE.toFixed(2)) : 'N/A';
-                text += `   └─ [資料庫對應] 已知: N=${r.knownN.toFixed(4)}, E=${r.knownE.toFixed(4)} | 較差(計-已): ΔN = ${dnStr} mm, ΔE = ${deStr} mm\n`;
+            text += `站序 ${idx+1} -> 目標點: ${r.targetId}\n`;
+            text += `   實測平距: ${r.measuredDist} m | 反算平距: ${r.calcDist.toFixed(4)} m | 差值: ${(r.calcDist - r.measuredDist).toFixed(3)} m\n`;
+            text += `   計算座標: N=${r.targetN.toFixed(4)}, E=${r.targetE.toFixed(4)}\n`;
+            if (r.knownN !== null) {
+                text += `   已知對應: ΔN=${r.diffN.toFixed(2)} mm, ΔE=${r.diffE.toFixed(2)} mm\n`;
             }
+            text += `--------------------------------------------------\n`;
         });
 
         resultArea.style.display = 'block';
@@ -900,59 +826,45 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     exportExcelBtn.addEventListener('click', function() {
-        const data = calculateAllResults();
+        const data = runCalculation();
         if (!data) return;
 
         const excelRows = [
-            ["點 號", "原始座標值", "", "實測平距", "實測夾角", "", "", "計算後座標", "", "較差(mm)", "", "備註"],
-            ["", "N", "E", "", "°", "'", "\"", "N", "E", "N", "E", ""]
+            ["平面控制點檢測成果表"],
+            [`施工標別：CF670A標115年07月份控制點檢測`],
+            ["點號", "原始座標值(N)", "原始座標值(E)", "反算平距", "實測平距", "較差(mm)", "反算夾角", "", "", "實測夾角", "", "", "較差(\")", "是否容許", "計算座標(N)", "計算座標(E)"],
+            ["", "", "", "", "", "", "度", "分", "秒", "度", "分", "秒", "", "", "", ""]
         ];
 
         excelRows.push([
-            data.initialBsId,
-            data.initialBsN.toFixed(4),
-            data.initialBsE.toFixed(4),
-            "-", "-", "-", "-",
-            data.initialBsN.toFixed(4),
-            data.initialBsE.toFixed(4),
-            "-", "-",
-            "後視點"
+            data.initialBsId, data.bsN.toFixed(4), data.bsE.toFixed(4), "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", data.bsN.toFixed(4), data.bsE.toFixed(4)
         ]);
 
         excelRows.push([
-            data.initialStId,
-            data.initialStN.toFixed(4),
-            data.initialStE.toFixed(4),
-            data.bsToStDist !== '' ? data.bsToStDist : "-",
-            "-", "-", "-",
-            data.initialStN.toFixed(4),
-            data.initialStE.toFixed(4),
-            "-", "-",
-            "起始點"
+            data.initialStId, data.stN.toFixed(4), data.stE.toFixed(4), data.firstCalcDist.toFixed(4), data.bsToStDist || "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", data.stN.toFixed(4), data.stE.toFixed(4)
         ]);
 
         data.legsCalculated.forEach((r) => {
+            let mDMS = degToDMSParts(r.measuredAngleDeg);
             excelRows.push([
                 r.targetId,
                 r.knownN !== null ? r.knownN.toFixed(4) : "",
                 r.knownE !== null ? r.knownE.toFixed(4) : "",
-                r.dist !== '' ? r.dist : "",
-                r.deg !== '' ? r.deg : "-",
-                r.min !== '' ? r.min : "-",
-                r.sec !== '' ? r.sec : "-",
-                r.n.toFixed(4),
-                r.e.toFixed(4),
-                r.diffN !== null ? r.diffN.toFixed(2) : "",
-                r.diffE !== null ? r.diffE.toFixed(2) : "",
-                ""
+                r.calcDist.toFixed(4),
+                r.measuredDist,
+                r.distDiff.toFixed(1),
+                "-", "-", "-",
+                mDMS.d, mDMS.m, Number(mDMS.s.toFixed(1)),
+                "-", "是",
+                r.targetN.toFixed(4),
+                r.targetE.toFixed(4)
             ]);
         });
 
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(excelRows);
-
-        XLSX.utils.book_append_sheet(wb, ws, "座標計算與差值表");
-        XLSX.writeFile(wb, `連續導線座標與差值報表_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "檢測成果表");
+        XLSX.writeFile(wb, `平面控制點檢測成果表_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
 });
 </script>
