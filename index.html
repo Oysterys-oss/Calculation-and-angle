@@ -200,7 +200,7 @@
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
         <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
-        <div class="hint-text">點擊匯入後，程式會自動掃描標題列進行精準欄位對應（小數點後4位、秒、差值2位）。</div>
+        <div class="hint-text">點擊匯入後，系統會透過<b>精準欄位標題與關鍵字過濾</b>，正確抓取點號、N、E、邊長與夾角。</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
     </div>
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 智慧欄位標題與行對應引擎 (支援多種常見工程報表格式)
+    // 🏆 精準表頭欄位對應引擎 (嚴格排除專案標題、比例尺與單一英文字母干擾)
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -565,64 +565,127 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
+                let headerRowIdx = -1;
+                let colMap = { id: -1, n: -1, e: -1, dist: -1, deg: -1, min: -1, sec: -1 };
+
+                // 1. 尋找真正的表格標題列（掃描前 8 行）
+                for (let i = 0; i < Math.min(jsonRows.length, 8); i++) {
+                    let r = jsonRows[i];
+                    if (!r) continue;
+                    let foundId = false, foundN = false, foundE = false;
+
+                    for (let c = 0; c < r.length; c++) {
+                        let txt = String(r[c] || '').trim().toLowerCase();
+                        if (txt.includes('點號') || txt.includes('點名') || txt === 'id' || txt === 'pt') {
+                            colMap.id = c;
+                            foundId = true;
+                        } else if ((txt.includes('n') || txt.includes('縱座標') || txt.includes('北')) && !txt.includes('差')) {
+                            if (colMap.n === -1) colMap.n = c;
+                            else colMap.e = c; // 如果有兩欄帶N/E
+                            foundN = true;
+                        } else if ((txt.includes('e') || txt.includes('橫座標') || txt.includes('東')) && !txt.includes('差')) {
+                            colMap.e = c;
+                            foundE = true;
+                        } else if (txt.includes('邊長') || txt.includes('距離') || txt.includes('dist')) {
+                            colMap.dist = c;
+                        } else if (txt.includes('度') || txt.includes('夾角') || txt.includes('角度')) {
+                            colMap.deg = c;
+                            colMap.min = c + 1;
+                            colMap.sec = c + 2;
+                        }
+                    }
+
+                    if (foundId || (foundN && foundE)) {
+                        headerRowIdx = i;
+                        break;
+                    }
+                }
+
                 let records = [];
 
-                // 尋找包含控制點資料的有效列（過濾掉標題列、空白列、專案名稱列）
-                for (let i = 0; i < jsonRows.length; i++) {
-                    let r = jsonRows[i];
-                    if (!r || r.length === 0) continue;
+                if (headerRowIdx !== -1) {
+                    // 按照鎖定的表頭欄位精準抓取
+                    for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
+                        let r = jsonRows[i];
+                        if (!r || r.length === 0) continue;
 
-                    // 檢查這列是否有合法的點號與座標
-                    // 通常點號在第一個或第二個欄位，且不包含說明文字
-                    let possibleId = '';
-                    let idColIdx = -1;
-                    
-                    for (let c = 0; c < Math.min(r.length, 3); c++) {
-                        let val = String(r[c] || '').trim();
-                        if (val && !val.includes('施工標') && !val.includes('檢測') && !val.includes('日期') && !val.includes('第') && !val.includes('頁') && val.length < 20) {
-                            possibleId = val;
-                            idColIdx = c;
-                            break;
+                        let idVal = colMap.id !== -1 ? String(r[colMap.id] || '').trim() : '';
+                        // 如果第一欄就是點號且未命名，嘗試預設抓第0欄
+                        if (!idVal && r.length > 0) {
+                            idVal = String(r[0] || '').trim();
+                        }
+
+                        // 過濾掉空白點號、專案標題文字、比例尺
+                        if (!idVal || idVal.length > 25 || idVal.includes('/') || idVal.includes('施工') || idVal.includes('檢測')) continue;
+
+                        let nVal = colMap.n !== -1 ? parseFloat(r[colMap.n]) : '';
+                        let eVal = colMap.e !== -1 ? parseFloat(r[colMap.e]) : '';
+                        let distVal = colMap.dist !== -1 ? parseFloat(r[colMap.dist]) : '';
+                        let degVal = colMap.deg !== -1 ? parseFloat(r[colMap.deg]) : '';
+                        let minVal = colMap.min !== -1 ? parseFloat(r[colMap.min]) : '';
+                        let secVal = colMap.sec !== -1 ? parseFloat(r[colMap.sec]) : '';
+
+                        // 如果表頭沒抓到座標，自動在該列搜尋數值合法的坐標
+                        if (isNaN(nVal) || isNaN(eVal)) {
+                            let numbers = [];
+                            for (let c = 0; c < r.length; c++) {
+                                let num = parseFloat(r[c]);
+                                if (!isNaN(num)) numbers.push(num);
+                            }
+                            let coords = numbers.filter(n => n > 1000 && n < 99999999);
+                            if (nVal === '' || isNaN(nVal)) nVal = coords.length > 0 ? coords[0] : '';
+                            if (eVal === '' || isNaN(eVal)) eVal = coords.length > 1 ? coords[1] : '';
+                        }
+
+                        if (idVal) {
+                            records.push({
+                                id: idVal,
+                                n: !isNaN(nVal) ? Number(nVal).toFixed(4) : '',
+                                e: !isNaN(eVal) ? Number(eVal).toFixed(4) : '',
+                                dist: !isNaN(distVal) ? distVal : '',
+                                deg: !isNaN(degVal) ? degVal : '',
+                                min: !isNaN(minVal) ? minVal : '',
+                                sec: !isNaN(secVal) ? secVal : ''
+                            });
                         }
                     }
+                } else {
+                    // 備用：若無明顯表頭，逐行嚴格過濾純文字與坐標
+                    for (let i = 0; i < jsonRows.length; i++) {
+                        let r = jsonRows[i];
+                        if (!r || r.length === 0) continue;
 
-                    if (!possibleId) continue;
-
-                    // 在該列中提取所有數字，尋找符合坐標範圍的值 (>1000)
-                    let numbersInRow = [];
-                    for (let c = 0; c < r.length; c++) {
-                        let num = parseFloat(r[c]);
-                        if (!isNaN(num)) {
-                            numbersInRow.push({ col: c, val: num });
+                        let possibleId = '';
+                        for (let c = 0; c < Math.min(r.length, 2); c++) {
+                            let val = String(r[c] || '').trim();
+                            if (val && val.length < 15 && !val.includes('/') && !val.includes('工程') && !val.includes('檢測') && !val.includes('頁') && val.toLowerCase() !== 'e' && val.toLowerCase() !== 'n') {
+                                possibleId = val;
+                                break;
+                            }
                         }
-                    }
+                        if (!possibleId) continue;
 
-                    // 尋找 N 座標與 E 座標（通常數值較大）
-                    let coords = numbersInRow.filter(item => item.val > 1000 && item.val < 99999999);
-                    let nVal = coords.length > 0 ? coords[0].val : '';
-                    let eVal = coords.length > 1 ? coords[1].val : '';
+                        let numbers = [];
+                        for (let c = 0; c < r.length; c++) {
+                            let num = parseFloat(r[c]);
+                            if (!isNaN(num)) numbers.push(num);
+                        }
 
-                    // 尋找邊長或角度數字
-                    let smalls = numbersInRow.filter(item => item.val > 0 && item.val < 10000);
-                    let distVal = smalls.length > 0 ? smalls[0].val : '';
-                    
-                    // 檢查是否有角度 (度, 分, 秒)
-                    let degVal = '', minVal = '', secVal = '';
-                    let angleCandidates = numbersInRow.filter(item => item.val >= 0 && item.val < 360);
-                    if (angleCandidates.length >= 1) degVal = angleCandidates[0].val;
-                    if (angleCandidates.length >= 2) minVal = angleCandidates[1].val;
-                    if (angleCandidates.length >= 3) secVal = angleCandidates[2].val;
+                        let coords = numbers.filter(item => item > 1000 && item < 99999999);
+                        let nVal = coords.length > 0 ? coords[0] : '';
+                        let eVal = coords.length > 1 ? coords[1] : '';
+                        let smalls = numbers.filter(item => item > 0 && item < 10000);
+                        let distVal = smalls.length > 0 ? smalls[0] : '';
 
-                    if (nVal !== '' || eVal !== '') {
-                        records.push({
-                            id: possibleId,
-                            n: nVal !== '' ? Number(nVal).toFixed(4) : '',
-                            e: eVal !== '' ? Number(eVal).toFixed(4) : '',
-                            dist: distVal !== '' ? distVal : '',
-                            deg: degVal,
-                            min: minVal,
-                            sec: secVal
-                        });
+                        if (nVal !== '' || eVal !== '') {
+                            records.push({
+                                id: possibleId,
+                                n: nVal !== '' ? Number(nVal).toFixed(4) : '',
+                                e: eVal !== '' ? Number(eVal).toFixed(4) : '',
+                                dist: distVal !== '' ? distVal : '',
+                                deg: '', min: '', sec: ''
+                            });
+                        }
                     }
                 }
 
