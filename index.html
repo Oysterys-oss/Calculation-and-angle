@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>多站連續導線座標計算與管理工具</title>
-    <!-- 引入 SheetJS 用於前端匯入與匯出 Excel -->
+    <!-- 引入 SheetJS 用於前端匯出 Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -164,7 +164,6 @@
 
         .btn-primary { background-color: var(--primary-color); color: white; flex: 2; }
         .btn-success { background-color: var(--success-color); color: white; flex: 1.5; }
-        .btn-info { background-color: #0284c7; color: white; flex: 1.5; }
         .btn-secondary { background-color: #e2e8f0; color: var(--text-color); flex: 1; }
         .btn-danger-outline { background-color: #fff; color: var(--danger-color); border: 1px solid var(--danger-color); flex: 1; }
         .btn-delete { background-color: var(--danger-color); color: white; padding: 6px 12px; font-size: 0.85rem; }
@@ -263,7 +262,6 @@
     <!-- 連續導線點輸入表格 -->
     <div class="section-box">
         <h3>📊 導線前瞻點序列 (依序輸入各站點之邊長與夾角)</h3>
-        <div class="hint-text">💡 <b>快速匯入</b>：您也可以直接上傳 Excel 檔案，或是在表格第一列點擊後按 <b>Ctrl + V</b> 貼上 Excel 資料。</div>
         <div class="table-container" style="margin-top: 10px;">
             <table id="traverseTable">
                 <thead>
@@ -291,11 +289,7 @@
                 </tbody>
             </table>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
-            <input type="file" id="excelFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
-            <button type="button" id="importExcelBtn" class="btn-info">📂 匯入 Excel 導線資料</button>
-        </div>
+        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
     </div>
 
     <div class="btn-group">
@@ -332,8 +326,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearBtn = document.getElementById('clearBtn');
     const calculateBtn = document.getElementById('calculateBtn');
     const exportExcelBtn = document.getElementById('exportExcelBtn');
-    const importExcelBtn = document.getElementById('importExcelBtn');
-    const excelFileImporter = document.getElementById('excelFileImporter');
     const resultArea = document.getElementById('resultArea');
 
     function degToDMS(degDecimal) {
@@ -436,53 +428,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         const idInput = newRow.querySelector('.input-id');
-        
-        // 支援整批貼上 Excel 導線資料
-        idInput.addEventListener('paste', function(e) {
-            e.preventDefault();
-            let clipboardData = e.clipboardData || window.clipboardData;
-            let pastedData = clipboardData.getData('Text');
-            let lines = pastedData.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
-            
-            let currentRow = newRow;
-            lines.forEach((line, index) => {
-                let cols = line.split('\t');
-                // 假設欄位順序: 點號, 原始N(可略), 原始E(可略), 邊長, 度, 分, 秒
-                // 若您的Excel沒有原始座標，可以彈性對應。這裡設計自動偵測是否有數值。
-                let pId = cols[0] ? cols[0].trim() : '';
-                let pDist = '', pDeg = '', pMin = '', pSec = '';
-
-                if (cols.length >= 7) {
-                    pDist = cols[3] ? cols[3].trim() : '';
-                    pDeg = cols[4] ? cols[4].trim() : '';
-                    pMin = cols[5] ? cols[5].trim() : '';
-                    pSec = cols[6] ? cols[6].trim() : '';
-                } else if (cols.length === 4) {
-                    pDist = cols[1] ? cols[1].trim() : '';
-                    pDeg = cols[2] ? cols[2].trim() : '';
-                    pMin = cols[3] ? cols[3].trim() : '';
-                } else {
-                    pDist = cols[1] ? cols[1].trim() : '';
-                    pDeg = cols[2] ? cols[2].trim() : '';
-                    pMin = cols[3] ? cols[3].trim() : '';
-                    pSec = cols[4] ? cols[4].trim() : '';
-                }
-
-                if (index === 0) {
-                    currentRow.querySelector('.input-id').value = pId;
-                    if(pDist) currentRow.querySelector('.input-dist').value = pDist;
-                    if(pDeg) currentRow.querySelector('.input-deg').value = pDeg;
-                    if(pMin) currentRow.querySelector('.input-min').value = pMin;
-                    if(pSec) currentRow.querySelector('.input-sec').value = pSec;
-                } else {
-                    addRow(pId, pDist, pDeg, pMin, pSec);
-                }
-            });
-            updateRowIndices();
-            updateKnownStatusUI();
-            saveDataToLocalStorage();
-        });
-
         idInput.addEventListener('input', () => {
             updateKnownStatusUI();
             saveDataToLocalStorage();
@@ -629,78 +574,6 @@ document.addEventListener('DOMContentLoaded', function() {
     addRowBtn.addEventListener('click', () => {
         addRow();
         saveDataToLocalStorage();
-    });
-
-    // 點擊按鈕觸發檔案選擇器
-    importExcelBtn.addEventListener('click', () => {
-        excelFileImporter.click();
-    });
-
-    // 處理上傳的 Excel 檔案
-    excelFileImporter.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            try {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                // 清空現有表格
-                tbody.innerHTML = '';
-                
-                let importedCount = 0;
-                jsonRows.forEach((row, idx) => {
-                    // 假設略過標題列（如果第一列包含文字或「點號」等字樣）
-                    if (idx === 0 && (String(row[0]).includes('點') || String(row[0]).includes('ID'))) {
-                        return;
-                    }
-                    if (row.length === 0 || !row[0]) return;
-
-                    // 智慧對應欄位：支援多種欄位排列格式
-                    let pId = row[0] ? String(row[0]).trim() : '';
-                    let pDist = '', pDeg = '', pMin = '', pSec = '';
-
-                    if (row.length >= 7) {
-                        pDist = row[3] !== undefined ? row[3] : '';
-                        pDeg = row[4] !== undefined ? row[4] : '';
-                        pMin = row[5] !== undefined ? row[5] : '';
-                        pSec = row[6] !== undefined ? row[6] : '';
-                    } else if (row.length === 4) {
-                        pDist = row[1] !== undefined ? row[1] : '';
-                        pDeg = row[2] !== undefined ? row[2] : '';
-                        pMin = row[3] !== undefined ? row[3] : '';
-                    } else {
-                        pDist = row[1] !== undefined ? row[1] : '';
-                        pDeg = row[2] !== undefined ? row[2] : '';
-                        pMin = row[3] !== undefined ? row[3] : '';
-                        pSec = row[4] !== undefined ? row[4] : '';
-                    }
-
-                    addRow(pId, pDist, pDeg, pMin, pSec);
-                    importedCount++;
-                });
-
-                if (importedCount === 0) {
-                    addRow();
-                    alert('未能成功解析資料，請確認 Excel 檔案格式。');
-                } else {
-                    updateRowIndices();
-                    updateKnownStatusUI();
-                    saveDataToLocalStorage();
-                    alert(`成功匯入 ${importedCount} 筆導線資料！`);
-                }
-            } catch (err) {
-                console.error(err);
-                alert('讀取 Excel 檔案時發生錯誤！');
-            }
-            excelFileImporter.value = ''; // 重設檔案輸入
-        };
-        reader.readAsArrayBuffer(file);
     });
 
     clearBtn.addEventListener('click', function() {
@@ -868,6 +741,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ["", "N", "E", "", "°", "'", "\"", "N", "E", "N", "E", ""]
         ];
 
+        // 後視點列 (強制小數點後 4 位)
         excelRows.push([
             data.initialBsId,
             data.initialBsN.toFixed(4),
@@ -879,6 +753,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "後視點"
         ]);
 
+        // 起始點列 (第 1 站設站點，強制小數點後 4 位)
         excelRows.push([
             data.initialStId,
             data.initialStN.toFixed(4),
@@ -891,6 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "起始點"
         ]);
 
+        // 導線延伸各站點 (強制 N、E 原始與計算後皆為 4 位小數，較差維持 2 位)
         data.legsCalculated.forEach((r) => {
             excelRows.push([
                 r.targetId,
