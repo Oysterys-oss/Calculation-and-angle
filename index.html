@@ -200,7 +200,7 @@
     <!-- 依據您的成果表格式設計的匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
         <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
-        <div class="hint-text">支援如截圖所示格式：前兩列為後視點與設站點（各佔N、E兩行），後續列為目標導線前瞻點（自動忽略最後空白或未填列）。</div>
+        <div class="hint-text">支援如截圖所示格式：前兩列為後視點與設站點（各佔N、E兩行），後續列為目標導線前瞻點（自動過濾最末端無效空白列）。</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
     </div>
@@ -584,15 +584,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('stE').value = validRows[3][2] || '';
 
                 // 填入前瞻點序列 (從第3個點開始，每次跳2行N/E)
-                // ⚠️ 修改重點：迴圈停止條件改為 validRows.length - 2，自動排除最後 1 個點（通常為報表末端預留或空白列）
+                // ⚠️ 修改重點：自動檢查點號是否存在或是否為空白/無效結尾列
                 tbody.innerHTML = '';
                 let count = 0;
 
-                for (let i = 4; i < validRows.length - 2; i += 2) {
+                for (let i = 4; i < validRows.length; i += 2) {
                     let rN = validRows[i];
                     if (!rN || !rN[0]) break;
 
-                    let pId = rN[0];
+                    let pId = String(rN[0]).trim();
+                    // 若點號欄位空白、或是包含非正常點號的文字則略過
+                    if (pId === '' || pId.includes('第') || pId.includes('頁')) {
+                        break;
+                    }
+
                     let pN = rN[2] || '';
                     let pE = validRows[i+1] ? (validRows[i+1][2] || '') : '';
 
@@ -619,7 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert('成功匯入控制點檢測成果表（已自動排除最後 1 列）！');
+                alert('成功匯入控制點檢測成果表（已自動排除最末端無效空白列）！');
 
             } catch (err) {
                 console.error(err);
