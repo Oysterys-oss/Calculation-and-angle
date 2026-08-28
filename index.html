@@ -197,10 +197,10 @@
 <div class="container">
     <h1>多站連續導線座標計算與管理工具</h1>
 
-    <!-- 依據您的成果表格式設計的匯入按鈕 -->
+    <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
         <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
-        <div class="hint-text">支援如截圖所示格式：前兩列為後視點與設站點（各佔N、E兩行），後續列為目標導線前瞻點（自動過濾最末端無效空白列）。</div>
+        <div class="hint-text">對應您的格式：欄 A 為點號、欄 C 為座標 N 與 E、欄 E 為實測平距、欄 M~O 為實測夾角（度分秒）。</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
     </div>
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 依據控制點檢測成果表的結構解析 Excel
+    // 依據您提供的截圖成果表精確解析欄位與列
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -565,47 +565,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                // 過濾出包含點號的有效資料列
-                let validRows = jsonRows.filter(r => r && r.length > 2 && r[0] && r[0] !== '點' && r[0] !== '號');
+                // 尋找包含資料的列（以欄 A 有點號為主）
+                let rowsWithData = [];
+                for (let i = 0; i < jsonRows.length; i++) {
+                    let r = jsonRows[i];
+                    if (r && r[0] !== undefined && r[0] !== null && String(r[0]).trim() !== '') {
+                        let val = String(r[0]).trim();
+                        if (val !== '點' && val !== '號' && !val.includes('平面控制點')) {
+                            rowsWithData.push({ index: i, row: r });
+                        }
+                    }
+                }
 
-                if (validRows.length < 4) {
+                if (rowsWithData.length < 3) {
                     alert('Excel 中的有效資料列不足！');
                     return;
                 }
 
-                // 後視點 (第1個點)
-                document.getElementById('bsId').value = validRows[0][0] || '';
-                document.getElementById('bsN').value = validRows[0][2] || '';
-                document.getElementById('bsE').value = validRows[1][2] || '';
+                // 第 1 筆為後視點 (BS) -> N 在 row[2]，E 在下一列 row[2]
+                let bsIndex = rowsWithData[0].index;
+                let bsId = String(jsonRows[bsIndex][0]).trim();
+                let bsN = jsonRows[bsIndex][2] !== undefined ? jsonRows[bsIndex][2] : '';
+                let bsE = (jsonRows[bsIndex + 1] && jsonRows[bsIndex + 1][2] !== undefined) ? jsonRows[bsIndex + 1][2] : '';
 
-                // 設站點 (第2個點)
-                document.getElementById('stId').value = validRows[2][0] || '';
-                document.getElementById('stN').value = validRows[2][2] || '';
-                document.getElementById('stE').value = validRows[3][2] || '';
+                document.getElementById('bsId').value = bsId;
+                document.getElementById('bsN').value = bsN;
+                document.getElementById('bsE').value = bsE;
 
-                // 填入前瞻點序列 (從第3個點開始，每次跳2行N/E)
-                // ⚠️ 修改重點：自動檢查點號是否存在或是否為空白/無效結尾列
+                // 第 2 筆為設站點 (ST) -> N 在 row[2]，E 在下一列 row[2]
+                let stIndex = rowsWithData[1].index;
+                let stId = String(jsonRows[stIndex][0]).trim();
+                let stN = jsonRows[stIndex][2] !== undefined ? jsonRows[stIndex][2] : '';
+                let stE = (jsonRows[stIndex + 1] && jsonRows[stIndex + 1][2] !== undefined) ? jsonRows[stIndex + 1][2] : '';
+
+                document.getElementById('stId').value = stId;
+                document.getElementById('stN').value = stN;
+                document.getElementById('stE').value = stE;
+
+                // 後續為導線前瞻點 (從第 3 筆資料開始，每點佔 2 列：N列與E列)
                 tbody.innerHTML = '';
                 let count = 0;
 
-                for (let i = 4; i < validRows.length; i += 2) {
-                    let rN = validRows[i];
-                    if (!rN || !rN[0]) break;
+                for (let k = 2; k < rowsWithData.length; k++) {
+                    let curIdx = rowsWithData[k].index;
+                    let rN = jsonRows[curIdx];
+                    let rE = jsonRows[curIdx + 1] || [];
 
-                    let pId = String(rN[0]).trim();
-                    // 若點號欄位空白、或是包含非正常點號的文字則略過
+                    let pId = String(rN[0] || '').trim();
                     if (pId === '' || pId.includes('第') || pId.includes('頁')) {
                         break;
                     }
 
-                    let pN = rN[2] || '';
-                    let pE = validRows[i+1] ? (validRows[i+1][2] || '') : '';
+                    let pN = rN[2] !== undefined ? rN[2] : '';
+                    let pE = rE[2] !== undefined ? rE[2] : '';
 
-                    let pDist = rN[4] || rN[3] || '';
-                    let pDeg = rN[12] || '';
-                    let pMin = rN[13] || '';
-                    let pSec = rN[14] || '';
+                    // 實測平距在欄 E (index 4)
+                    let pDist = rN[4] !== undefined ? rN[4] : '';
 
+                    // 實測夾角 度(index 12), 分(index 13), 秒(index 14)
+                    let pDeg = rN[12] !== undefined ? rN[12] : '';
+                    let pMin = rN[13] !== undefined ? rN[13] : '';
+                    let pSec = rN[14] !== undefined ? rN[14] : '';
+
+                    // 如果已知點資料庫沒有，自動將其 N/E 寫入已知點
                     if (pN !== '' && pE !== '') {
                         let db = getKnownDatabase();
                         if (!db[pId]) {
@@ -624,11 +646,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert('成功匯入控制點檢測成果表（已自動排除最末端無效空白列）！');
+                alert('成功精確匯入控制點檢測成果表！');
 
             } catch (err) {
                 console.error(err);
-                alert('匯入發生錯誤，請確認 Excel 檔案格式與截圖一致！');
+                alert('匯入發生錯誤，請確認 Excel 格式！');
             }
             reportFileImporter.value = '';
         };
