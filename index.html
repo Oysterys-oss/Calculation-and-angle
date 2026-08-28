@@ -240,7 +240,7 @@
         </div>
     </div>
 
-    <!-- 已知點座標資料庫 (完全不動，保持原樣) -->
+    <!-- 已知點座標資料庫 -->
     <div class="section-box">
         <h3 id="toggleKnownDbHeader">
             <span>📂 已知點座標資料庫 (點擊可展開/收合)</span>
@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 徹底強固解析邏輯：過濾正確的「實測平距」與「點號座標」
+    // 🏆 精準對應解析：明確區分「反算平距」與右側的「實測平距」
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -571,11 +571,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (potentialId && potentialId.length <= 15 && !potentialId.includes('/') && !potentialId.includes('標') && !potentialId.includes('成果表') && !potentialId.includes('點號')) {
                         let id = potentialId;
                         if (!pointsMap[id]) {
-                            pointsMap[id] = { id, n: '', e: '', dist: '', deg: '', min: '', sec: '' };
+                            pointsMap[id] = { id, n: '', e: '', calcDist: '', dist: '', deg: '', min: '', sec: '' };
                             pointOrder.push(id);
                         }
 
-                        // 尋找 N 坐標 (通常在 2700000~2800000 之間)
+                        // 尋找 N 坐標 (2700000~2800000)
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
                             if (!isNaN(val) && val > 2000000 && val < 9999999) {
@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
 
-                        // 檢查同一列或相鄰列尋找 E 坐標 (通常在 300000~400000 之間)
+                        // 尋找 E 坐標 (300000~400000)
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
                             if (!isNaN(val) && val > 100000 && val < 500000) {
@@ -593,16 +593,22 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
 
-                        // 尋找實測平距 (合理的導線邊長大約在 50m ~ 1500m 之間，排除座標值跟極小數)
+                        // 精準抓取「實測平距」：通常介於 50m~2000m 之間，且由於表格格式，「實測平距」通常在「反算平距」右側欄位。
+                        // 我們掃描介於 50~2000 之間的數值，若找到多個，取右側那一個（或排除作為反算平距的左側欄）。
+                        let foundDistances = [];
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
-                            if (!isNaN(val) && val > 10 && val < 2000) {
-                                // 確保不是 N 或 E 坐標
-                                if (!(val > 100000)) {
-                                    pointsMap[id].dist = val;
-                                    break;
-                                }
+                            if (!isNaN(val) && val > 10 && val < 2000 && !(val > 100000)) {
+                                foundDistances.push({ col: c, val: val });
                             }
+                        }
+
+                        if (foundDistances.length >= 2) {
+                            // 第一個通常是反算平距，第二個是實測平距
+                            pointsMap[id].calcDist = foundDistances[0].val;
+                            pointsMap[id].dist = foundDistances[1].val;
+                        } else if (foundDistances.length === 1) {
+                            pointsMap[id].dist = foundDistances[0].val;
                         }
 
                         // 檢查下一列 (i + 1 列) 以防 E 坐標或平距在下一行
@@ -617,13 +623,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                     }
                                 }
                             }
-                            if (!pointsMap[id].dist) {
+                            if (pointsMap[id].dist === '') {
+                                let nextDistances = [];
                                 for (let c = 0; c < nextR.length; c++) {
                                     let val = parseFloat(nextR[c]);
                                     if (!isNaN(val) && val > 10 && val < 2000 && !(val > 100000)) {
-                                        pointsMap[id].dist = val;
-                                        break;
+                                        nextDistances.push(val);
                                     }
+                                }
+                                if (nextDistances.length >= 2) {
+                                    pointsMap[id].calcDist = nextDistances[0];
+                                    pointsMap[id].dist = nextDistances[1];
+                                } else if (nextDistances.length === 1) {
+                                    pointsMap[id].dist = nextDistances[0];
                                 }
                             }
 
@@ -661,7 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('stN').value = st.n.toFixed(4);
                 document.getElementById('stE').value = st.e.toFixed(4);
 
-                // 將第一點的實測平距賦值給後視點至設站點實測邊長
+                // 將第一筆 (Y251->Y250對應列) 的實測平距賦值給起算邊長
                 if (bs.dist !== '') {
                     document.getElementById('bsToStDist').value = bs.dist;
                 }
