@@ -197,10 +197,10 @@
 <div class="container">
     <h1>多站連續導線座標計算與管理工具</h1>
 
-    <!-- 成果表匯入操作區 -->
+    <!-- 依據您的成果表格式設計的匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
-        <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入「平面控制點檢測成果表」Excel</h3>
-        <div class="hint-text">支援直接上傳如圖片中上下兩行（N行與E行）的標準工程檢測成果表格式，系統會自動抓取點號、已知座標、實測平距與夾角！</div>
+        <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
+        <div class="hint-text">支援如截圖所示格式：前兩列為後視點與設站點（各佔N、E兩行），後續列為目標導線前瞻點（自動忽略最後空白或未填列）。</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
     </div>
@@ -211,11 +211,11 @@
         <div class="grid-2" style="margin-top: 10px;">
             <div class="form-group">
                 <label>初始後視點 點號 (BS):</label>
-                <input type="text" id="bsId" value="" placeholder="例: Y254A">
+                <input type="text" id="bsId" value="" placeholder="例: Y251">
             </div>
             <div class="form-group">
                 <label>初始設站點 點號 (ST):</label>
-                <input type="text" id="stId" value="" placeholder="例: Y254">
+                <input type="text" id="stId" value="" placeholder="例: Y250">
             </div>
             <div class="form-group">
                 <label>後視點 縱座標 (N):</label>
@@ -248,7 +248,7 @@
             <span class="toggle-icon" id="toggleIcon">▼ 展開</span>
         </h3>
         <div class="collapsible-content" id="knownDbContent">
-            <div class="hint-text">💡 匯入成果表時，系統會自動將各點的原始座標同步記錄到此已知點資料庫中。</div>
+            <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料貼上。</div>
             <div class="table-container">
                 <table id="knownDbTable">
                     <thead>
@@ -339,6 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const importReportBtn = document.getElementById('importReportBtn');
     const reportFileImporter = document.getElementById('reportFileImporter');
+    
     const resultArea = document.getElementById('resultArea');
 
     function degToDMS(degDecimal) {
@@ -546,11 +547,11 @@ document.addEventListener('DOMContentLoaded', function() {
         saveDataToLocalStorage();
     });
 
-    // 專門針對「平面控制點檢測成果表」上下兩行格式的智慧解析匯入
     importReportBtn.addEventListener('click', () => {
         reportFileImporter.click();
     });
 
+    // 依據控制點檢測成果表的結構解析 Excel
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -564,107 +565,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                // 根據表格結構，資料通常從第 4 或 5 列開始 (Index 4 開始)
-                // 每一點佔兩列：第一列為 N 座標與相關數據，第二列為 E 座標
-                
-                let parsedPoints = [];
-                let currentPointId = '';
-                let currentN = '', currentE = '', currentDist = '', currentDeg = '', currentMin = '', currentSec = '';
+                // 過濾出包含點號的有效資料列
+                let validRows = jsonRows.filter(r => r && r.length > 2 && r[0] && r[0] !== '點' && r[0] !== '號');
 
-                for (let i = 4; i < jsonRows.length; i++) {
-                    const row = jsonRows[i];
-                    if (!row || row.length === 0) continue;
-
-                    // 檢查第一欄是否有點號 (Y251, Y250, GU01...)
-                    let col0 = row[0] !== undefined ? String(row[0]).trim() : '';
-                    let col1 = row[1] !== undefined ? String(row[1]).trim() : ''; // 通常是 N 或 E 標籤
-                    let col2 = row[2] !== undefined ? row[2] : ''; // 數值
-
-                    if (col0 !== '' && col0 !== 'N' && col0 !== 'E') {
-                        // 如果遇到了新點號，先把上一個點結算存入
-                        if (currentPointId !== '') {
-                            parsedPoints.push({ id: currentPointId, n: currentN, e: currentE, dist: currentDist, deg: currentDeg, min: currentMin, sec: currentSec });
-                            currentN = ''; currentE = ''; currentDist = ''; currentDeg = ''; currentMin = ''; currentSec = '';
-                        }
-                        currentPointId = col0;
-                    }
-
-                    // 判斷這一行是 N 還是 E
-                    if (col1 === 'N' || (col0 !== '' && col1 === '')) {
-                        // 這是 N 座標行
-                        currentN = col2;
-                        // 同時這一行通常包含實測平距(大約在索引 5 或 6)與實測夾角度分秒(大約在索引 12, 13, 14)
-                        // 根據圖片欄位位置尋找有數值的欄位
-                        for (let c = 3; c < row.length; c++) {
-                            let val = row[c];
-                            if (val !== undefined && val !== '' && !isNaN(val)) {
-                                if (currentDist === '' && c < 10) currentDist = val;
-                            }
-                        }
-                    } else if (col1 === 'E') {
-                        // 這是 E 座標行
-                        currentE = col2;
-                    }
-
-                    // 另外從該列直接抓取夾角 (度、分、秒) 欄位
-                    // 根據圖片，實測夾角大約在右側欄位
-                    for (let c = 10; c < row.length; c++) {
-                        let val = row[c];
-                        if (val !== undefined && val !== '' && !isNaN(val)) {
-                            if (currentDeg === '') currentDeg = val;
-                            else if (currentMin === '') currentMin = val;
-                            else if (currentSec === '') currentSec = val;
-                        }
-                    }
-                }
-
-                // 推入最後一個點
-                if (currentPointId !== '') {
-                    parsedPoints.push({ id: currentPointId, n: currentN, e: currentE, dist: currentDist, deg: currentDeg, min: currentMin, sec: currentSec });
-                }
-
-                if (parsedPoints.length === 0) {
-                    alert('未能在該 Excel 中成功解析出控制點資料！');
+                if (validRows.length < 4) {
+                    alert('Excel 中的有效資料列不足！');
                     return;
                 }
 
-                // 自動帶入：
-                // 前兩點作為起始後視點(BS)與設站點(ST)
-                if (parsedPoints.length >= 2) {
-                    document.getElementById('bsId').value = parsedPoints[0].id;
-                    document.getElementById('bsN').value = parsedPoints[0].n;
-                    document.getElementById('bsE').value = parsedPoints[0].e;
+                // 後視點 (第1個點)
+                document.getElementById('bsId').value = validRows[0][0] || '';
+                document.getElementById('bsN').value = validRows[0][2] || '';
+                document.getElementById('bsE').value = validRows[1][2] || '';
 
-                    document.getElementById('stId').value = parsedPoints[1].id;
-                    document.getElementById('stN').value = parsedPoints[1].N || parsedPoints[1].n;
-                    document.getElementById('stE').value = parsedPoints[1].e;
-                    document.getElementById('bsToStDist').value = parsedPoints[1].dist || '';
+                // 設站點 (第2個點)
+                document.getElementById('stId').value = validRows[2][0] || '';
+                document.getElementById('stN').value = validRows[2][2] || '';
+                document.getElementById('stE').value = validRows[3][2] || '';
+
+                // 填入前瞻點序列 (從第3個點開始，每次跳2行N/E)
+                // ⚠️ 修改重點：迴圈停止條件改為 validRows.length - 2，自動排除最後 1 個點（通常為報表末端預留或空白列）
+                tbody.innerHTML = '';
+                let count = 0;
+
+                for (let i = 4; i < validRows.length - 2; i += 2) {
+                    let rN = validRows[i];
+                    if (!rN || !rN[0]) break;
+
+                    let pId = rN[0];
+                    let pN = rN[2] || '';
+                    let pE = validRows[i+1] ? (validRows[i+1][2] || '') : '';
+
+                    let pDist = rN[4] || rN[3] || '';
+                    let pDeg = rN[12] || '';
+                    let pMin = rN[13] || '';
+                    let pSec = rN[14] || '';
+
+                    if (pN !== '' && pE !== '') {
+                        let db = getKnownDatabase();
+                        if (!db[pId]) {
+                            addKnownRow(pId, pN, pE);
+                        }
+                    }
+
+                    addRow(pId, pDist, pDeg, pMin, pSec);
+                    count++;
                 }
 
-                // 清空已知點資料庫與前瞻點表格，重新填入
-                knownTbody.innerHTML = '';
-                tbody.innerHTML = '';
-
-                parsedPoints.forEach(p => {
-                    if (p.n && p.e) {
-                        addKnownRow(p.id, p.n, p.e);
-                    }
-                });
-
-                // 從第 2 點之後作為導線前瞻點序列
-                for (let i = 2; i < parsedPoints.length; i++) {
-                    let p = parsedPoints[i];
-                    addRow(p.id, p.dist, p.deg, p.min, p.sec);
+                if (count === 0) {
+                    addRow();
                 }
 
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`成功匯入 ${parsedPoints.length} 個控制點檢測成果！`);
+                alert('成功匯入控制點檢測成果表（已自動排除最後 1 列）！');
 
             } catch (err) {
                 console.error(err);
-                alert('讀取 Excel 成果表時發生錯誤！');
+                alert('匯入發生錯誤，請確認 Excel 檔案格式與截圖一致！');
             }
             reportFileImporter.value = '';
         };
@@ -696,6 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentStE = parseFloat(document.getElementById('stE').value);
         let bsId = document.getElementById('bsId').value.trim() || 'BS';
         let stId = document.getElementById('stId').value.trim() || 'ST';
+
         let bsToStDistVal = document.getElementById('bsToStDist').value;
 
         if (isNaN(currentBsN) || isNaN(currentBsE) || isNaN(currentStN) || isNaN(currentStE)) {
@@ -712,6 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const degInput = row.querySelector('.input-deg').value;
             const minInput = row.querySelector('.input-min').value;
             const secInput = row.querySelector('.input-sec').value;
+
             let known = knownDb[id] || null;
 
             legs.push({
