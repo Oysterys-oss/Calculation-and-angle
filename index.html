@@ -200,7 +200,7 @@
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
         <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
-        <div class="hint-text">點擊匯入標準檢測成果表，將自動精確對應：後視點、設站點、夾角（欄 L, M, N）與實測平距（欄 E）。</div>
+        <div class="hint-text">點擊匯入後，程式會自動略過上方標題與說明文字，精確抓取控制點與測量數據。</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
     </div>
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 精確解析 Excel 控制點成果表 (解決區段與位移問題)
+    // 🏆 具備智慧過濾功能的 Excel 控制點成果表解析器
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -565,28 +565,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                // 1. 抓取所有包含「點號」的點位數據區塊 (Block)
                 let pointBlocks = [];
                 for (let i = 0; i < jsonRows.length; i++) {
                     let rN = jsonRows[i];
                     if (!rN || rN[0] === undefined || rN[0] === null) continue;
 
                     let pId = String(rN[0]).trim();
-                    // 過濾非點號文字 (如標題、頁碼)
-                    if (!pId || pId === '點' || pId === '號' || pId.includes('平面控制點') || pId.includes('第') || pId.includes('頁')) {
+                    
+                    // 智慧過濾：排除標題、施工標別說明文字、頁碼等非點號欄位
+                    if (!pId || pId === '點' || pId === '號' || pId.includes('施工標') || pId.includes('平面控制點') || pId.includes('第') || pId.includes('頁') || pId.length > 15) {
                         continue;
                     }
 
-                    // 每一點佔兩列: rN 是 N 列, rE 是 E 列
+                    // 確保該點位含有數值的座標，才被認為是有效的控制點列
                     let rE = jsonRows[i + 1] || [];
+                    let pN = (rN[2] !== undefined && rN[2] !== null && !isNaN(rN[2])) ? rN[2] : '';
+                    let pE = (rE[2] !== undefined && rE[2] !== null && !isNaN(rE[2])) ? rE[2] : '';
 
-                    let pN = (rN[2] !== undefined && rN[2] !== null) ? rN[2] : '';
-                    let pE = (rE[2] !== undefined && rE[2] !== null) ? rE[2] : '';
+                    if (pN === '' || pE === '') continue; // 若沒有有效座標則跳過
 
-                    // 實測邊長: 在該點位 E 列的欄 E (index 4)
                     let distToNext = (rE[4] !== undefined && rE[4] !== null) ? rE[4] : '';
-
-                    // 實測夾角: 在該點位 N 列的欄 L, M, N (index 11, 12, 13)
                     let deg = (rN[11] !== undefined && rN[11] !== null) ? rN[11] : '';
                     let min = (rN[12] !== undefined && rN[12] !== null) ? rN[12] : '';
                     let sec = (rN[13] !== undefined && rN[13] !== null) ? rN[13] : '';
@@ -603,13 +601,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (pointBlocks.length < 2) {
-                    alert('Excel 中抓到的控制點少於 2 個，請確認檔案格式！');
+                    alert('無法在 Excel 中辨識出足夠的控制點（少於 2 個有效點），請確認檔案內容！');
                     return;
                 }
 
-                // 2. 填入起算點與設站點
-                let bs = pointBlocks[0]; // Y251
-                let st = pointBlocks[1]; // Y250
+                // 填入起算點與設站點
+                let bs = pointBlocks[0]; 
+                let st = pointBlocks[1]; 
 
                 document.getElementById('bsId').value = bs.id;
                 document.getElementById('bsN').value = bs.n;
@@ -619,29 +617,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('stN').value = st.n;
                 document.getElementById('stE').value = st.e;
 
-                // 後視點到設站點邊長 (來自 Y251 的 distToNext)
                 document.getElementById('bsToStDist').value = bs.distToNext;
 
-                // 3. 填入已知點資料庫 (包含 BS 與 ST)
+                // 填入已知點資料庫
                 let db = getKnownDatabase();
-                if (bs.id && bs.n !== '' && bs.e && !db[bs.id]) addKnownRow(bs.id, bs.n, bs.e);
-                if (st.id && st.n !== '' && st.e && !db[st.id]) addKnownRow(st.id, st.n, st.e);
+                if (bs.id && !db[bs.id]) addKnownRow(bs.id, bs.n, bs.e);
+                if (st.id && !db[st.id]) addKnownRow(st.id, st.n, st.e);
 
-                // 4. 填入前瞻點序列 (GU01, GU02, GU03...)
+                // 填入前瞻點序列
                 tbody.innerHTML = '';
-
                 for (let k = 2; k < pointBlocks.length; k++) {
-                    let prevStation = pointBlocks[k - 1]; // 觀測本點的測站
-                    let targetPoint = pointBlocks[k];     // 前瞻目標點
+                    let prevStation = pointBlocks[k - 1]; 
+                    let targetPoint = pointBlocks[k];     
 
                     let targetId = targetPoint.id;
-                    let dist = prevStation.distToNext;    // 設站點到目標點的邊長
-                    let deg = prevStation.deg;            // 在該設站點量測的夾角(度)
-                    let min = prevStation.min;            // 分
-                    let sec = prevStation.sec;            // 秒
+                    let dist = prevStation.distToNext;    
+                    let deg = prevStation.deg;            
+                    let min = prevStation.min;            
+                    let sec = prevStation.sec;            
 
-                    // 將前瞻點原有的 Known 座標也存入 DB
-                    if (targetId && targetPoint.n !== '' && targetPoint.e !== '' && !db[targetId]) {
+                    if (targetId && !db[targetId]) {
                         addKnownRow(targetId, targetPoint.n, targetPoint.e);
                     }
 
@@ -651,7 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert('完美匯入完成！邊長與度分秒夾角已全部自動對齊！');
+                alert(`成功讀取！已自動略過上方標題，正確抓取起算點 [${bs.id}]、設站點 [${st.id}] 以及後續導線點。`);
 
             } catch (err) {
                 console.error(err);
