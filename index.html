@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 精準對應解析：明確區分「反算平距」與右側的「實測平距」
+    // 🏆 精準對應解析：明確區分「反算平距/實測平距」與「角度欄位」
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -593,25 +593,35 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
 
-                        // 精準抓取「實測平距」：通常介於 50m~2000m 之間，且由於表格格式，「實測平距」通常在「反算平距」右側欄位。
-                        // 我們掃描介於 50~2000 之間的數值，若找到多個，取右側那一個（或排除作為反算平距的左側欄）。
+                        // 尋找平距 (10~2000範圍)
                         let foundDistances = [];
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
                             if (!isNaN(val) && val > 10 && val < 2000 && !(val > 100000)) {
-                                foundDistances.push({ col: c, val: val });
+                                foundDistances.push(val);
+                            }
+                        }
+                        if (foundDistances.length >= 2) {
+                            pointsMap[id].calcDist = foundDistances[0];
+                            pointsMap[id].dist = foundDistances[1];
+                        } else if (foundDistances.length === 1) {
+                            pointsMap[id].dist = foundDistances[0];
+                        }
+
+                        // 尋找夾角 (度、分、秒) 在當前行
+                        for (let c = 0; c < r.length - 2; c++) {
+                            let d = parseFloat(r[c]);
+                            let m = parseFloat(r[c+1]);
+                            let s = parseFloat(r[c+2]);
+                            if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
+                                pointsMap[id].deg = d;
+                                pointsMap[id].min = m;
+                                pointsMap[id].sec = s;
+                                break;
                             }
                         }
 
-                        if (foundDistances.length >= 2) {
-                            // 第一個通常是反算平距，第二個是實測平距
-                            pointsMap[id].calcDist = foundDistances[0].val;
-                            pointsMap[id].dist = foundDistances[1].val;
-                        } else if (foundDistances.length === 1) {
-                            pointsMap[id].dist = foundDistances[0].val;
-                        }
-
-                        // 檢查下一列 (i + 1 列) 以防 E 坐標或平距在下一行
+                        // 檢查下一行 (i + 1 行) 補齊坐標、平距或夾角
                         if (i + 1 < jsonRows.length) {
                             let nextR = jsonRows[i+1];
                             if (!pointsMap[id].e) {
@@ -638,17 +648,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                     pointsMap[id].dist = nextDistances[0];
                                 }
                             }
-
-                            // 尋找實測夾角 (度、分、秒)
-                            for (let c = 0; c < nextR.length - 2; c++) {
-                                let d = parseFloat(nextR[c]);
-                                let m = parseFloat(nextR[c+1]);
-                                let s = parseFloat(nextR[c+2]);
-                                if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
-                                    pointsMap[id].deg = d;
-                                    pointsMap[id].min = m;
-                                    pointsMap[id].sec = s;
-                                    break;
+                            if (pointsMap[id].deg === '') {
+                                for (let c = 0; c < nextR.length - 2; c++) {
+                                    let d = parseFloat(nextR[c]);
+                                    let m = parseFloat(nextR[c+1]);
+                                    let s = parseFloat(nextR[c+2]);
+                                    if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
+                                        pointsMap[id].deg = d;
+                                        pointsMap[id].min = m;
+                                        pointsMap[id].sec = s;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -673,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('stN').value = st.n.toFixed(4);
                 document.getElementById('stE').value = st.e.toFixed(4);
 
-                // 將第一筆 (Y251->Y250對應列) 的實測平距賦值給起算邊長
+                // 第一點 (Y251->Y250) 的實測平距
                 if (bs.dist !== '') {
                     document.getElementById('bsToStDist').value = bs.dist;
                 }
@@ -684,23 +694,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 tbody.innerHTML = '';
-                for (let i = 2; i < validRecords.length; i++) {
-                    let prevRec = validRecords[i - 1];
-                    let curRec = validRecords[i];
-
+                // 🏆 關鍵修正：第 1 站前瞻點 (GU01) 的平距與夾角，應該對應自表格中「設站點 (Y250)」的那一行記錄！
+                for (let i = 1; i < validRecords.length; i++) {
+                    let currentRec = validRecords[i]; // 例如 Y250, GU01, GU02...
+                    
+                    // 如果不是最後一個點，我們從當前行取平距與夾角給前瞻點序列
                     addRow(
-                        curRec.id,
-                        prevRec.dist !== '' ? prevRec.dist : '',
-                        prevRec.deg !== '' ? prevRec.deg : '',
-                        prevRec.min !== '' ? prevRec.min : '',
-                        prevRec.sec !== '' ? prevRec.sec : ''
+                        currentRec.id,
+                        currentRec.dist !== '' ? currentRec.dist : '',
+                        currentRec.deg !== '' ? currentRec.deg : '',
+                        currentRec.min !== '' ? currentRec.min : '',
+                        currentRec.sec !== '' ? currentRec.sec : ''
                     );
                 }
 
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`成功匯入檢測成果表！\n後視點：${bs.id}\n設站點：${st.id}\n後視點至設站點實測邊長：${bs.dist || '未抓取'}`);
+                alert(`成功正確對應匯入檢測成果表！\n後視點：${bs.id}\n設站點：${st.id}`);
 
             } catch (err) {
                 console.error(err);
