@@ -200,7 +200,7 @@
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
         <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
-        <div class="hint-text">對應您的格式：欄 A 為點號、欄 C 為座標 N 與 E、欄 E 為實測平距、欄 M~O 為實測夾角（度分秒）。</div>
+        <div class="hint-text">點擊匯入標準檢測成果表，將自動精確對應：後視點、設站點、夾角（欄 L, M, N）與實測平距（欄 E）。</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
     </div>
@@ -248,7 +248,7 @@
             <span class="toggle-icon" id="toggleIcon">▼ 展開</span>
         </h3>
         <div class="collapsible-content" id="knownDbContent">
-            <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料貼上。</div>
+            <div class="hint-text">💡 <b>快捷操作</b>：匯入檢測表時，原表上的已知座標會自動同步存入此資料庫中。</div>
             <div class="table-container">
                 <table id="knownDbTable">
                     <thead>
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 依據您提供的截圖成果表精確解析欄位與列
+    // 🏆 精確解析 Excel 控制點成果表 (解決區段與位移問題)
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -565,92 +565,97 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                // 尋找包含資料的列（以欄 A 有點號為主）
-                let rowsWithData = [];
+                // 1. 抓取所有包含「點號」的點位數據區塊 (Block)
+                let pointBlocks = [];
                 for (let i = 0; i < jsonRows.length; i++) {
-                    let r = jsonRows[i];
-                    if (r && r[0] !== undefined && r[0] !== null && String(r[0]).trim() !== '') {
-                        let val = String(r[0]).trim();
-                        if (val !== '點' && val !== '號' && !val.includes('平面控制點')) {
-                            rowsWithData.push({ index: i, row: r });
-                        }
+                    let rN = jsonRows[i];
+                    if (!rN || rN[0] === undefined || rN[0] === null) continue;
+
+                    let pId = String(rN[0]).trim();
+                    // 過濾非點號文字 (如標題、頁碼)
+                    if (!pId || pId === '點' || pId === '號' || pId.includes('平面控制點') || pId.includes('第') || pId.includes('頁')) {
+                        continue;
                     }
+
+                    // 每一點佔兩列: rN 是 N 列, rE 是 E 列
+                    let rE = jsonRows[i + 1] || [];
+
+                    let pN = (rN[2] !== undefined && rN[2] !== null) ? rN[2] : '';
+                    let pE = (rE[2] !== undefined && rE[2] !== null) ? rE[2] : '';
+
+                    // 實測邊長: 在該點位 E 列的欄 E (index 4)
+                    let distToNext = (rE[4] !== undefined && rE[4] !== null) ? rE[4] : '';
+
+                    // 實測夾角: 在該點位 N 列的欄 L, M, N (index 11, 12, 13)
+                    let deg = (rN[11] !== undefined && rN[11] !== null) ? rN[11] : '';
+                    let min = (rN[12] !== undefined && rN[12] !== null) ? rN[12] : '';
+                    let sec = (rN[13] !== undefined && rN[13] !== null) ? rN[13] : '';
+
+                    pointBlocks.push({
+                        id: pId,
+                        n: pN,
+                        e: pE,
+                        distToNext: distToNext,
+                        deg: deg,
+                        min: min,
+                        sec: sec
+                    });
                 }
 
-                if (rowsWithData.length < 3) {
-                    alert('Excel 中的有效資料列不足！');
+                if (pointBlocks.length < 2) {
+                    alert('Excel 中抓到的控制點少於 2 個，請確認檔案格式！');
                     return;
                 }
 
-                // 第 1 筆為後視點 (BS) -> N 在 row[2]，E 在下一列 row[2]
-                let bsIndex = rowsWithData[0].index;
-                let bsId = String(jsonRows[bsIndex][0]).trim();
-                let bsN = jsonRows[bsIndex][2] !== undefined ? jsonRows[bsIndex][2] : '';
-                let bsE = (jsonRows[bsIndex + 1] && jsonRows[bsIndex + 1][2] !== undefined) ? jsonRows[bsIndex + 1][2] : '';
+                // 2. 填入起算點與設站點
+                let bs = pointBlocks[0]; // Y251
+                let st = pointBlocks[1]; // Y250
 
-                document.getElementById('bsId').value = bsId;
-                document.getElementById('bsN').value = bsN;
-                document.getElementById('bsE').value = bsE;
+                document.getElementById('bsId').value = bs.id;
+                document.getElementById('bsN').value = bs.n;
+                document.getElementById('bsE').value = bs.e;
 
-                // 第 2 筆為設站點 (ST) -> N 在 row[2]，E 在下一列 row[2]
-                let stIndex = rowsWithData[1].index;
-                let stId = String(jsonRows[stIndex][0]).trim();
-                let stN = jsonRows[stIndex][2] !== undefined ? jsonRows[stIndex][2] : '';
-                let stE = (jsonRows[stIndex + 1] && jsonRows[stIndex + 1][2] !== undefined) ? jsonRows[stIndex + 1][2] : '';
+                document.getElementById('stId').value = st.id;
+                document.getElementById('stN').value = st.n;
+                document.getElementById('stE').value = st.e;
 
-                document.getElementById('stId').value = stId;
-                document.getElementById('stN').value = stN;
-                document.getElementById('stE').value = stE;
+                // 後視點到設站點邊長 (來自 Y251 的 distToNext)
+                document.getElementById('bsToStDist').value = bs.distToNext;
 
-                // 後續為導線前瞻點 (從第 3 筆資料開始，每點佔 2 列：N列與E列)
+                // 3. 填入已知點資料庫 (包含 BS 與 ST)
+                let db = getKnownDatabase();
+                if (bs.id && bs.n !== '' && bs.e && !db[bs.id]) addKnownRow(bs.id, bs.n, bs.e);
+                if (st.id && st.n !== '' && st.e && !db[st.id]) addKnownRow(st.id, st.n, st.e);
+
+                // 4. 填入前瞻點序列 (GU01, GU02, GU03...)
                 tbody.innerHTML = '';
-                let count = 0;
 
-                for (let k = 2; k < rowsWithData.length; k++) {
-                    let curIdx = rowsWithData[k].index;
-                    let rN = jsonRows[curIdx];
-                    let rE = jsonRows[curIdx + 1] || [];
+                for (let k = 2; k < pointBlocks.length; k++) {
+                    let prevStation = pointBlocks[k - 1]; // 觀測本點的測站
+                    let targetPoint = pointBlocks[k];     // 前瞻目標點
 
-                    let pId = String(rN[0] || '').trim();
-                    if (pId === '' || pId.includes('第') || pId.includes('頁')) {
-                        break;
+                    let targetId = targetPoint.id;
+                    let dist = prevStation.distToNext;    // 設站點到目標點的邊長
+                    let deg = prevStation.deg;            // 在該設站點量測的夾角(度)
+                    let min = prevStation.min;            // 分
+                    let sec = prevStation.sec;            // 秒
+
+                    // 將前瞻點原有的 Known 座標也存入 DB
+                    if (targetId && targetPoint.n !== '' && targetPoint.e !== '' && !db[targetId]) {
+                        addKnownRow(targetId, targetPoint.n, targetPoint.e);
                     }
 
-                    let pN = rN[2] !== undefined ? rN[2] : '';
-                    let pE = rE[2] !== undefined ? rE[2] : '';
-
-                    // 實測平距在欄 E (index 4)
-                    let pDist = rN[4] !== undefined ? rN[4] : '';
-
-                    // 實測夾角 度(index 12), 分(index 13), 秒(index 14)
-                    let pDeg = rN[12] !== undefined ? rN[12] : '';
-                    let pMin = rN[13] !== undefined ? rN[13] : '';
-                    let pSec = rN[14] !== undefined ? rN[14] : '';
-
-                    // 如果已知點資料庫沒有，自動將其 N/E 寫入已知點
-                    if (pN !== '' && pE !== '') {
-                        let db = getKnownDatabase();
-                        if (!db[pId]) {
-                            addKnownRow(pId, pN, pE);
-                        }
-                    }
-
-                    addRow(pId, pDist, pDeg, pMin, pSec);
-                    count++;
-                }
-
-                if (count === 0) {
-                    addRow();
+                    addRow(targetId, dist, deg, min, sec);
                 }
 
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert('成功精確匯入控制點檢測成果表！');
+                alert('完美匯入完成！邊長與度分秒夾角已全部自動對齊！');
 
             } catch (err) {
                 console.error(err);
-                alert('匯入發生錯誤，請確認 Excel 格式！');
+                alert('匯入發生錯誤，請確認 Excel 檔案格式！');
             }
             reportFileImporter.value = '';
         };
