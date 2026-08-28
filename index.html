@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>多站連續導線座標計算與管理工具</title>
-    <!-- 引入 SheetJS 用於前端匯出 Excel -->
+    <!-- 引入 SheetJS 用於前端匯入與匯出 Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -164,6 +164,7 @@
 
         .btn-primary { background-color: var(--primary-color); color: white; flex: 2; }
         .btn-success { background-color: var(--success-color); color: white; flex: 1.5; }
+        .btn-info { background-color: #0284c7; color: white; flex: 1.5; }
         .btn-secondary { background-color: #e2e8f0; color: var(--text-color); flex: 1; }
         .btn-danger-outline { background-color: #fff; color: var(--danger-color); border: 1px solid var(--danger-color); flex: 1; }
         .btn-delete { background-color: var(--danger-color); color: white; padding: 6px 12px; font-size: 0.85rem; }
@@ -195,6 +196,14 @@
 
 <div class="container">
     <h1>多站連續導線座標計算與管理工具</h1>
+
+    <!-- 整份報表匯入操作區 -->
+    <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
+        <h3 style="color: #1d4ed8; margin-top: 0;">📂 整份完整報表匯入</h3>
+        <div class="hint-text">您可以直接上傳先前匯出的 Excel 完整報表（或相同格式的報表），系統會自動帶入後視點、起始點及後續所有導線前瞻點資料。</div>
+        <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
+        <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入完整 Excel 報表</button>
+    </div>
 
     <!-- 起始後視點與設站點 -->
     <div class="section-box">
@@ -239,7 +248,7 @@
             <span class="toggle-icon" id="toggleIcon">▼ 展開</span>
         </h3>
         <div class="collapsible-content" id="knownDbContent">
-            <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料，點擊下方任一輸入框後按下 <b>Ctrl + V</b> 即可整批貼上！資料會自動儲存且不會被清空按鈕影響。</div>
+            <div class="hint-text">💡 <b>快捷操作</b>：您可以直接從 Excel 選取「點號、N、E」多行多列資料，點擊下方任一輸入框後按下 <b>Ctrl + V</b> 即可整批貼上！</div>
             <div class="table-container">
                 <table id="knownDbTable">
                     <thead>
@@ -289,7 +298,9 @@
                 </tbody>
             </table>
         </div>
-        <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" id="addRowBtn" class="btn-secondary">＋ 新增導線延伸點</button>
+        </div>
     </div>
 
     <div class="btn-group">
@@ -326,6 +337,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearBtn = document.getElementById('clearBtn');
     const calculateBtn = document.getElementById('calculateBtn');
     const exportExcelBtn = document.getElementById('exportExcelBtn');
+    
+    // 報表匯入相關
+    const importReportBtn = document.getElementById('importReportBtn');
+    const reportFileImporter = document.getElementById('reportFileImporter');
+    
     const resultArea = document.getElementById('resultArea');
 
     function degToDMS(degDecimal) {
@@ -366,32 +382,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
 
-        const idInput = row.querySelector('.known-id');
-        idInput.addEventListener('paste', function(e) {
-            e.preventDefault();
-            let clipboardData = e.clipboardData || window.clipboardData;
-            let pastedData = clipboardData.getData('Text');
-            let rows = pastedData.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
-            
-            let currentRow = row;
-            rows.forEach((line, index) => {
-                let cols = line.split('\t');
-                let pId = cols[0] ? cols[0].trim() : '';
-                let pN = cols[1] ? cols[1].trim() : '';
-                let pE = cols[2] ? cols[2].trim() : '';
-
-                if (index === 0) {
-                    currentRow.querySelector('.known-id').value = pId;
-                    if(pN) currentRow.querySelector('.known-n').value = pN;
-                    if(pE) currentRow.querySelector('.known-e').value = pE;
-                } else {
-                    addKnownRow(pId, pN, pE);
-                }
-            });
-            saveDataToLocalStorage();
-            updateKnownStatusUI();
-        });
-
         row.querySelector('.btn-delete').addEventListener('click', () => {
             row.remove();
             saveDataToLocalStorage();
@@ -427,16 +417,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
 
-        const idInput = newRow.querySelector('.input-id');
-        idInput.addEventListener('input', () => {
-            updateKnownStatusUI();
-            saveDataToLocalStorage();
-        });
-
         newRow.querySelectorAll('input').forEach(input => {
-            if (input !== idInput) {
-                input.addEventListener('input', saveDataToLocalStorage);
-            }
+            input.addEventListener('input', saveDataToLocalStorage);
         });
 
         newRow.querySelector('.btn-delete').addEventListener('click', function() {
@@ -555,15 +537,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    document.querySelectorAll('.section-box input').forEach(input => {
-        if (!input.classList.contains('known-id') && !input.classList.contains('known-n') && 
-            !input.classList.contains('known-e') && !input.classList.contains('input-id') && 
-            !input.classList.contains('input-dist') && !input.classList.contains('input-deg') && 
-            !input.classList.contains('input-min') && !input.classList.contains('input-sec')) {
-            input.addEventListener('input', saveDataToLocalStorage);
-        }
-    });
-
     loadDataFromLocalStorage();
 
     addKnownRowBtn.addEventListener('click', () => {
@@ -574,6 +547,99 @@ document.addEventListener('DOMContentLoaded', function() {
     addRowBtn.addEventListener('click', () => {
         addRow();
         saveDataToLocalStorage();
+    });
+
+    // 觸發報表檔案選擇
+    importReportBtn.addEventListener('click', () => {
+        reportFileImporter.click();
+    });
+
+    // 讀取並解析整份完整 Excel 報表
+    reportFileImporter.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                // 預期完整報表結構：
+                // 列 0: 標題列 1 ("點 號", "原始座標值", ...)
+                // 列 1: 標題列 2 ("", "N", "E", ...)
+                // 列 2: 後視點資料 (BS)
+                // 列 3: 起始點資料 (ST)
+                // 列 4 以後: 各導線前瞻點資料
+
+                let dataRowStartIndex = 2;
+                
+                // 自動尋找並填入後視點 (BS)
+                if (jsonRows.length > 2 && jsonRows[2]) {
+                    const r = jsonRows[2];
+                    document.getElementById('bsId').value = r[0] !== undefined ? r[0] : '';
+                    document.getElementById('bsN').value = r[1] !== undefined && r[1] !== '-' ? r[1] : '';
+                    document.getElementById('bsE').value = r[2] !== undefined && r[2] !== '-' ? r[2] : '';
+                }
+
+                // 自動尋找並填入起始點 (ST) 與邊長
+                if (jsonRows.length > 3 && jsonRows[3]) {
+                    const r = jsonRows[3];
+                    document.getElementById('stId').value = r[0] !== undefined ? r[0] : '';
+                    document.getElementById('stN').value = r[1] !== undefined && r[1] !== '-' ? r[1] : '';
+                    document.getElementById('stE').value = r[2] !== undefined && r[2] !== '-' ? r[2] : '';
+                    document.getElementById('bsToStDist').value = r[3] !== undefined && r[3] !== '-' ? r[3] : '';
+                }
+
+                // 清空現有導線前瞻點表格
+                tbody.innerHTML = '';
+                let importedLegsCount = 0;
+
+                // 從第 4 列開始讀取前瞻點
+                for (let i = 4; i < jsonRows.length; i++) {
+                    const row = jsonRows[i];
+                    if (!row || row.length === 0 || !row[0]) continue;
+
+                    let pId = row[0] !== undefined ? String(row[0]).trim() : '';
+                    let pDist = (row[3] !== undefined && row[3] !== '-') ? row[3] : '';
+                    let pDeg = (row[4] !== undefined && row[4] !== '-') ? row[4] : '';
+                    let pMin = (row[5] !== undefined && row[5] !== '-') ? row[5] : '';
+                    let pSec = (row[6] !== undefined && row[6] !== '-') ? row[6] : '';
+
+                    // 順便把有已知座標的點加入或對應
+                    let knownN = (row[1] !== undefined && row[1] !== '') ? row[1] : '';
+                    let knownE = (row[2] !== undefined && row[2] !== '') ? row[2] : '';
+                    if (knownN !== '' && knownE !== '') {
+                        // 檢查已知點資料庫是否已有此點，沒有就自動新增進資料庫
+                        let db = getKnownDatabase();
+                        if (!db[pId]) {
+                            addKnownRow(pId, knownN, knownE);
+                        }
+                    }
+
+                    addRow(pId, pDist, pDeg, pMin, pSec);
+                    importedLegsCount++;
+                }
+
+                if (importedLegsCount === 0) {
+                    addRow();
+                }
+
+                updateRowIndices();
+                updateKnownStatusUI();
+                saveDataToLocalStorage();
+                alert('完整 Excel 報表匯入成功！');
+
+            } catch (err) {
+                console.error(err);
+                alert('讀取完整 Excel 報表時發生錯誤，請確認檔案格式是否正確！');
+            }
+            reportFileImporter.value = '';
+        };
+        reader.readAsArrayBuffer(file);
     });
 
     clearBtn.addEventListener('click', function() {
@@ -679,7 +745,6 @@ document.addEventListener('DOMContentLoaded', function() {
             let targetE = activeStE + dE;
             let fwdAzDeg = fwdAzRad * 180 / PI_VAL;
 
-            // 較差 (mm) = (計算值 - 已知值) * 1000
             let diffN = (leg.knownN !== null) ? (targetN - leg.knownN) * 1000 : null;
             let diffE = (leg.knownE !== null) ? (targetE - leg.knownE) * 1000 : null;
 
@@ -741,7 +806,6 @@ document.addEventListener('DOMContentLoaded', function() {
             ["", "N", "E", "", "°", "'", "\"", "N", "E", "N", "E", ""]
         ];
 
-        // 後視點列 (強制小數點後 4 位)
         excelRows.push([
             data.initialBsId,
             data.initialBsN.toFixed(4),
@@ -753,7 +817,6 @@ document.addEventListener('DOMContentLoaded', function() {
             "後視點"
         ]);
 
-        // 起始點列 (第 1 站設站點，強制小數點後 4 位)
         excelRows.push([
             data.initialStId,
             data.initialStN.toFixed(4),
@@ -766,7 +829,6 @@ document.addEventListener('DOMContentLoaded', function() {
             "起始點"
         ]);
 
-        // 導線延伸各站點 (強制 N、E 原始與計算後皆為 4 位小數，較差維持 2 位)
         data.legsCalculated.forEach((r) => {
             excelRows.push([
                 r.targetId,
