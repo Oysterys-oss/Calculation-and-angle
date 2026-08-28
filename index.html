@@ -492,11 +492,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data_v3', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v4', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data_v3');
+        const saved = localStorage.getItem('traverse_tool_data_v4');
         if (!saved) {
             addKnownRow();
             addRow();
@@ -548,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 精準對應解析：第一筆點 (如設站點本身) 僅抓取平距，夾角留空以防錯位
+    // 🏆 精準解析每一行的點號、實測平距（含小數點）與實測夾角 (度分秒)
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (potentialId && potentialId.length <= 15 && !potentialId.includes('/') && !potentialId.includes('標') && !potentialId.includes('成果表') && !potentialId.includes('點號')) {
                         let id = potentialId;
                         if (!pointsMap[id]) {
-                            pointsMap[id] = { id, n: '', e: '', calcDist: '', dist: '', deg: '', min: '', sec: '' };
+                            pointsMap[id] = { id, n: '', e: '', dist: '', deg: '', min: '', sec: '' };
                             pointOrder.push(id);
                         }
 
@@ -595,22 +595,28 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
 
-                        // 尋找平距 (10~2000範圍)
-                        let foundDistances = [];
+                        // 尋找精確實測平距（強制尋找帶有小數點的數值，範圍在 1 ~ 2000 之間）
                         for (let c = 0; c < r.length; c++) {
-                            let val = parseFloat(r[c]);
-                            if (!isNaN(val) && val > 10 && val < 2000 && !(val > 100000)) {
-                                foundDistances.push(val);
+                            let rawVal = r[c];
+                            let val = parseFloat(rawVal);
+                            let strVal = String(rawVal);
+                            if (!isNaN(val) && val > 1 && val < 2000 && strVal.includes('.')) {
+                                pointsMap[id].dist = val;
+                                break;
                             }
                         }
-                        if (foundDistances.length >= 2) {
-                            pointsMap[id].calcDist = foundDistances[0];
-                            pointsMap[id].dist = foundDistances[1];
-                        } else if (foundDistances.length === 1) {
-                            pointsMap[id].dist = foundDistances[0];
+                        // 若該行沒有含小數點的，退而求其次找 1~2000 內的數字
+                        if (pointsMap[id].dist === '') {
+                            for (let c = 0; c < r.length; c++) {
+                                let val = parseFloat(r[c]);
+                                if (!isNaN(val) && val > 1 && val < 2000 && !(val > 100000)) {
+                                    pointsMap[id].dist = val;
+                                    break;
+                                }
+                            }
                         }
 
-                        // 尋找夾角 (度、分、秒)
+                        // 尋找實測夾角 (度、分、秒)
                         for (let c = 0; c < r.length - 2; c++) {
                             let d = parseFloat(r[c]);
                             let m = parseFloat(r[c+1]);
@@ -623,7 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
 
-                        // 檢查下一行補齊
+                        // 檢查下一行補齊缺漏的數值
                         if (i + 1 < jsonRows.length) {
                             let nextR = jsonRows[i+1];
                             if (!pointsMap[id].e) {
@@ -636,18 +642,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             }
                             if (pointsMap[id].dist === '') {
-                                let nextDistances = [];
                                 for (let c = 0; c < nextR.length; c++) {
-                                    let val = parseFloat(nextR[c]);
-                                    if (!isNaN(val) && val > 10 && val < 2000 && !(val > 100000)) {
-                                        nextDistances.push(val);
+                                    let rawVal = nextR[c];
+                                    let val = parseFloat(rawVal);
+                                    let strVal = String(rawVal);
+                                    if (!isNaN(val) && val > 1 && val < 2000 && strVal.includes('.')) {
+                                        pointsMap[id].dist = val;
+                                        break;
                                     }
-                                }
-                                if (nextDistances.length >= 2) {
-                                    pointsMap[id].calcDist = nextDistances[0];
-                                    pointsMap[id].dist = nextDistances[1];
-                                } else if (nextDistances.length === 1) {
-                                    pointsMap[id].dist = nextDistances[0];
                                 }
                             }
                             if (pointsMap[id].deg === '') {
@@ -696,37 +698,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 tbody.innerHTML = '';
                 
-                // 🏆 關鍵修正：
-                // 第一筆前瞻點（例如 Y250 這行），在檢測表中它的夾角欄位是空白的（對應後視點到設站點的平距）。
-                // 所以我們放入點號與平距，但將夾角設為空！
-                // 從第二筆前瞻點（GU01）開始，才去讀取對應的實測夾角。
+                // 從索引 1（第二個點 Y250）開始作為前瞻點序列匯入，每一列各自帶有自己的邊長與夾角
                 for (let i = 1; i < validRecords.length; i++) {
                     let currentRec = validRecords[i];
-                    let nextRec = validRecords[i+1]; // 下一行的夾角屬於當前點前瞻序列
-
-                    let targetDeg = '';
-                    let targetMin = '';
-                    let targetSec = '';
-
-                    if (nextRec && nextRec.deg !== '') {
-                        targetDeg = nextRec.deg;
-                        targetMin = nextRec.min;
-                        targetSec = nextRec.sec;
-                    }
-
                     addRow(
                         currentRec.id,
                         currentRec.dist !== '' ? currentRec.dist : '',
-                        targetDeg,
-                        targetMin,
-                        targetSec
+                        currentRec.deg !== '' ? currentRec.deg : '',
+                        currentRec.min !== '' ? currentRec.min : '',
+                        currentRec.sec !== '' ? currentRec.sec : ''
                     );
                 }
 
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`成功正確對應匯入檢測成果表！\n後視點：${bs.id}\n設站點：${st.id}`);
+                alert(`成功精準匯入檢測成果表！\n後視點：${bs.id}\n設站點：${st.id}`);
 
             } catch (err) {
                 console.error(err);
