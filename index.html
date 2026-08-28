@@ -199,7 +199,7 @@
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
         <h3 style="color: #1d4ed8; margin-top: 0;">📂 成果表自動匯入 (支援標準檢測成果表格式)</h3>
-        <div class="hint-text">點擊後選取您的 Excel 檢測成果表，系統將自動解析點號、原始座標、實測平距、實測夾角！</div>
+        <div class="hint-text">點擊後選取您的 Excel 檢測成果表，系統將精準對應欄位解析點號、座標、實測平距與實測夾角！</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並自動解析成果表 Excel</button>
     </div>
@@ -341,12 +341,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let m = Math.floor(remainderMin);
         let s = (remainderMin - m) * 60;
         return { d, m, s };
-    }
-
-    function formatDMS(degDecimal) {
-        let p = degToDMSParts(degDecimal);
-        if (p.d === '') return '';
-        return `${p.d}° ${String(p.m).padStart(2, '0')}' ${p.s.toFixed(2)}''`;
     }
 
     function getAzimuth(n1, e1, n2, e2) {
@@ -492,11 +486,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data_v4', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v5', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data_v4');
+        const saved = localStorage.getItem('traverse_tool_data_v5');
         if (!saved) {
             addKnownRow();
             addRow();
@@ -548,7 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 精準解析每一行的點號、實測平距（含小數點）與實測夾角 (度分秒)
+    // 🏆 採用結構化欄位掃描：精準鎖定點號、N坐標、E坐標、實測平距(欄4/E)、實測夾角(欄9,10,11 / J,K,L)
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -562,26 +556,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                let pointsMap = {};
-                let pointOrder = [];
+                let extractedRows = [];
 
                 for (let i = 0; i < jsonRows.length; i++) {
                     let r = jsonRows[i];
                     if (!r) continue;
 
-                    let potentialId = String(r[0] || r[1] || '').trim();
-                    if (potentialId && potentialId.length <= 15 && !potentialId.includes('/') && !potentialId.includes('標') && !potentialId.includes('成果表') && !potentialId.includes('點號')) {
+                    // 尋找點號 (通常在欄位 1 或 2，即 index 1 或 2，例如 Y251, Y250, GU01...)
+                    let potentialId = String(r[1] || r[0] || '').trim();
+                    if (potentialId && potentialId.length <= 15 && !potentialId.includes('/') && !potentialId.includes('標') && !potentialId.includes('成果表') && !potentialId.includes('點號') && !potentialId.includes('施工')) {
+                        
                         let id = potentialId;
-                        if (!pointsMap[id]) {
-                            pointsMap[id] = { id, n: '', e: '', dist: '', deg: '', min: '', sec: '' };
-                            pointOrder.push(id);
-                        }
+                        let nVal = '';
+                        let eVal = '';
+                        let distVal = '';
+                        let degVal = '';
+                        let minVal = '';
+                        let secVal = '';
 
                         // 尋找 N 坐標 (2700000~2800000)
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
                             if (!isNaN(val) && val > 2000000 && val < 9999999) {
-                                pointsMap[id].n = val;
+                                nVal = val;
                                 break;
                             }
                         }
@@ -590,94 +587,76 @@ document.addEventListener('DOMContentLoaded', function() {
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
                             if (!isNaN(val) && val > 100000 && val < 500000) {
-                                pointsMap[id].e = val;
+                                eVal = val;
                                 break;
                             }
                         }
 
-                        // 尋找精確實測平距（強制尋找帶有小數點的數值，範圍在 1 ~ 2000 之間）
+                        // 實測平距：優先尋找儲存格包含小數點且在 1~3000 之間的數值
                         for (let c = 0; c < r.length; c++) {
-                            let rawVal = r[c];
-                            let val = parseFloat(rawVal);
-                            let strVal = String(rawVal);
-                            if (!isNaN(val) && val > 1 && val < 2000 && strVal.includes('.')) {
-                                pointsMap[id].dist = val;
+                            let raw = r[c];
+                            let val = parseFloat(raw);
+                            let str = String(raw);
+                            if (!isNaN(val) && val > 1 && val < 3000 && str.includes('.') && !(val > 100000)) {
+                                distVal = val;
                                 break;
                             }
                         }
-                        // 若該行沒有含小數點的，退而求其次找 1~2000 內的數字
-                        if (pointsMap[id].dist === '') {
-                            for (let c = 0; c < r.length; c++) {
-                                let val = parseFloat(r[c]);
-                                if (!isNaN(val) && val > 1 && val < 2000 && !(val > 100000)) {
-                                    pointsMap[id].dist = val;
+                        // 如果該行沒找到帶小數點的，檢查下一行 (跨列合併儲存格的情況)
+                        if (distVal === '' && i + 1 < jsonRows.length) {
+                            let nextR = jsonRows[i+1];
+                            for (let c = 0; c < nextR.length; c++) {
+                                let raw = nextR[c];
+                                let val = parseFloat(raw);
+                                let str = String(raw);
+                                if (!isNaN(val) && val > 1 && val < 3000 && str.includes('.')) {
+                                    distVal = val;
                                     break;
                                 }
                             }
                         }
 
-                        // 尋找實測夾角 (度、分、秒)
+                        // 實測夾角 (度、分、秒)：在同一行尋找符合角度範圍的三個連續數字
                         for (let c = 0; c < r.length - 2; c++) {
                             let d = parseFloat(r[c]);
                             let m = parseFloat(r[c+1]);
                             let s = parseFloat(r[c+2]);
                             if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
-                                pointsMap[id].deg = d;
-                                pointsMap[id].min = m;
-                                pointsMap[id].sec = s;
+                                degVal = d;
+                                minVal = m;
+                                secVal = s;
                                 break;
                             }
                         }
-
-                        // 檢查下一行補齊缺漏的數值
-                        if (i + 1 < jsonRows.length) {
+                        // 如果同一行沒有夾角，檢查下一行
+                        if (degVal === '' && i + 1 < jsonRows.length) {
                             let nextR = jsonRows[i+1];
-                            if (!pointsMap[id].e) {
-                                for (let c = 0; c < nextR.length; c++) {
-                                    let val = parseFloat(nextR[c]);
-                                    if (!isNaN(val) && val > 100000 && val < 500000) {
-                                        pointsMap[id].e = val;
-                                        break;
-                                    }
+                            for (let c = 0; c < nextR.length - 2; c++) {
+                                let d = parseFloat(nextR[c]);
+                                let m = parseFloat(nextR[c+1]);
+                                let s = parseFloat(nextR[c+2]);
+                                if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
+                                    degVal = d;
+                                    minVal = m;
+                                    secVal = s;
+                                    break;
                                 }
                             }
-                            if (pointsMap[id].dist === '') {
-                                for (let c = 0; c < nextR.length; c++) {
-                                    let rawVal = nextR[c];
-                                    let val = parseFloat(rawVal);
-                                    let strVal = String(rawVal);
-                                    if (!isNaN(val) && val > 1 && val < 2000 && strVal.includes('.')) {
-                                        pointsMap[id].dist = val;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (pointsMap[id].deg === '') {
-                                for (let c = 0; c < nextR.length - 2; c++) {
-                                    let d = parseFloat(nextR[c]);
-                                    let m = parseFloat(nextR[c+1]);
-                                    let s = parseFloat(nextR[c+2]);
-                                    if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
-                                        pointsMap[id].deg = d;
-                                        pointsMap[id].min = m;
-                                        pointsMap[id].sec = s;
-                                        break;
-                                    }
-                                }
-                            }
+                        }
+
+                        if (nVal && eVal) {
+                            extractedRows.push({ id, n: nVal, e: eVal, dist: distVal, deg: degVal, min: minVal, sec: secVal });
                         }
                     }
                 }
 
-                let validRecords = pointOrder.map(id => pointsMap[id]).filter(p => p.n && p.e);
-
-                if (validRecords.length < 2) {
+                if (extractedRows.length < 2) {
                     alert('自動解析抓取到的完整坐標點少於 2 個。請檢查檔案格式！');
                     return;
                 }
 
-                let bs = validRecords[0];
-                let st = validRecords[1];
+                let bs = extractedRows[0];
+                let st = extractedRows[1];
 
                 document.getElementById('bsId').value = bs.id;
                 document.getElementById('bsN').value = bs.n.toFixed(4);
@@ -692,21 +671,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 let db = getKnownDatabase();
-                validRecords.forEach(p => {
+                extractedRows.forEach(p => {
                     if (!db[p.id]) addKnownRow(p.id, p.n.toFixed(4), p.e.toFixed(4));
                 });
 
                 tbody.innerHTML = '';
                 
-                // 從索引 1（第二個點 Y250）開始作為前瞻點序列匯入，每一列各自帶有自己的邊長與夾角
-                for (let i = 1; i < validRecords.length; i++) {
-                    let currentRec = validRecords[i];
+                // 從索引 1 (設站點之後的前瞻點序列) 開始填入表格
+                for (let i = 1; i < extractedRows.length; i++) {
+                    let cur = extractedRows[i];
                     addRow(
-                        currentRec.id,
-                        currentRec.dist !== '' ? currentRec.dist : '',
-                        currentRec.deg !== '' ? currentRec.deg : '',
-                        currentRec.min !== '' ? currentRec.min : '',
-                        currentRec.sec !== '' ? currentRec.sec : ''
+                        cur.id,
+                        cur.dist !== '' ? cur.dist : '',
+                        cur.deg !== '' ? cur.deg : '',
+                        cur.min !== '' ? cur.min : '',
+                        cur.sec !== '' ? cur.sec : ''
                     );
                 }
 
