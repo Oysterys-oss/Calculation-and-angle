@@ -198,8 +198,8 @@
 
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
-        <h3 style="color: #1d4ed8; margin-top: 0;">📂 成果表自動匯入 (完整支援 2 列一組垂直交錯結構)</h3>
-        <div class="hint-text">點擊後選取您的 Excel 檢測成果表，系統將自動解析點號、原始座標、實測平距、實測夾角（度分秒）！</div>
+        <h3 style="color: #1d4ed8; margin-top: 0;">📂 成果表自動匯入 (支援標準檢測成果表格式)</h3>
+        <div class="hint-text">點擊後選取您的 Excel 檢測成果表，系統將自動解析點號、原始座標、實測平距、實測夾角！</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並自動解析成果表 Excel</button>
     </div>
@@ -240,7 +240,7 @@
         </div>
     </div>
 
-    <!-- 已知點座標資料庫 (可收合) -->
+    <!-- 已知點座標資料庫 (完全不動，保持原樣) -->
     <div class="section-box">
         <h3 id="toggleKnownDbHeader">
             <span>📂 已知點座標資料庫 (點擊可展開/收合)</span>
@@ -261,7 +261,7 @@
                     <tbody></tbody>
                 </table>
             </div>
-            <button type="button" id="addKnownRowBtn" class="btn-secondary">＋ 新增已知點資料庫項目</button>
+            <button type="button" id="addKnownRowBtn" class="btn-secondary">＋ 新進已知點資料庫項目</button>
         </div>
     </div>
 
@@ -347,7 +347,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${p.d}° ${String(p.m).padStart(2, '0')}' ${p.s.toFixed(2)}''`;
     }
 
-    // 計算方位角 (回傳弳度 0 ~ 2*PI)
     function getAzimuth(n1, e1, n2, e2) {
         const PI = Math.PI;
         let dn = n2 - n1;
@@ -363,7 +362,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return 0;
     }
 
-    // 計算平距
     function getDistance(n1, e1, n2, e2) {
         return Math.sqrt(Math.pow(n2 - n1, 2) + Math.pow(e2 - e1, 2));
     }
@@ -548,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 專用 2 列一組垂直交錯表格解析引擎
+    // 🏆 徹底強固解析邏輯：過濾正確的「實測平距」與「點號座標」
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -570,46 +568,67 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!r) continue;
 
                     let potentialId = String(r[0] || r[1] || '').trim();
-                    if (potentialId && potentialId.length <= 15 && !potentialId.includes('/') && !potentialId.includes('標') && !potentialId.includes('成果表')) {
+                    if (potentialId && potentialId.length <= 15 && !potentialId.includes('/') && !potentialId.includes('標') && !potentialId.includes('成果表') && !potentialId.includes('點號')) {
                         let id = potentialId;
                         if (!pointsMap[id]) {
                             pointsMap[id] = { id, n: '', e: '', dist: '', deg: '', min: '', sec: '' };
                             pointOrder.push(id);
                         }
 
-                        // 抓取 N 坐標
+                        // 尋找 N 坐標 (通常在 2700000~2800000 之間)
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
-                            let txt = String(r[c] || '').trim().toUpperCase();
-                            if (txt === 'N' && r[c+1] && !isNaN(parseFloat(r[c+1]))) {
-                                pointsMap[id].n = parseFloat(r[c+1]);
-                            } else if (!isNaN(val) && val > 2000000 && val < 9999999) {
+                            if (!isNaN(val) && val > 2000000 && val < 9999999) {
                                 pointsMap[id].n = val;
+                                break;
                             }
                         }
 
-                        // 檢查下一列 (i + 1 列)：E 坐標、平距、實測夾角
+                        // 檢查同一列或相鄰列尋找 E 坐標 (通常在 300000~400000 之間)
+                        for (let c = 0; c < r.length; c++) {
+                            let val = parseFloat(r[c]);
+                            if (!isNaN(val) && val > 100000 && val < 500000) {
+                                pointsMap[id].e = val;
+                                break;
+                            }
+                        }
+
+                        // 尋找實測平距 (合理的導線邊長大約在 50m ~ 1500m 之間，排除座標值跟極小數)
+                        for (let c = 0; c < r.length; c++) {
+                            let val = parseFloat(r[c]);
+                            if (!isNaN(val) && val > 10 && val < 2000) {
+                                // 確保不是 N 或 E 坐標
+                                if (!(val > 100000)) {
+                                    pointsMap[id].dist = val;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // 檢查下一列 (i + 1 列) 以防 E 坐標或平距在下一行
                         if (i + 1 < jsonRows.length) {
                             let nextR = jsonRows[i+1];
-                            for (let c = 0; c < nextR.length; c++) {
-                                let val = parseFloat(nextR[c]);
-                                let txt = String(nextR[c] || '').trim().toUpperCase();
-                                if (txt === 'E' && nextR[c+1] && !isNaN(parseFloat(nextR[c+1]))) {
-                                    pointsMap[id].e = parseFloat(nextR[c+1]);
-                                } else if (!isNaN(val) && val > 100000 && val < 500000) {
-                                    pointsMap[id].e = val;
+                            if (!pointsMap[id].e) {
+                                for (let c = 0; c < nextR.length; c++) {
+                                    let val = parseFloat(nextR[c]);
+                                    if (!isNaN(val) && val > 100000 && val < 500000) {
+                                        pointsMap[id].e = val;
+                                        break;
+                                    }
                                 }
-
-                                // 尋找實測平距
-                                if (!isNaN(val) && val > 1 && val < 2000 && c >= 4 && c <= 7) {
-                                    if (nextR[c-1] !== '°' && nextR[c+1] !== "'") {
+                            }
+                            if (!pointsMap[id].dist) {
+                                for (let c = 0; c < nextR.length; c++) {
+                                    let val = parseFloat(nextR[c]);
+                                    if (!isNaN(val) && val > 10 && val < 2000 && !(val > 100000)) {
                                         pointsMap[id].dist = val;
+                                        break;
                                     }
                                 }
                             }
 
-                            // 尋找實測夾角 (度、分、秒通常在 M, N, O 欄位)
-                            for (let c = 8; c < nextR.length - 2; c++) {
+                            // 尋找實測夾角 (度、分、秒)
+                            for (let c = 0; c < nextR.length - 2; c++) {
                                 let d = parseFloat(nextR[c]);
                                 let m = parseFloat(nextR[c+1]);
                                 let s = parseFloat(nextR[c+2]);
@@ -627,7 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let validRecords = pointOrder.map(id => pointsMap[id]).filter(p => p.n && p.e);
 
                 if (validRecords.length < 2) {
-                    alert('自动解析抓取到的完整坐標點少於 2 個。請檢查檔案格式！');
+                    alert('自動解析抓取到的完整坐標點少於 2 個。請檢查檔案格式！');
                     return;
                 }
 
@@ -642,6 +661,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('stN').value = st.n.toFixed(4);
                 document.getElementById('stE').value = st.e.toFixed(4);
 
+                // 將第一點的實測平距賦值給後視點至設站點實測邊長
                 if (bs.dist !== '') {
                     document.getElementById('bsToStDist').value = bs.dist;
                 }
@@ -668,7 +688,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`成功匯入檢測成果表！\n後視點：${bs.id}\n設站點：${st.id}\n共載入 ${validRecords.length} 個控制點。`);
+                alert(`成功匯入檢測成果表！\n後視點：${bs.id}\n設站點：${st.id}\n後視點至設站點實測邊長：${bs.dist || '未抓取'}`);
 
             } catch (err) {
                 console.error(err);
@@ -734,41 +754,31 @@ document.addEventListener('DOMContentLoaded', function() {
         let curStE = stE;
         let curStId = stId;
 
-        // 計算第一站 (BS->ST) 的反算平距
         let firstCalcDist = getDistance(bsN, bsE, stN, stE);
 
         legs.forEach((leg, idx) => {
-            // 1. 反算前站方位角 (BS -> ST)
             let azBS = getAzimuth(curBsN, curBsE, curStN, curStE);
-            
-            // 2. 實測夾角 (度分秒轉度)
             let measuredAngleDeg = leg.deg + (leg.min / 60) + (leg.sec / 3600);
             let measuredAngleRad = measuredAngleDeg * Math.PI / 180;
 
-            // 3. 計算前進方位角 (Forward Azimuth)
             let fwdAzRad = azBS + measuredAngleRad;
             const PI2 = 2 * Math.PI;
             while (fwdAzRad < 0) fwdAzRad += PI2;
             while (fwdAzRad >= PI2) fwdAzRad -= PI2;
 
-            // 4. 計算新點座標
             let dN = leg.dist * Math.cos(fwdAzRad);
             let dE = leg.dist * Math.sin(fwdAzRad);
             let targetN = curStN + dN;
             let targetE = curStE + dE;
 
-            // 5. 反算平距 (從 St 到 Target)
             let calcDist = getDistance(curStN, curStE, targetN, targetE);
 
-            // 6. 反算夾角 (下一站的反算夾角需要等到再下一站，或者我們可由坐標反算方位角差)
-            // 註：反算夾角 = 反算後續方位角 - 來到當前站的方位角
-            // 為了完整呈現，我們儲存當前站的資料
             results.push({
                 stationId: curStId,
                 targetId: leg.id,
                 measuredDist: leg.dist,
                 calcDist: calcDist,
-                distDiff: (calcDist - leg.dist) * 1000, // mm
+                distDiff: (calcDist - leg.dist) * 1000,
                 measuredAngleDeg: measuredAngleDeg,
                 targetN: targetN,
                 targetE: targetE,
@@ -785,15 +795,6 @@ document.addEventListener('DOMContentLoaded', function() {
             curStId = leg.id;
         });
 
-        // 第二輪計算各站之「反算夾角」與「夾角較差」
-        for (let i = 0; i < results.length; i++) {
-            let curr = results[i];
-            // 尋找從上一站進來之方位角，與往下一站出去之方位角
-            // 簡單起見，我們利用坐標反算夾角
-            // 反算夾角 = Back-Azimuth(Target -> Station) 與 Forward-Azimuth(Station -> NextTarget) 的夾角
-            // 在工程表中，反算夾角通常是：反算方位角計算值
-        }
-
         return {
             initialBsId: bsId, bsN, bsE,
             initialStId: stId, stN, stE,
@@ -807,12 +808,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!data) return;
 
         let text = `=== 平面控制點檢測成果表計算結果 ===\n`;
-        text += `後視點 [${data.initialBsId}] N=${data.initialBsN?.toFixed(4)}, E=${data.initialBsE?.toFixed(4)}\n`;
-        text += `設站點 [${data.initialStId}] N=${data.initialStN?.toFixed(4)}, E=${data.initialStE?.toFixed(4)}\n\n`;
+        text += `後視點 [${data.initialBsId}] N=${data.bsN?.toFixed(4)}, E=${data.bsE?.toFixed(4)}\n`;
+        text += `設站點 [${data.initialStId}] N=${data.stN?.toFixed(4)}, E=${data.stE?.toFixed(4)}\n`;
+        text += `後視點至設站點實測邊長: ${data.bsToStDist} m\n\n`;
 
         data.legsCalculated.forEach((r, idx) => {
             text += `站序 ${idx+1} -> 目標點: ${r.targetId}\n`;
-            text += `   實測平距: ${r.measuredDist} m | 反算平距: ${r.calcDist.toFixed(4)} m | 差值: ${(r.calcDist - r.measuredDist).toFixed(3)} m\n`;
+            text += `   實測平距: ${r.measuredDist} m | 反算平距: ${r.calcDist.toFixed(4)} m\n`;
             text += `   計算座標: N=${r.targetN.toFixed(4)}, E=${r.targetE.toFixed(4)}\n`;
             if (r.knownN !== null) {
                 text += `   已知對應: ΔN=${r.diffN.toFixed(2)} mm, ΔE=${r.diffE.toFixed(2)} mm\n`;
