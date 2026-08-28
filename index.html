@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>平面控制點檢測成果表 - 手動精準對應系統</title>
+    <title>平面控制點檢測成果表 - 自動化匯入系統</title>
     <!-- 引入 SheetJS 用於前端 Excel 讀寫 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -80,12 +80,6 @@
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
             gap: 15px;
         }
 
@@ -194,64 +188,22 @@
             font-size: 0.95rem;
             display: none;
         }
-
-        .mapping-box {
-            background: #fff;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>平面控制點檢測成果表 - 手動精準對應系統</h1>
+    <h1>平面控制點檢測成果表 - 自動化匯入系統</h1>
 
-    <!-- 匯入與欄位對應設定區 -->
-    <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
-        <h3 style="color: #1d4ed8; margin-top: 0;">📂 步驟一：選擇 Excel 並設定欄位行索引</h3>
-        <div class="hint-text">如果您的 Excel 標題列在第 3 行，資料從第 5 行開始，請在此調整行數與欄位索引（從 0 開始算，例如第 1 欄填 0）。</div>
-        
-        <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
-        <button type="button" id="selectFileBtn" class="btn-info">📂 1. 選擇 Excel 成果表檔案</button>
-        <span id="fileNameDisplay" style="margin-left: 10px; font-weight: 600; color: #334155;">尚未選擇檔案</span>
-
-        <div class="mapping-box">
-            <div class="grid-3">
-                <div class="form-group">
-                    <label>資料開始列 (Header 之後):</label>
-                    <input type="number" id="mapStartRow" value="4" min="0" title="程式陣列從0開始，若資料在Excel第5行請填4">
-                </div>
-                <div class="form-group">
-                    <label>點號 欄位索引 (Col):</label>
-                    <input type="number" id="mapColId" value="0" min="0" placeholder="例如第1欄填0">
-                </div>
-                <div class="form-group">
-                    <label>N 坐標 欄位索引 (Col):</label>
-                    <input type="number" id="mapColN" value="1" min="0" placeholder="例如第2欄填1">
-                </div>
-                <div class="form-group">
-                    <label>E 坐標 欄位索引 (Col):</label>
-                    <input type="number" id="mapColE" value="2" min="0" placeholder="例如第3欄填2">
-                </div>
-                <div class="form-group">
-                    <label>平距 欄位索引 (Col):</label>
-                    <input type="number" id="mapColDist" value="4" min="0" placeholder="例如第5欄填4">
-                </div>
-                <div class="form-group">
-                    <label>夾角（度/分/秒）起始欄:</label>
-                    <input type="number" id="mapColAngle" value="9" min="0" placeholder="若無填 -1">
-                </div>
-            </div>
-            <button type="button" id="executeImportBtn" class="btn-success" style="margin-top: 10px; width: 100%;">⚡ 2. 執行指定欄位對應匯入</button>
-        </div>
-    </div>
+    <!-- 隱藏的檔案上傳 Input -->
+    <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
 
     <!-- 起始後視點與設站點 -->
     <div class="section-box">
-        <h3>📍 導線起算點與第一站實測資料 (第 1 站)</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin:0;">📍 導線起算點與第一站實測資料 (第 1 站)</h3>
+            <button type="button" id="selectFileBtn" class="btn-info" style="padding: 6px 12px; font-size: 0.85rem;">📂 一鍵匯入 Excel 成果表</button>
+        </div>
         <div class="grid-2" style="margin-top: 10px;">
             <div class="form-group">
                 <label>初始後視點 點號 (BS):</label>
@@ -306,7 +258,7 @@
                     <tbody></tbody>
                 </table>
             </div>
-            <button type="button" id="addKnownRowBtn" class="btn-secondary">＋ 新進已知點資料庫項目</button>
+            <button type="button" id="addKnownRowBtn" class="btn-secondary">＋ 新增已知點資料庫項目</button>
         </div>
     </div>
 
@@ -352,8 +304,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let globalWorkbookData = null;
-
     const toggleHeader = document.getElementById('toggleKnownDbHeader');
     const knownContent = document.getElementById('knownDbContent');
     const toggleIcon = document.getElementById('toggleIcon');
@@ -379,8 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const selectFileBtn = document.getElementById('selectFileBtn');
     const reportFileImporter = document.getElementById('reportFileImporter');
-    const fileNameDisplay = document.getElementById('fileNameDisplay');
-    const executeImportBtn = document.getElementById('executeImportBtn');
     
     const resultArea = document.getElementById('resultArea');
 
@@ -389,7 +337,6 @@ document.addEventListener('DOMContentLoaded', function() {
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
-        fileNameDisplay.textContent = file.name;
 
         const reader = new FileReader();
         reader.onload = function(event) {
@@ -398,90 +345,83 @@ document.addEventListener('DOMContentLoaded', function() {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                globalWorkbookData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                alert(`檔案讀取成功！總共 ${globalWorkbookData.length} 行。請在下方確認對應欄位索引後，點擊「執行指定欄位對應匯入」。`);
+                const rowsData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                // 自動化解析設定（預設對應您的固定欄位索引）
+                const startRow = 4;
+                const colId = 0;
+                const colN = 1;
+                const colE = 2;
+                const colDist = 4;
+                const colAngle = 9;
+
+                let extractedRows = [];
+
+                for (let i = startRow; i < rowsData.length; i++) {
+                    let r = rowsData[i];
+                    if (!r || r.length === 0) continue;
+
+                    let id = String(r[colId] || '').trim();
+                    let n = parseFloat(r[colN]);
+                    let e = parseFloat(r[colE]);
+                    let dist = colDist >= 0 && r[colDist] !== undefined ? parseFloat(r[colDist]) : '';
+                    
+                    let deg = '', min = '', sec = '';
+                    if (colAngle >= 0 && r[colAngle] !== undefined) {
+                        deg = parseFloat(r[colAngle]) || 0;
+                        min = colAngle + 1 < r.length ? (parseFloat(r[colAngle + 1]) || 0) : 0;
+                        sec = colAngle + 2 < r.length ? (parseFloat(r[colAngle + 2]) || 0) : 0;
+                    }
+
+                    if (id && !isNaN(n) && !isNaN(e)) {
+                        extractedRows.push({
+                            id, n, e,
+                            dist: !isNaN(dist) ? dist : '',
+                            deg, min, sec
+                        });
+                    }
+                }
+
+                if (extractedRows.length < 2) {
+                    alert('抓取到的有效點位少於 2 個，請檢查檔案格式是否正確。');
+                    return;
+                }
+
+                let bs = extractedRows[0];
+                let st = extractedRows[1];
+
+                document.getElementById('bsId').value = bs.id;
+                document.getElementById('bsN').value = bs.n.toFixed(4);
+                document.getElementById('bsE').value = bs.e.toFixed(4);
+
+                document.getElementById('stId').value = st.id;
+                document.getElementById('stN').value = st.n.toFixed(4);
+                document.getElementById('stE').value = st.e.toFixed(4);
+
+                if (bs.dist !== '') {
+                    document.getElementById('bsToStDist').value = bs.dist;
+                }
+
+                let db = getKnownDatabase();
+                extractedRows.forEach(p => {
+                    if (!db[p.id]) addKnownRow(p.id, p.n.toFixed(4), p.e.toFixed(4));
+                });
+
+                tbody.innerHTML = '';
+                for (let i = 1; i < extractedRows.length; i++) {
+                    let cur = extractedRows[i];
+                    addRow(cur.id, cur.dist, cur.deg, cur.min, cur.sec);
+                }
+
+                updateRowIndices();
+                updateKnownStatusUI();
+                saveDataToLocalStorage();
+                alert(`成功自動匯入 ${extractedRows.length} 筆點位資料！`);
             } catch (err) {
                 alert('讀取 Excel 失敗：' + err.message);
             }
         };
         reader.readAsArrayBuffer(file);
-    });
-
-    executeImportBtn.addEventListener('click', function() {
-        if (!globalWorkbookData) {
-            alert('請先選擇並載入 Excel 檔案！');
-            return;
-        }
-
-        const startRow = parseInt(document.getElementById('mapStartRow').value) || 0;
-        const colId = parseInt(document.getElementById('mapColId').value) ?? 0;
-        const colN = parseInt(document.getElementById('mapColN').value) ?? 1;
-        const colE = parseInt(document.getElementById('mapColE').value) ?? 2;
-        const colDist = parseInt(document.getElementById('mapColDist').value) ?? 4;
-        const colAngle = parseInt(document.getElementById('mapColAngle').value) ?? 9;
-
-        let extractedRows = [];
-
-        for (let i = startRow; i < globalWorkbookData.length; i++) {
-            let r = globalWorkbookData[i];
-            if (!r || r.length === 0) continue;
-
-            let id = String(r[colId] || '').trim();
-            let n = parseFloat(r[colN]);
-            let e = parseFloat(r[colE]);
-            let dist = colDist >= 0 && r[colDist] !== undefined ? parseFloat(r[colDist]) : '';
-            
-            let deg = '', min = '', sec = '';
-            if (colAngle >= 0 && r[colAngle] !== undefined) {
-                deg = parseFloat(r[colAngle]) || 0;
-                min = colAngle + 1 < r.length ? (parseFloat(r[colAngle + 1]) || 0) : 0;
-                sec = colAngle + 2 < r.length ? (parseFloat(r[colAngle + 2]) || 0) : 0;
-            }
-
-            if (id && !isNaN(n) && !isNaN(e)) {
-                extractedRows.push({
-                    id, n, e,
-                    dist: !isNaN(dist) ? dist : '',
-                    deg, min, sec
-                });
-            }
-        }
-
-        if (extractedRows.length < 2) {
-            alert(`依照您設定的起算列 (${startRow}) 與欄位索引抓取到的有效點位少於 2 個！請檢查「欄位索引」數字是否正確（例如第一欄是 0，第二欄是 1）。`);
-            return;
-        }
-
-        let bs = extractedRows[0];
-        let st = extractedRows[1];
-
-        document.getElementById('bsId').value = bs.id;
-        document.getElementById('bsN').value = bs.n.toFixed(4);
-        document.getElementById('bsE').value = bs.e.toFixed(4);
-
-        document.getElementById('stId').value = st.id;
-        document.getElementById('stN').value = st.n.toFixed(4);
-        document.getElementById('stE').value = st.e.toFixed(4);
-
-        if (bs.dist !== '') {
-            document.getElementById('bsToStDist').value = bs.dist;
-        }
-
-        let db = getKnownDatabase();
-        extractedRows.forEach(p => {
-            if (!db[p.id]) addKnownRow(p.id, p.n.toFixed(4), p.e.toFixed(4));
-        });
-
-        tbody.innerHTML = '';
-        for (let i = 1; i < extractedRows.length; i++) {
-            let cur = extractedRows[i];
-            addRow(cur.id, cur.dist, cur.deg, cur.min, cur.sec);
-        }
-
-        updateRowIndices();
-        updateKnownStatusUI();
-        saveDataToLocalStorage();
-        alert(`成功依照您指定的欄位匯入 ${extractedRows.length} 筆點位！`);
     });
 
     function degToDMSParts(degDecimal) {
@@ -634,11 +574,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data_v7', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v8', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data_v7');
+        const saved = localStorage.getItem('traverse_tool_data_v8');
         if (!saved) {
             addKnownRow();
             addRow();
@@ -743,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let firstCalcDist = getDistance(bsN, bsE, stN, stE);
 
-        legs.forEach((leg, idx) => {
+        legs.forEach((leg) => {
             let azBS = getAzimuth(curBsN, curBsE, curStN, curStE);
             let measuredAngleDeg = leg.deg + (leg.min / 60) + (leg.sec / 3600);
             let measuredAngleRad = measuredAngleDeg * Math.PI / 180;
