@@ -200,7 +200,7 @@
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
         <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
-        <div class="hint-text">點擊匯入後，程式會自動略過上方標題與說明文字，精確抓取控制點與測量數據。</div>
+        <div class="hint-text">點擊匯入後，程式會自動識別欄位標題，智慧抓取控制點與測量數據。</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
     </div>
@@ -278,7 +278,7 @@
                         <th style="width: 8%;">站序</th>
                         <th style="width: 22%;">目標點號 (ID)</th>
                         <th style="width: 25%;">邊長 (m)</th>
-                        <th style="width: 35%;">夾角 (度分秒)</th>
+                        <th style="width: 35%;">夾角 (度分秒，秒數支援小數)</th>
                         <th style="width: 10%;">操作</th>
                     </tr>
                     <tr>
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let remainderMin = (degDecimal - d) * 60;
         let m = Math.floor(remainderMin);
         let s = (remainderMin - m) * 60;
-        return `${d}° ${String(m).padStart(2, '0')}' ${s.toFixed(2)}''`;
+        return `${d}° ${String(m).padStart(2, '0')}' ${s.toFixed(4)}''`;
     }
 
     function pol(n1, e1, n2, e2, p) {
@@ -375,8 +375,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="text" class="known-id" value="${id}" placeholder="已知點號"></td>
-            <td><input type="number" step="any" class="known-n" value="${n}" placeholder="已知 N"></td>
-            <td><input type="number" step="any" class="known-e" value="${e}" placeholder="已知 E"></td>
+            <td><input type="number" step="any" class="known-n" value="${n !== '' ? Number(n).toFixed(4) : ''}" placeholder="已知 N"></td>
+            <td><input type="number" step="any" class="known-e" value="${e !== '' ? Number(e).toFixed(4) : ''}" placeholder="已知 E"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
 
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="angle-inputs">
                     <input type="number" class="input-deg" value="${deg}" placeholder="度">
                     <input type="number" class="input-min" value="${min}" placeholder="分">
-                    <input type="number" class="input-sec" value="${sec}" placeholder="秒">
+                    <input type="number" step="any" class="input-sec" value="${sec}" placeholder="秒">
                 </div>
             </td>
             <td><button type="button" class="btn-delete">刪除</button></td>
@@ -510,10 +510,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = JSON.parse(saved);
             document.getElementById('bsId').value = data.bsId || '';
             document.getElementById('stId').value = data.stId || '';
-            document.getElementById('bsN').value = data.bsN || '';
-            document.getElementById('stN').value = data.stN || '';
-            document.getElementById('bsE').value = data.bsE || '';
-            document.getElementById('stE').value = data.stE || '';
+            document.getElementById('bsN').value = data.bsN !== '' ? Number(data.bsN).toFixed(4) : '';
+            document.getElementById('stN').value = data.stN !== '' ? Number(data.stN).toFixed(4) : '';
+            document.getElementById('bsE').value = data.bsE !== '' ? Number(data.bsE).toFixed(4) : '';
+            document.getElementById('stE').value = data.stE !== '' ? Number(data.stE).toFixed(4) : '';
             document.getElementById('bsToStDist').value = data.bsToStDist || '';
 
             if (data.knownDb && data.knownDb.length > 0) {
@@ -551,7 +551,6 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 具備智慧過濾功能的 Excel 控制點成果表解析器
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -568,44 +567,82 @@ document.addEventListener('DOMContentLoaded', function() {
                 let pointBlocks = [];
                 for (let i = 0; i < jsonRows.length; i++) {
                     let rN = jsonRows[i];
-                    if (!rN || rN[0] === undefined || rN[0] === null) continue;
+                    if (!rN || rN.length === 0) continue;
 
-                    let pId = String(rN[0]).trim();
-                    
-                    // 智慧過濾：排除標題、施工標別說明文字、頁碼等非點號欄位
-                    if (!pId || pId === '點' || pId === '號' || pId.includes('施工標') || pId.includes('平面控制點') || pId.includes('第') || pId.includes('頁') || pId.length > 15) {
-                        continue;
+                    let pId = '';
+                    for (let c = 0; c < rN.length; c++) {
+                        let val = String(rN[c] || '').trim();
+                        if (val && !val.includes('施工標') && !val.includes('控制點檢測') && !val.includes('第') && !val.includes('頁') && val.length < 15) {
+                            pId = val;
+                            break;
+                        }
                     }
 
-                    // 確保該點位含有數值的座標，才被認為是有效的控制點列
-                    let rE = jsonRows[i + 1] || [];
-                    let pN = (rN[2] !== undefined && rN[2] !== null && !isNaN(rN[2])) ? rN[2] : '';
-                    let pE = (rE[2] !== undefined && rE[2] !== null && !isNaN(rE[2])) ? rE[2] : '';
+                    if (!pId) continue;
 
-                    if (pN === '' || pE === '') continue; // 若沒有有效座標則跳過
+                    let pN = '', pE = '', distToNext = '';
+                    let numericVals = [];
+                    for (let c = 0; c < rN.length; c++) {
+                        let num = parseFloat(rN[c]);
+                        if (!isNaN(num)) {
+                            numericVals.push({ col: c, val: num });
+                        }
+                    }
 
-                    let distToNext = (rE[4] !== undefined && rE[4] !== null) ? rE[4] : '';
-                    let deg = (rN[11] !== undefined && rN[11] !== null) ? rN[11] : '';
-                    let min = (rN[12] !== undefined && rN[12] !== null) ? rN[12] : '';
-                    let sec = (rN[13] !== undefined && rN[13] !== null) ? rN[13] : '';
+                    let potentialCoords = numericVals.filter(item => item.val > 1000 && item.val < 99999999);
+                    if (potentialCoords.length >= 2) {
+                        pN = potentialCoords[0].val;
+                        pE = potentialCoords[1].val;
+                    } else if (potentialCoords.length === 1) {
+                        pN = potentialCoords[0].val;
+                    }
+
+                    let smallNums = numericVals.filter(item => item.val > 0 && item.val < 10000);
+                    if (smallNums.length > 0) {
+                        distToNext = smallNums[0].val;
+                    }
 
                     pointBlocks.push({
                         id: pId,
-                        n: pN,
-                        e: pE,
+                        n: pN !== '' ? Number(pN).toFixed(4) : '',
+                        e: pE !== '' ? Number(pE).toFixed(4) : '',
                         distToNext: distToNext,
-                        deg: deg,
-                        min: min,
-                        sec: sec
+                        deg: '',
+                        min: '',
+                        sec: ''
                     });
                 }
 
                 if (pointBlocks.length < 2) {
-                    alert('無法在 Excel 中辨識出足夠的控制點（少於 2 個有效點），請確認檔案內容！');
+                    pointBlocks = [];
+                    for (let i = 0; i < jsonRows.length; i++) {
+                        let rN = jsonRows[i];
+                        if (!rN || rN[0] === undefined || rN[0] === null) continue;
+                        let pId = String(rN[0]).trim();
+                        if (!pId || pId.includes('施工標') || pId.length > 15) continue;
+
+                        let rE = jsonRows[i + 1] || [];
+                        let pN = rN[2] !== undefined ? rN[2] : '';
+                        let pE = rE[2] !== undefined ? rE[2] : '';
+                        if (pN === '' || pE === '') continue;
+
+                        pointBlocks.push({
+                            id: pId,
+                            n: Number(pN).toFixed(4),
+                            e: Number(pE).toFixed(4),
+                            distToNext: rE[4] !== undefined ? rE[4] : '',
+                            deg: rN[11] !== undefined ? rN[11] : '',
+                            min: rN[12] !== undefined ? rN[12] : '',
+                            sec: rN[13] !== undefined ? rN[13] : ''
+                        });
+                    }
+                }
+
+                if (pointBlocks.length < 2) {
+                    alert('無法在 Excel 中辨識出足夠的控制點，請手動輸入或確認檔案格式！');
                     return;
                 }
 
-                // 填入起算點與設站點
                 let bs = pointBlocks[0]; 
                 let st = pointBlocks[1]; 
 
@@ -619,12 +656,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 document.getElementById('bsToStDist').value = bs.distToNext;
 
-                // 填入已知點資料庫
                 let db = getKnownDatabase();
                 if (bs.id && !db[bs.id]) addKnownRow(bs.id, bs.n, bs.e);
                 if (st.id && !db[st.id]) addKnownRow(st.id, st.n, st.e);
 
-                // 填入前瞻點序列
                 tbody.innerHTML = '';
                 for (let k = 2; k < pointBlocks.length; k++) {
                     let prevStation = pointBlocks[k - 1]; 
@@ -646,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`成功讀取！已自動略過上方標題，正確抓取起算點 [${bs.id}]、設站點 [${st.id}] 以及後續導線點。`);
+                alert(`成功讀取！已成功略過上方所有標題，抓取起算點 [${bs.id}]、設站點 [${st.id}] 以及後續導線點。`);
 
             } catch (err) {
                 console.error(err);
