@@ -736,52 +736,50 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = calculateAllResults();
         if (!data) return;
 
-        // 仿照圖片的表頭設計
         const excelRows = [
             ["點 號", "原始座標值", "", "實測平距", "實測夾角", "", "", "計算後座標", "", "較差(mm)", "", "備註"],
             ["", "N", "E", "", "°", "'", "\"", "N", "E", "N", "E", ""]
         ];
 
-        // 後視點列
-        let bsKnown = getKnownDatabase()[data.initialBsId];
+        // 後視點列 (強制小數點後 4 位)
         excelRows.push([
             data.initialBsId,
-            Number(data.initialBsN.toFixed(4)),
-            Number(data.initialBsE.toFixed(4)),
+            data.initialBsN.toFixed(4),
+            data.initialBsE.toFixed(4),
             "-", "-", "-", "-",
-            Number(data.initialBsN.toFixed(4)),
-            Number(data.initialBsE.toFixed(4)),
+            data.initialBsN.toFixed(4),
+            data.initialBsE.toFixed(4),
             "-", "-",
             "後視點"
         ]);
 
-        // 起始點列 (第 1 站設站點)
+        // 起始點列 (第 1 站設站點，強制小數點後 4 位)
         excelRows.push([
             data.initialStId,
-            Number(data.initialStN.toFixed(4)),
-            Number(data.initialStE.toFixed(4)),
+            data.initialStN.toFixed(4),
+            data.initialStE.toFixed(4),
             data.bsToStDist !== '' ? data.bsToStDist : "-",
             "-", "-", "-",
-            Number(data.initialStN.toFixed(4)),
-            Number(data.initialStE.toFixed(4)),
+            data.initialStN.toFixed(4),
+            data.initialStE.toFixed(4),
             "-", "-",
             "起始點"
         ]);
 
-        // 導線延伸各站點
+        // 導線延伸各站點 (強制 N、E 原始與計算後皆為 4 位小數，較差維持 2 位)
         data.legsCalculated.forEach((r) => {
             excelRows.push([
                 r.targetId,
-                r.knownN !== null ? Number(r.knownN.toFixed(4)) : "",
-                r.knownE !== null ? Number(r.knownE.toFixed(4)) : "",
+                r.knownN !== null ? r.knownN.toFixed(4) : "",
+                r.knownE !== null ? r.knownE.toFixed(4) : "",
                 r.dist !== '' ? r.dist : "",
                 r.deg !== '' ? r.deg : "-",
                 r.min !== '' ? r.min : "-",
                 r.sec !== '' ? r.sec : "-",
-                Number(r.n.toFixed(4)),
-                Number(r.e.toFixed(4)),
-                r.diffN !== null ? Number(r.diffN.toFixed(2)) : "",
-                r.diffE !== null ? Number(r.diffE.toFixed(2)) : "",
+                r.n.toFixed(4),
+                r.e.toFixed(4),
+                r.diffN !== null ? r.diffN.toFixed(2) : "",
+                r.diffE !== null ? r.diffE.toFixed(2) : "",
                 ""
             ]);
         });
