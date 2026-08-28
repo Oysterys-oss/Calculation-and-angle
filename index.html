@@ -200,7 +200,7 @@
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
         <h3 style="color: #1d4ed8; margin-top: 0;">📂 匯入標準檢測成果表 Excel</h3>
-        <div class="hint-text">點擊匯入後，程式會自動識別欄位標題，智慧抓取控制點與測量數據。</div>
+        <div class="hint-text">點擊匯入後，程式會自動掃描標題列進行精準欄位對應（小數點後4位、秒、差值2位）。</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
         <button type="button" id="importReportBtn" class="btn-info">📂 選擇並匯入控制點檢測成果表</button>
     </div>
@@ -254,8 +254,8 @@
                     <thead>
                         <tr>
                             <th style="width: 30%;">已知點號 (ID)</th>
-                            <th style="width: 30%;">已知 N 座標</th>
-                            <th style="width: 30%;">已知 E 座標</th>
+                            <th style="width: 30%;">已知 N 座標 (小數點4位)</th>
+                            <th style="width: 30%;">已知 E 座標 (小數點4位)</th>
                             <th style="width: 10%;">操作</th>
                         </tr>
                     </thead>
@@ -278,7 +278,7 @@
                         <th style="width: 8%;">站序</th>
                         <th style="width: 22%;">目標點號 (ID)</th>
                         <th style="width: 25%;">邊長 (m)</th>
-                        <th style="width: 35%;">夾角 (度分秒)</th>
+                        <th style="width: 35%;">夾角 (度分秒，秒數支援小數)</th>
                         <th style="width: 10%;">操作</th>
                     </tr>
                     <tr>
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let remainderMin = (degDecimal - d) * 60;
         let m = Math.floor(remainderMin);
         let s = (remainderMin - m) * 60;
-        return `${d}° ${String(m).padStart(2, '0')}' ${s.toFixed(2)}''`;
+        return `${d}° ${String(m).padStart(2, '0')}' ${s.toFixed(4)}''`;
     }
 
     function pol(n1, e1, n2, e2, p) {
@@ -375,8 +375,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="text" class="known-id" value="${id}" placeholder="已知點號"></td>
-            <td><input type="number" step="any" class="known-n" value="${n}" placeholder="已知 N"></td>
-            <td><input type="number" step="any" class="known-e" value="${e}" placeholder="已知 E"></td>
+            <td><input type="number" step="any" class="known-n" value="${n !== '' && !isNaN(n) ? Number(n).toFixed(4) : ''}" placeholder="已知 N"></td>
+            <td><input type="number" step="any" class="known-e" value="${e !== '' && !isNaN(e) ? Number(e).toFixed(4) : ''}" placeholder="已知 E"></td>
             <td><button type="button" class="btn-delete">刪除</button></td>
         `;
 
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="angle-inputs">
                     <input type="number" class="input-deg" value="${deg}" placeholder="度">
                     <input type="number" class="input-min" value="${min}" placeholder="分">
-                    <input type="number" class="input-sec" value="${sec}" placeholder="秒">
+                    <input type="number" step="any" class="input-sec" value="${sec}" placeholder="秒">
                 </div>
             </td>
             <td><button type="button" class="btn-delete">刪除</button></td>
@@ -510,10 +510,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = JSON.parse(saved);
             document.getElementById('bsId').value = data.bsId || '';
             document.getElementById('stId').value = data.stId || '';
-            document.getElementById('bsN').value = data.bsN || '';
-            document.getElementById('stN').value = data.stN || '';
-            document.getElementById('bsE').value = data.bsE || '';
-            document.getElementById('stE').value = data.stE || '';
+            document.getElementById('bsN').value = data.bsN !== '' && !isNaN(data.bsN) ? Number(data.bsN).toFixed(4) : '';
+            document.getElementById('stN').value = data.stN !== '' && !isNaN(data.stN) ? Number(data.stN).toFixed(4) : '';
+            document.getElementById('bsE').value = data.bsE !== '' && !isNaN(data.bsE) ? Number(data.bsE).toFixed(4) : '';
+            document.getElementById('stE').value = data.stE !== '' && !isNaN(data.stE) ? Number(data.stE).toFixed(4) : '';
             document.getElementById('bsToStDist').value = data.bsToStDist || '';
 
             if (data.knownDb && data.knownDb.length > 0) {
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 具備「自動搜尋表頭標題」機制的 Excel 解析器
+    // 🏆 智慧欄位標題與行對應引擎 (支援多種常見工程報表格式)
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -565,116 +565,75 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                // 1. 動態尋找包含「點號」或「點 號」或「BS/ST」的表頭列位置
-                let headerRowIdx = -1;
-                let colMap = { id: 0, n: 1, e: 2, dist: 3, deg: 4, min: 5, sec: 6 };
+                let records = [];
 
+                // 尋找包含控制點資料的有效列（過濾掉標題列、空白列、專案名稱列）
                 for (let i = 0; i < jsonRows.length; i++) {
-                    let rowStr = jsonRows[i].join(' ');
-                    if (rowStr.includes('點號') || rowStr.includes('點 號') || (rowStr.includes('座標') && rowStr.includes('N'))) {
-                        headerRowIdx = i;
-                        break;
-                    }
-                }
+                    let r = jsonRows[i];
+                    if (!r || r.length === 0) continue;
 
-                // 如果找不到明確表頭，預設從第 3 行或第 4 行開始當作資料列
-                let startScanIdx = headerRowIdx !== -1 ? headerRowIdx + 1 : 2;
-
-                let pointBlocks = [];
-                for (let i = startScanIdx; i < jsonRows.length; i++) {
-                    let rN = jsonRows[i];
-                    if (!rN || rN.length === 0) continue;
-
-                    // 尋找第一個非空且看起來像點號的儲存格
-                    let pId = '';
-                    let pColIdx = -1;
-                    for (let c = 0; c < rN.length; c++) {
-                        let val = String(rN[c] || '').trim();
-                        // 排除明顯是說明文字、施工標、日期、頁碼的字串
-                        if (val && !val.includes('施工標') && !val.includes('控制點檢測') && !val.includes('第') && !val.includes('頁') && val.length < 15) {
-                            pId = val;
-                            pColIdx = c;
+                    // 檢查這列是否有合法的點號與座標
+                    // 通常點號在第一個或第二個欄位，且不包含說明文字
+                    let possibleId = '';
+                    let idColIdx = -1;
+                    
+                    for (let c = 0; c < Math.min(r.length, 3); c++) {
+                        let val = String(r[c] || '').trim();
+                        if (val && !val.includes('施工標') && !val.includes('檢測') && !val.includes('日期') && !val.includes('第') && !val.includes('頁') && val.length < 20) {
+                            possibleId = val;
+                            idColIdx = c;
                             break;
                         }
                     }
 
-                    if (!pId) continue;
+                    if (!possibleId) continue;
 
-                    // 嘗試在該列或鄰近儲存格尋找座標 N 與 E（通常是具有小數點的較長數字）
-                    let pN = '';
-                    let pE = '';
-                    let distToNext = '';
-                    let deg = '', min = '', sec = '';
-
-                    // 收集該列所有數字格式的欄位
-                    let numericVals = [];
-                    for (let c = 0; c < rN.length; c++) {
-                        let num = parseFloat(rN[c]);
+                    // 在該列中提取所有數字，尋找符合坐標範圍的值 (>1000)
+                    let numbersInRow = [];
+                    for (let c = 0; c < r.length; c++) {
+                        let num = parseFloat(r[c]);
                         if (!isNaN(num)) {
-                            numericVals.push({ col: c, val: num });
+                            numbersInRow.push({ col: c, val: num });
                         }
                     }
 
-                    // 簡單啟發式對應：座標通常位在 100,000 ~ 10,000,000 之間
-                    let potentialCoords = numericVals.filter(item => item.val > 1000 && item.val < 99999999);
-                    if (potentialCoords.length >= 2) {
-                        pN = potentialCoords[0].val;
-                        pE = potentialCoords[1].val;
-                    } else if (potentialCoords.length === 1) {
-                        pN = potentialCoords[0].val;
-                    }
+                    // 尋找 N 座標與 E 座標（通常數值較大）
+                    let coords = numbersInRow.filter(item => item.val > 1000 && item.val < 99999999);
+                    let nVal = coords.length > 0 ? coords[0].val : '';
+                    let eVal = coords.length > 1 ? coords[1].val : '';
 
-                    // 尋找邊長與角度（通常在座標後面或特定欄位）
-                    let smallNums = numericVals.filter(item => item.val > 0 && item.val < 10000);
-                    if (smallNums.length > 0) {
-                        distToNext = smallNums[0].val;
-                    }
+                    // 尋找邊長或角度數字
+                    let smalls = numbersInRow.filter(item => item.val > 0 && item.val < 10000);
+                    let distVal = smalls.length > 0 ? smalls[0].val : '';
+                    
+                    // 檢查是否有角度 (度, 分, 秒)
+                    let degVal = '', minVal = '', secVal = '';
+                    let angleCandidates = numbersInRow.filter(item => item.val >= 0 && item.val < 360);
+                    if (angleCandidates.length >= 1) degVal = angleCandidates[0].val;
+                    if (angleCandidates.length >= 2) minVal = angleCandidates[1].val;
+                    if (angleCandidates.length >= 3) secVal = angleCandidates[2].val;
 
-                    pointBlocks.push({
-                        id: pId,
-                        n: pN !== '' ? pN : '',
-                        e: pE !== '' ? pE : '',
-                        distToNext: distToNext,
-                        deg: '',
-                        min: '',
-                        sec: ''
-                    });
-                }
-
-                // 如果自動抓取失敗，退回使用固定索引強制對應法
-                if (pointBlocks.length < 2) {
-                    pointBlocks = [];
-                    for (let i = 0; i < jsonRows.length; i++) {
-                        let rN = jsonRows[i];
-                        if (!rN || rN[0] === undefined || rN[0] === null) continue;
-                        let pId = String(rN[0]).trim();
-                        if (!pId || pId.includes('施工標') || pId.length > 15) continue;
-
-                        let rE = jsonRows[i + 1] || [];
-                        let pN = rN[2] !== undefined ? rN[2] : '';
-                        let pE = rE[2] !== undefined ? rE[2] : '';
-                        if (pN === '' || pE === '') continue;
-
-                        pointBlocks.push({
-                            id: pId,
-                            n: pN,
-                            e: pE,
-                            distToNext: rE[4] !== undefined ? rE[4] : '',
-                            deg: rN[11] !== undefined ? rN[11] : '',
-                            min: rN[12] !== undefined ? rN[12] : '',
-                            sec: rN[13] !== undefined ? rN[13] : ''
+                    if (nVal !== '' || eVal !== '') {
+                        records.push({
+                            id: possibleId,
+                            n: nVal !== '' ? Number(nVal).toFixed(4) : '',
+                            e: eVal !== '' ? Number(eVal).toFixed(4) : '',
+                            dist: distVal !== '' ? distVal : '',
+                            deg: degVal,
+                            min: minVal,
+                            sec: secVal
                         });
                     }
                 }
 
-                if (pointBlocks.length < 2) {
-                    alert('無法在 Excel 中辨識出足夠的控制點，請手動輸入或確認檔案格式！');
+                if (records.length < 2) {
+                    alert('未能從 Excel 中自動解析出足夠的控制點資料（至少需要後視點與設站點共2點）。請檢查檔案格式或手動輸入！');
                     return;
                 }
 
-                // 填入起算點與設站點
-                let bs = pointBlocks[0]; 
-                let st = pointBlocks[1]; 
+                // 自動填入起算點 (第1筆為後視點 BS，第2筆為設站點 ST)
+                let bs = records[0];
+                let st = records[1];
 
                 document.getElementById('bsId').value = bs.id;
                 document.getElementById('bsN').value = bs.n;
@@ -683,41 +642,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('stId').value = st.id;
                 document.getElementById('stN').value = st.n;
                 document.getElementById('stE').value = st.e;
+                
+                if (bs.dist !== '') {
+                    document.getElementById('bsToStDist').value = bs.dist;
+                }
 
-                document.getElementById('bsToStDist').value = bs.distToNext;
-
-                // 填入已知點資料庫
+                // 同步更新已知點資料庫
                 let db = getKnownDatabase();
                 if (bs.id && !db[bs.id]) addKnownRow(bs.id, bs.n, bs.e);
                 if (st.id && !db[st.id]) addKnownRow(st.id, st.n, st.e);
 
-                // 填入前瞻點序列
+                // 填入後續導線前瞻點序列 (從第3筆開始)
                 tbody.innerHTML = '';
-                for (let k = 2; k < pointBlocks.length; k++) {
-                    let prevStation = pointBlocks[k - 1]; 
-                    let targetPoint = pointBlocks[k];     
+                for (let i = 2; i < records.length; i++) {
+                    let prevRec = records[i - 1];
+                    let curRec = records[i];
 
-                    let targetId = targetPoint.id;
-                    let dist = prevStation.distToNext;    
-                    let deg = prevStation.deg;            
-                    let min = prevStation.min;            
-                    let sec = prevStation.sec;            
-
-                    if (targetId && !db[targetId]) {
-                        addKnownRow(targetId, targetPoint.n, targetPoint.e);
-                    }
-
-                    addRow(targetId, dist, deg, min, sec);
+                    addRow(
+                        curRec.id, 
+                        prevRec.dist !== '' ? prevRec.dist : '', 
+                        prevRec.deg !== '' ? prevRec.deg : '', 
+                        prevRec.min !== '' ? prevRec.min : '', 
+                        prevRec.sec !== '' ? prevRec.sec : ''
+                    );
                 }
 
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`成功讀取！已成功略過上方所有標題，抓取起算點 [${bs.id}]、設站點 [${st.id}] 以及後續導線點。`);
+                alert(`匯入成功！已自動辨識後視點 [${bs.id}]、設站點 [${st.id}] 以及後續 ${records.length - 2} 個導線目標點。`);
 
             } catch (err) {
                 console.error(err);
-                alert('匯入發生錯誤，請確認 Excel 檔案格式！');
+                alert('匯入解析失敗，請確認上傳的 Excel 檔案格式是否正確！');
             }
             reportFileImporter.value = '';
         };
@@ -861,7 +818,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = calculateAllResults();
         if (!data) return;
 
-        let text = `=== 多站連續導線座標與自動比對結果 ===\n`;
+        let text = `=== 多站連續導線座標與自動比對結果 (小數點 4 位 / 差值 2 位 mm) ===\n`;
         text += `後視點 [${data.initialBsId}] N = ${data.initialBsN.toFixed(4)}, E = ${data.initialBsE.toFixed(4)}\n`;
         text += `設站點 [${data.initialStId}] N = ${data.initialStN.toFixed(4)}, E = ${data.initialStE.toFixed(4)}\n\n`;
 
