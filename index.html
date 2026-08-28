@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>平面控制點檢測成果表 - 智能全欄位識別系統</title>
+    <title>平面控制點檢測成果表 - 手動精準對應系統</title>
     <!-- 引入 SheetJS 用於前端 Excel 讀寫 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -83,6 +83,12 @@
             gap: 15px;
         }
 
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
         .form-group {
             margin-bottom: 10px;
         }
@@ -94,7 +100,7 @@
             font-size: 0.9rem;
         }
 
-        input[type="text"], input[type="number"] {
+        input[type="text"], input[type="number"], select {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
@@ -104,7 +110,7 @@
             background-color: #fff;
         }
 
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
@@ -166,7 +172,6 @@
         .btn-info { background-color: #0284c7; color: white; flex: 1.5; }
         .btn-secondary { background-color: #e2e8f0; color: var(--text-color); flex: 1; }
         .btn-danger-outline { background-color: #fff; color: var(--danger-color); border: 1px solid var(--danger-color); flex: 1; }
-        .btn-delete { background-color: var(--danger-color); color: white; padding: 6px 12px; font-size: 0.85rem; }
 
         .known-tag {
             font-size: 0.8rem;
@@ -190,32 +195,58 @@
             display: none;
         }
 
-        #debugLog {
-            background-color: #1e293b;
-            color: #38bdf8;
-            padding: 10px;
+        .mapping-box {
+            background: #fff;
+            padding: 12px;
             border-radius: 6px;
-            font-family: monospace;
-            font-size: 0.85rem;
-            max-height: 150px;
-            overflow-y: auto;
+            border: 1px solid #cbd5e1;
             margin-top: 10px;
-            display: none;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>平面控制點檢測成果表 - 智能全欄位識別系統</h1>
+    <h1>平面控制點檢測成果表 - 手動精準對應系統</h1>
 
-    <!-- 匯入按鈕 -->
+    <!-- 匯入與欄位對應設定區 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
-        <h3 style="color: #1d4ed8; margin-top: 0;">📂 成果表智慧匯入 (自動掃描欄位)</h3>
-        <div class="hint-text">選擇 Excel 後，系統將自動比對標題與數值特徵抓取。若仍未抓取成功，下方會顯示偵測日誌供您參考！</div>
+        <h3 style="color: #1d4ed8; margin-top: 0;">📂 步驟一：選擇 Excel 並設定欄位行索引</h3>
+        <div class="hint-text">如果您的 Excel 標題列在第 3 行，資料從第 5 行開始，請在此調整行數與欄位索引（從 0 開始算，例如第 1 欄填 0）。</div>
+        
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
-        <button type="button" id="importReportBtn" class="btn-info">📂 選擇 Excel 成果表並智慧解析</button>
-        <div id="debugLog"></div>
+        <button type="button" id="selectFileBtn" class="btn-info">📂 1. 選擇 Excel 成果表檔案</button>
+        <span id="fileNameDisplay" style="margin-left: 10px; font-weight: 600; color: #334155;">尚未選擇檔案</span>
+
+        <div class="mapping-box">
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>資料開始列 (Header 之後):</label>
+                    <input type="number" id="mapStartRow" value="4" min="0" title="程式陣列從0開始，若資料在Excel第5行請填4">
+                </div>
+                <div class="form-group">
+                    <label>點號 欄位索引 (Col):</label>
+                    <input type="number" id="mapColId" value="0" min="0" placeholder="例如第1欄填0">
+                </div>
+                <div class="form-group">
+                    <label>N 坐標 欄位索引 (Col):</label>
+                    <input type="number" id="mapColN" value="1" min="0" placeholder="例如第2欄填1">
+                </div>
+                <div class="form-group">
+                    <label>E 坐標 欄位索引 (Col):</label>
+                    <input type="number" id="mapColE" value="2" min="0" placeholder="例如第3欄填2">
+                </div>
+                <div class="form-group">
+                    <label>平距 欄位索引 (Col):</label>
+                    <input type="number" id="mapColDist" value="4" min="0" placeholder="例如第5欄填4">
+                </div>
+                <div class="form-group">
+                    <label>夾角（度/分/秒）起始欄:</label>
+                    <input type="number" id="mapColAngle" value="9" min="0" placeholder="若無填 -1">
+                </div>
+            </div>
+            <button type="button" id="executeImportBtn" class="btn-success" style="margin-top: 10px; width: 100%;">⚡ 2. 執行指定欄位對應匯入</button>
+        </div>
     </div>
 
     <!-- 起始後視點與設站點 -->
@@ -321,6 +352,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    let globalWorkbookData = null;
+
     const toggleHeader = document.getElementById('toggleKnownDbHeader');
     const knownContent = document.getElementById('knownDbContent');
     const toggleIcon = document.getElementById('toggleIcon');
@@ -344,16 +377,112 @@ document.addEventListener('DOMContentLoaded', function() {
     const calculateBtn = document.getElementById('calculateBtn');
     const exportExcelBtn = document.getElementById('exportExcelBtn');
     
-    const importReportBtn = document.getElementById('importReportBtn');
+    const selectFileBtn = document.getElementById('selectFileBtn');
     const reportFileImporter = document.getElementById('reportFileImporter');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const executeImportBtn = document.getElementById('executeImportBtn');
+    
     const resultArea = document.getElementById('resultArea');
-    const debugLog = document.getElementById('debugLog');
 
-    function logDebug(msg) {
-        console.log(msg);
-        debugLog.style.display = 'block';
-        debugLog.innerHTML += msg + '<br>';
-    }
+    selectFileBtn.addEventListener('click', () => reportFileImporter.click());
+
+    reportFileImporter.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        fileNameDisplay.textContent = file.name;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                globalWorkbookData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                alert(`檔案讀取成功！總共 ${globalWorkbookData.length} 行。請在下方確認對應欄位索引後，點擊「執行指定欄位對應匯入」。`);
+            } catch (err) {
+                alert('讀取 Excel 失敗：' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    executeImportBtn.addEventListener('click', function() {
+        if (!globalWorkbookData) {
+            alert('請先選擇並載入 Excel 檔案！');
+            return;
+        }
+
+        const startRow = parseInt(document.getElementById('mapStartRow').value) || 0;
+        const colId = parseInt(document.getElementById('mapColId').value) ?? 0;
+        const colN = parseInt(document.getElementById('mapColN').value) ?? 1;
+        const colE = parseInt(document.getElementById('mapColE').value) ?? 2;
+        const colDist = parseInt(document.getElementById('mapColDist').value) ?? 4;
+        const colAngle = parseInt(document.getElementById('mapColAngle').value) ?? 9;
+
+        let extractedRows = [];
+
+        for (let i = startRow; i < globalWorkbookData.length; i++) {
+            let r = globalWorkbookData[i];
+            if (!r || r.length === 0) continue;
+
+            let id = String(r[colId] || '').trim();
+            let n = parseFloat(r[colN]);
+            let e = parseFloat(r[colE]);
+            let dist = colDist >= 0 && r[colDist] !== undefined ? parseFloat(r[colDist]) : '';
+            
+            let deg = '', min = '', sec = '';
+            if (colAngle >= 0 && r[colAngle] !== undefined) {
+                deg = parseFloat(r[colAngle]) || 0;
+                min = colAngle + 1 < r.length ? (parseFloat(r[colAngle + 1]) || 0) : 0;
+                sec = colAngle + 2 < r.length ? (parseFloat(r[colAngle + 2]) || 0) : 0;
+            }
+
+            if (id && !isNaN(n) && !isNaN(e)) {
+                extractedRows.push({
+                    id, n, e,
+                    dist: !isNaN(dist) ? dist : '',
+                    deg, min, sec
+                });
+            }
+        }
+
+        if (extractedRows.length < 2) {
+            alert(`依照您設定的起算列 (${startRow}) 與欄位索引抓取到的有效點位少於 2 個！請檢查「欄位索引」數字是否正確（例如第一欄是 0，第二欄是 1）。`);
+            return;
+        }
+
+        let bs = extractedRows[0];
+        let st = extractedRows[1];
+
+        document.getElementById('bsId').value = bs.id;
+        document.getElementById('bsN').value = bs.n.toFixed(4);
+        document.getElementById('bsE').value = bs.e.toFixed(4);
+
+        document.getElementById('stId').value = st.id;
+        document.getElementById('stN').value = st.n.toFixed(4);
+        document.getElementById('stE').value = st.e.toFixed(4);
+
+        if (bs.dist !== '') {
+            document.getElementById('bsToStDist').value = bs.dist;
+        }
+
+        let db = getKnownDatabase();
+        extractedRows.forEach(p => {
+            if (!db[p.id]) addKnownRow(p.id, p.n.toFixed(4), p.e.toFixed(4));
+        });
+
+        tbody.innerHTML = '';
+        for (let i = 1; i < extractedRows.length; i++) {
+            let cur = extractedRows[i];
+            addRow(cur.id, cur.dist, cur.deg, cur.min, cur.sec);
+        }
+
+        updateRowIndices();
+        updateKnownStatusUI();
+        saveDataToLocalStorage();
+        alert(`成功依照您指定的欄位匯入 ${extractedRows.length} 筆點位！`);
+    });
 
     function degToDMSParts(degDecimal) {
         if (isNaN(degDecimal) || degDecimal === '') return { d: '', m: '', s: '' };
@@ -505,11 +634,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data_v6', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v7', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data_v6');
+        const saved = localStorage.getItem('traverse_tool_data_v7');
         if (!saved) {
             addKnownRow();
             addRow();
@@ -557,170 +686,8 @@ document.addEventListener('DOMContentLoaded', function() {
         saveDataToLocalStorage();
     });
 
-    importReportBtn.addEventListener('click', () => {
-        reportFileImporter.click();
-    });
-
-    // 🏆 智慧全欄位掃描器：動態尋找每一列中的有效點號、N坐標、E坐標、平距與角度
-    reportFileImporter.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        debugLog.innerHTML = '';
-        logDebug('開始讀取檔案: ' + file.name);
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            try {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                logDebug('總共讀取到 ' + jsonRows.length + ' 行資料');
-
-                let extractedRows = [];
-
-                for (let i = 0; i < jsonRows.length; i++) {
-                    let r = jsonRows[i];
-                    if (!r || r.length === 0) continue;
-
-                    // 尋找文字形式的點號 (非數字、長度小於 15 且不含關鍵字)
-                    let foundId = '';
-                    let nVal = '';
-                    let eVal = '';
-                    let distVal = '';
-                    let degVal = '';
-                    let minVal = '';
-                    let secVal = '';
-
-                    for (let c = 0; c < r.length; c++) {
-                        let cellStr = String(r[c] || '').trim();
-                        // 檢查是否為點號格式 (例如字母開頭或含數字的測點)
-                        if (cellStr.length > 0 && cellStr.length <= 15 && !cellStr.includes('/') && !cellStr.includes('標') && !cellStr.includes('成果表') && !cellStr.includes('點號') && !cellStr.includes('施工') && !cellStr.includes('坐標') && !cellStr.includes('平距') && !cellStr.includes('夾角') && isNaN(cellStr)) {
-                            // 確保不是純數字字串
-                            foundId = cellStr;
-                            break;
-                        }
-                    }
-
-                    // 如果整行都沒找到專屬點號，但有坐標，檢查第一欄或第二欄
-                    if (!foundId) {
-                        for (let c = 0; c < Math.min(3, r.length); c++) {
-                            let val = String(r[c] || '').trim();
-                            if (val.length > 0 && !val.includes('成果') && !val.includes('表') && isNaN(val)) {
-                                foundId = val;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (foundId) {
-                        // 掃描 N 坐標 (通常介於 2000000 ~ 9999999)
-                        for (let c = 0; c < r.length; c++) {
-                            let val = parseFloat(r[c]);
-                            if (!isNaN(val) && val > 2000000 && val < 9999999) {
-                                nVal = val;
-                                break;
-                            }
-                        }
-
-                        // 掃描 E 坐標 (通常介於 100000 ~ 500000)
-                        for (let c = 0; c < r.length; c++) {
-                            let val = parseFloat(r[c]);
-                            if (!isNaN(val) && val > 100000 && val < 500000) {
-                                eVal = val;
-                                break;
-                            }
-                        }
-
-                        // 掃描平距 (通常介於 0.5 ~ 5000 且帶小數點)
-                        for (let c = 0; c < r.length; c++) {
-                            let raw = r[c];
-                            let val = parseFloat(raw);
-                            let str = String(raw);
-                            if (!isNaN(val) && val > 0.5 && val < 5000 && str.includes('.') && !(val > 100000)) {
-                                distVal = val;
-                                break;
-                            }
-                        }
-
-                        // 掃描角度 (度、分、秒)
-                        for (let c = 0; c < r.length - 2; c++) {
-                            let d = parseFloat(r[c]);
-                            let m = parseFloat(r[c+1]);
-                            let s = parseFloat(r[c+2]);
-                            if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
-                                degVal = d;
-                                minVal = m;
-                                secVal = s;
-                                break;
-                            }
-                        }
-
-                        if (nVal && eVal) {
-                            extractedRows.push({ id: foundId, n: nVal, e: eVal, dist: distVal, deg: degVal, min: minVal, sec: secVal });
-                            logDebug(`成功解析點位: ${foundId} | N=${nVal} | E=${eVal} | 距離=${distVal} | 角度=${degVal}°${minVal}'${secVal}"`);
-                        }
-                    }
-                }
-
-                if (extractedRows.length < 2) {
-                    alert('自動解析抓取到的有效坐標點少於 2 個。請查看下方的偵測日誌了解詳情！');
-                    logDebug('錯誤：抓取點數不足 2 個。');
-                    return;
-                }
-
-                let bs = extractedRows[0];
-                let st = extractedRows[1];
-
-                document.getElementById('bsId').value = bs.id;
-                document.getElementById('bsN').value = bs.n.toFixed(4);
-                document.getElementById('bsE').value = bs.e.toFixed(4);
-
-                document.getElementById('stId').value = st.id;
-                document.getElementById('stN').value = st.n.toFixed(4);
-                document.getElementById('stE').value = st.e.toFixed(4);
-
-                if (bs.dist !== '') {
-                    document.getElementById('bsToStDist').value = bs.dist;
-                }
-
-                let db = getKnownDatabase();
-                extractedRows.forEach(p => {
-                    if (!db[p.id]) addKnownRow(p.id, p.n.toFixed(4), p.e.toFixed(4));
-                });
-
-                tbody.innerHTML = '';
-                for (let i = 1; i < extractedRows.length; i++) {
-                    let cur = extractedRows[i];
-                    addRow(
-                        cur.id,
-                        cur.dist !== '' ? cur.dist : '',
-                        cur.deg !== '' ? cur.deg : '',
-                        cur.min !== '' ? cur.min : '',
-                        cur.sec !== '' ? cur.sec : ''
-                    );
-                }
-
-                updateRowIndices();
-                updateKnownStatusUI();
-                saveDataToLocalStorage();
-                alert(`成功智慧匯入檢測成果表共 ${extractedRows.length} 筆點位！\n後視點：${bs.id}\n設站點：${st.id}`);
-
-            } catch (err) {
-                console.error(err);
-                logDebug('例外錯誤：' + err.message);
-                alert('解析 Excel 發生錯誤，詳細錯誤請見畫面下方的日誌！');
-            }
-            reportFileImporter.value = '';
-        };
-        reader.readAsArrayBuffer(file);
-    });
-
     clearBtn.addEventListener('click', function() {
-        if (confirm('確定清空起算點與導線點嗎？（已知點資料庫將會保留）')) {
+        if (confirm('確定清空起算點與導線點嗎？')) {
             document.getElementById('bsId').value = '';
             document.getElementById('stId').value = '';
             document.getElementById('bsN').value = '';
@@ -853,7 +820,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const excelRows = [
             ["平面控制點檢測成果表"],
-            [`施工標別：CF670A標控制點檢測`],
+            [`施工標別：控制點檢測`],
             ["點號", "原始座標值(N)", "原始座標值(E)", "反算平距", "實測平距", "較差(mm)", "反算夾角", "", "", "實測夾角", "", "", "較差(\")", "是否容許", "計算座標(N)", "計算座標(E)"],
             ["", "", "", "", "", "", "度", "分", "秒", "度", "分", "秒", "", "", "", ""]
         ];
