@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>平面控制點檢測成果表 - 完整計算與比對系統</title>
+    <title>平面控制點檢測成果表 - 智能全欄位識別系統</title>
     <!-- 引入 SheetJS 用於前端 Excel 讀寫 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -189,19 +189,33 @@
             font-size: 0.95rem;
             display: none;
         }
+
+        #debugLog {
+            background-color: #1e293b;
+            color: #38bdf8;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>平面控制點檢測成果表 - 完整計算與比對系統</h1>
+    <h1>平面控制點檢測成果表 - 智能全欄位識別系統</h1>
 
     <!-- 匯入按鈕 -->
     <div class="section-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
-        <h3 style="color: #1d4ed8; margin-top: 0;">📂 成果表自動匯入 (支援標準檢測成果表格式)</h3>
-        <div class="hint-text">點擊後選取您的 Excel 檢測成果表，系統將精準對應欄位解析點號、座標、實測平距與實測夾角！</div>
+        <h3 style="color: #1d4ed8; margin-top: 0;">📂 成果表智慧匯入 (自動掃描欄位)</h3>
+        <div class="hint-text">選擇 Excel 後，系統將自動比對標題與數值特徵抓取。若仍未抓取成功，下方會顯示偵測日誌供您參考！</div>
         <input type="file" id="reportFileImporter" accept=".xlsx, .xls, .csv" style="display: none;">
-        <button type="button" id="importReportBtn" class="btn-info">📂 選擇並自動解析成果表 Excel</button>
+        <button type="button" id="importReportBtn" class="btn-info">📂 選擇 Excel 成果表並智慧解析</button>
+        <div id="debugLog"></div>
     </div>
 
     <!-- 起始後視點與設站點 -->
@@ -247,7 +261,7 @@
             <span class="toggle-icon" id="toggleIcon">▼ 展開</span>
         </h3>
         <div class="collapsible-content" id="knownDbContent">
-            <div class="hint-text">💡 <b>說明</b>：匯入檢測表時，原表上的已知座標會自動同步存入此資料庫中，供計算後座標與已知座標進行較差(ΔN, ΔE)自動比對。</div>
+            <div class="hint-text">💡 <b>說明</b>：匯入檢測表時，原表上的已知座標會自動同步存入此資料庫中。</div>
             <div class="table-container">
                 <table id="knownDbTable">
                     <thead>
@@ -333,6 +347,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const importReportBtn = document.getElementById('importReportBtn');
     const reportFileImporter = document.getElementById('reportFileImporter');
     const resultArea = document.getElementById('resultArea');
+    const debugLog = document.getElementById('debugLog');
+
+    function logDebug(msg) {
+        console.log(msg);
+        debugLog.style.display = 'block';
+        debugLog.innerHTML += msg + '<br>';
+    }
 
     function degToDMSParts(degDecimal) {
         if (isNaN(degDecimal) || degDecimal === '') return { d: '', m: '', s: '' };
@@ -347,9 +368,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const PI = Math.PI;
         let dn = n2 - n1;
         let de = e2 - e1;
-        if (de === 0) {
-            return dn >= 0 ? 0 : PI;
-        }
+        if (de === 0) return dn >= 0 ? 0 : PI;
         let az = Math.atan(Math.abs(de) / Math.abs(dn));
         if (dn >= 0 && de > 0) return az;
         if (dn < 0 && de > 0) return PI - az;
@@ -486,11 +505,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data_v5', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v6', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data_v5');
+        const saved = localStorage.getItem('traverse_tool_data_v6');
         if (!saved) {
             addKnownRow();
             addRow();
@@ -542,10 +561,13 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 採用結構化欄位掃描：精準鎖定點號、N坐標、E坐標、實測平距(欄4/E)、實測夾角(欄9,10,11 / J,K,L)
+    // 🏆 智慧全欄位掃描器：動態尋找每一列中的有效點號、N坐標、E坐標、平距與角度
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
+
+        debugLog.innerHTML = '';
+        logDebug('開始讀取檔案: ' + file.name);
 
         const reader = new FileReader();
         reader.onload = function(event) {
@@ -556,25 +578,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
+                logDebug('總共讀取到 ' + jsonRows.length + ' 行資料');
+
                 let extractedRows = [];
 
                 for (let i = 0; i < jsonRows.length; i++) {
                     let r = jsonRows[i];
-                    if (!r) continue;
+                    if (!r || r.length === 0) continue;
 
-                    // 尋找點號 (通常在欄位 1 或 2，即 index 1 或 2，例如 Y251, Y250, GU01...)
-                    let potentialId = String(r[1] || r[0] || '').trim();
-                    if (potentialId && potentialId.length <= 15 && !potentialId.includes('/') && !potentialId.includes('標') && !potentialId.includes('成果表') && !potentialId.includes('點號') && !potentialId.includes('施工')) {
-                        
-                        let id = potentialId;
-                        let nVal = '';
-                        let eVal = '';
-                        let distVal = '';
-                        let degVal = '';
-                        let minVal = '';
-                        let secVal = '';
+                    // 尋找文字形式的點號 (非數字、長度小於 15 且不含關鍵字)
+                    let foundId = '';
+                    let nVal = '';
+                    let eVal = '';
+                    let distVal = '';
+                    let degVal = '';
+                    let minVal = '';
+                    let secVal = '';
 
-                        // 尋找 N 坐標 (2700000~2800000)
+                    for (let c = 0; c < r.length; c++) {
+                        let cellStr = String(r[c] || '').trim();
+                        // 檢查是否為點號格式 (例如字母開頭或含數字的測點)
+                        if (cellStr.length > 0 && cellStr.length <= 15 && !cellStr.includes('/') && !cellStr.includes('標') && !cellStr.includes('成果表') && !cellStr.includes('點號') && !cellStr.includes('施工') && !cellStr.includes('坐標') && !cellStr.includes('平距') && !cellStr.includes('夾角') && isNaN(cellStr)) {
+                            // 確保不是純數字字串
+                            foundId = cellStr;
+                            break;
+                        }
+                    }
+
+                    // 如果整行都沒找到專屬點號，但有坐標，檢查第一欄或第二欄
+                    if (!foundId) {
+                        for (let c = 0; c < Math.min(3, r.length); c++) {
+                            let val = String(r[c] || '').trim();
+                            if (val.length > 0 && !val.includes('成果') && !val.includes('表') && isNaN(val)) {
+                                foundId = val;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (foundId) {
+                        // 掃描 N 坐標 (通常介於 2000000 ~ 9999999)
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
                             if (!isNaN(val) && val > 2000000 && val < 9999999) {
@@ -583,7 +626,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
 
-                        // 尋找 E 坐標 (300000~400000)
+                        // 掃描 E 坐標 (通常介於 100000 ~ 500000)
                         for (let c = 0; c < r.length; c++) {
                             let val = parseFloat(r[c]);
                             if (!isNaN(val) && val > 100000 && val < 500000) {
@@ -592,31 +635,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
 
-                        // 實測平距：優先尋找儲存格包含小數點且在 1~3000 之間的數值
+                        // 掃描平距 (通常介於 0.5 ~ 5000 且帶小數點)
                         for (let c = 0; c < r.length; c++) {
                             let raw = r[c];
                             let val = parseFloat(raw);
                             let str = String(raw);
-                            if (!isNaN(val) && val > 1 && val < 3000 && str.includes('.') && !(val > 100000)) {
+                            if (!isNaN(val) && val > 0.5 && val < 5000 && str.includes('.') && !(val > 100000)) {
                                 distVal = val;
                                 break;
                             }
                         }
-                        // 如果該行沒找到帶小數點的，檢查下一行 (跨列合併儲存格的情況)
-                        if (distVal === '' && i + 1 < jsonRows.length) {
-                            let nextR = jsonRows[i+1];
-                            for (let c = 0; c < nextR.length; c++) {
-                                let raw = nextR[c];
-                                let val = parseFloat(raw);
-                                let str = String(raw);
-                                if (!isNaN(val) && val > 1 && val < 3000 && str.includes('.')) {
-                                    distVal = val;
-                                    break;
-                                }
-                            }
-                        }
 
-                        // 實測夾角 (度、分、秒)：在同一行尋找符合角度範圍的三個連續數字
+                        // 掃描角度 (度、分、秒)
                         for (let c = 0; c < r.length - 2; c++) {
                             let d = parseFloat(r[c]);
                             let m = parseFloat(r[c+1]);
@@ -628,30 +658,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                 break;
                             }
                         }
-                        // 如果同一行沒有夾角，檢查下一行
-                        if (degVal === '' && i + 1 < jsonRows.length) {
-                            let nextR = jsonRows[i+1];
-                            for (let c = 0; c < nextR.length - 2; c++) {
-                                let d = parseFloat(nextR[c]);
-                                let m = parseFloat(nextR[c+1]);
-                                let s = parseFloat(nextR[c+2]);
-                                if (!isNaN(d) && d >= 0 && d <= 360 && !isNaN(m) && m >= 0 && m < 60 && !isNaN(s) && s >= 0 && s < 60) {
-                                    degVal = d;
-                                    minVal = m;
-                                    secVal = s;
-                                    break;
-                                }
-                            }
-                        }
 
                         if (nVal && eVal) {
-                            extractedRows.push({ id, n: nVal, e: eVal, dist: distVal, deg: degVal, min: minVal, sec: secVal });
+                            extractedRows.push({ id: foundId, n: nVal, e: eVal, dist: distVal, deg: degVal, min: minVal, sec: secVal });
+                            logDebug(`成功解析點位: ${foundId} | N=${nVal} | E=${eVal} | 距離=${distVal} | 角度=${degVal}°${minVal}'${secVal}"`);
                         }
                     }
                 }
 
                 if (extractedRows.length < 2) {
-                    alert('自動解析抓取到的完整坐標點少於 2 個。請檢查檔案格式！');
+                    alert('自動解析抓取到的有效坐標點少於 2 個。請查看下方的偵測日誌了解詳情！');
+                    logDebug('錯誤：抓取點數不足 2 個。');
                     return;
                 }
 
@@ -676,8 +693,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 tbody.innerHTML = '';
-                
-                // 從索引 1 (設站點之後的前瞻點序列) 開始填入表格
                 for (let i = 1; i < extractedRows.length; i++) {
                     let cur = extractedRows[i];
                     addRow(
@@ -692,11 +707,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`成功精準匯入檢測成果表！\n後視點：${bs.id}\n設站點：${st.id}`);
+                alert(`成功智慧匯入檢測成果表共 ${extractedRows.length} 筆點位！\n後視點：${bs.id}\n設站點：${st.id}`);
 
             } catch (err) {
                 console.error(err);
-                alert('解析 Excel 發生錯誤，請確認檔案格式！');
+                logDebug('例外錯誤：' + err.message);
+                alert('解析 Excel 發生錯誤，詳細錯誤請見畫面下方的日誌！');
             }
             reportFileImporter.value = '';
         };
@@ -837,7 +853,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const excelRows = [
             ["平面控制點檢測成果表"],
-            [`施工標別：CF670A標115年07月份控制點檢測`],
+            [`施工標別：CF670A標控制點檢測`],
             ["點號", "原始座標值(N)", "原始座標值(E)", "反算平距", "實測平距", "較差(mm)", "反算夾角", "", "", "實測夾角", "", "", "較差(\")", "是否容許", "計算座標(N)", "計算座標(E)"],
             ["", "", "", "", "", "", "度", "分", "秒", "度", "分", "秒", "", "", "", ""]
         ];
