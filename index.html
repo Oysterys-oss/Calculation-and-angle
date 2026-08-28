@@ -679,6 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let targetE = activeStE + dE;
             let fwdAzDeg = fwdAzRad * 180 / PI_VAL;
 
+            // 較差 (mm) = (計算值 - 已知值) * 1000
             let diffN = (leg.knownN !== null) ? (targetN - leg.knownN) * 1000 : null;
             let diffE = (leg.knownE !== null) ? (targetE - leg.knownE) * 1000 : null;
 
@@ -722,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (r.knownN !== null || r.knownE !== null) {
                 let dnStr = r.diffN !== null ? (r.diffN >= 0 ? '+' + r.diffN.toFixed(2) : r.diffN.toFixed(2)) : 'N/A';
                 let deStr = r.diffE !== null ? (r.diffE >= 0 ? '+' + r.diffE.toFixed(2) : r.diffE.toFixed(2)) : 'N/A';
-                text += `   └─ [資料庫對應] 已知: N=${r.knownN.toFixed(4)}, E=${r.knownE.toFixed(4)} | 差值(計-已): ΔN = ${dnStr}, ΔE = ${deStr}\n`;
+                text += `   └─ [資料庫對應] 已知: N=${r.knownN.toFixed(4)}, E=${r.knownE.toFixed(4)} | 較差(計-已): ΔN = ${dnStr} mm, ΔE = ${deStr} mm\n`;
             }
         });
 
@@ -735,39 +736,53 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = calculateAllResults();
         if (!data) return;
 
+        // 仿照圖片的表頭設計
         const excelRows = [
-            ["點號 (ID)", "計算縱座標 (N)", "計算橫座標 (E)", "邊長 (m)", "夾角 (度分秒)", "", "", "已知縱座標 (N)", "已知橫座標 (E)", "差值 ΔN (計-已)*1000", "差值 ΔE (計-已)*1000"],
-            ["", "", "", "", "°", "'", "\"", "", "", "", ""]
+            ["點 號", "原始座標值", "", "實測平距", "實測夾角", "", "", "計算後座標", "", "較差(mm)", "", "備註"],
+            ["", "N", "E", "", "°", "'", "\"", "N", "E", "N", "E", ""]
         ];
 
+        // 後視點列
+        let bsKnown = getKnownDatabase()[data.initialBsId];
         excelRows.push([
             data.initialBsId,
             Number(data.initialBsN.toFixed(4)),
             Number(data.initialBsE.toFixed(4)),
-            "", "", "", "", "", "", "", ""
+            "-", "-", "-", "-",
+            Number(data.initialBsN.toFixed(4)),
+            Number(data.initialBsE.toFixed(4)),
+            "-", "-",
+            "後視點"
         ]);
 
+        // 起始點列 (第 1 站設站點)
         excelRows.push([
             data.initialStId,
             Number(data.initialStN.toFixed(4)),
             Number(data.initialStE.toFixed(4)),
-            data.bsToStDist !== '' ? data.bsToStDist : "",
-            "", "", "", "", "", "", ""
+            data.bsToStDist !== '' ? data.bsToStDist : "-",
+            "-", "-", "-",
+            Number(data.initialStN.toFixed(4)),
+            Number(data.initialStE.toFixed(4)),
+            "-", "-",
+            "起始點"
         ]);
 
+        // 導線延伸各站點
         data.legsCalculated.forEach((r) => {
             excelRows.push([
                 r.targetId,
-                Number(r.n.toFixed(4)),
-                Number(r.e.toFixed(4)),
-                r.dist !== '' ? r.dist : "",
-                r.deg !== '' ? r.deg : "",
-                r.min !== '' ? r.min : "",
-                r.sec !== '' ? r.sec : "",
                 r.knownN !== null ? Number(r.knownN.toFixed(4)) : "",
                 r.knownE !== null ? Number(r.knownE.toFixed(4)) : "",
+                r.dist !== '' ? r.dist : "",
+                r.deg !== '' ? r.deg : "-",
+                r.min !== '' ? r.min : "-",
+                r.sec !== '' ? r.sec : "-",
+                Number(r.n.toFixed(4)),
+                Number(r.e.toFixed(4)),
                 r.diffN !== null ? Number(r.diffN.toFixed(2)) : "",
-                r.diffE !== null ? Number(r.diffE.toFixed(2)) : ""
+                r.diffE !== null ? Number(r.diffE.toFixed(2)) : "",
+                ""
             ]);
         });
 
