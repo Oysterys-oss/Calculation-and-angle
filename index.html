@@ -335,6 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultArea = document.getElementById('resultArea');
 
     function degToDMSParts(degDecimal) {
+        if (isNaN(degDecimal) || degDecimal === '') return { d: '', m: '', s: '' };
         let d = Math.floor(degDecimal);
         let remainderMin = (degDecimal - d) * 60;
         let m = Math.floor(remainderMin);
@@ -344,6 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatDMS(degDecimal) {
         let p = degToDMSParts(degDecimal);
+        if (p.d === '') return '';
         return `${p.d}° ${String(p.m).padStart(2, '0')}' ${p.s.toFixed(2)}''`;
     }
 
@@ -402,9 +404,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><input type="number" step="any" class="input-dist" value="${dist}" placeholder="邊長(m)"></td>
             <td>
                 <div class="angle-inputs">
-                    <input type="number" class="input-deg" value="${deg}" placeholder="度">
-                    <input type="number" class="input-min" value="${min}" placeholder="分">
-                    <input type="number" step="any" class="input-sec" value="${sec}" placeholder="秒">
+                    <input type="number" class="input-deg" value="${deg !== undefined ? deg : ''}" placeholder="度">
+                    <input type="number" class="input-min" value="${min !== undefined ? min : ''}" placeholder="分">
+                    <input type="number" step="any" class="input-sec" value="${sec !== undefined ? sec : ''}" placeholder="秒">
                 </div>
             </td>
             <td><button type="button" class="btn-delete">刪除</button></td>
@@ -490,11 +492,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data_v2', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v3', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data_v2');
+        const saved = localStorage.getItem('traverse_tool_data_v3');
         if (!saved) {
             addKnownRow();
             addRow();
@@ -546,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportFileImporter.click();
     });
 
-    // 🏆 精準對應解析：明確區分「反算平距/實測平距」與「角度欄位」
+    // 🏆 精準對應解析：第一筆點 (如設站點本身) 僅抓取平距，夾角留空以防錯位
     reportFileImporter.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -608,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             pointsMap[id].dist = foundDistances[0];
                         }
 
-                        // 尋找夾角 (度、分、秒) 在當前行
+                        // 尋找夾角 (度、分、秒)
                         for (let c = 0; c < r.length - 2; c++) {
                             let d = parseFloat(r[c]);
                             let m = parseFloat(r[c+1]);
@@ -621,7 +623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
 
-                        // 檢查下一行 (i + 1 行) 補齊坐標、平距或夾角
+                        // 檢查下一行補齊
                         if (i + 1 < jsonRows.length) {
                             let nextR = jsonRows[i+1];
                             if (!pointsMap[id].e) {
@@ -683,7 +685,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('stN').value = st.n.toFixed(4);
                 document.getElementById('stE').value = st.e.toFixed(4);
 
-                // 第一點 (Y251->Y250) 的實測平距
                 if (bs.dist !== '') {
                     document.getElementById('bsToStDist').value = bs.dist;
                 }
@@ -694,17 +695,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 tbody.innerHTML = '';
-                // 🏆 關鍵修正：第 1 站前瞻點 (GU01) 的平距與夾角，應該對應自表格中「設站點 (Y250)」的那一行記錄！
+                
+                // 🏆 關鍵修正：
+                // 第一筆前瞻點（例如 Y250 這行），在檢測表中它的夾角欄位是空白的（對應後視點到設站點的平距）。
+                // 所以我們放入點號與平距，但將夾角設為空！
+                // 從第二筆前瞻點（GU01）開始，才去讀取對應的實測夾角。
                 for (let i = 1; i < validRecords.length; i++) {
-                    let currentRec = validRecords[i]; // 例如 Y250, GU01, GU02...
-                    
-                    // 如果不是最後一個點，我們從當前行取平距與夾角給前瞻點序列
+                    let currentRec = validRecords[i];
+                    let nextRec = validRecords[i+1]; // 下一行的夾角屬於當前點前瞻序列
+
+                    let targetDeg = '';
+                    let targetMin = '';
+                    let targetSec = '';
+
+                    if (nextRec && nextRec.deg !== '') {
+                        targetDeg = nextRec.deg;
+                        targetMin = nextRec.min;
+                        targetSec = nextRec.sec;
+                    }
+
                     addRow(
                         currentRec.id,
                         currentRec.dist !== '' ? currentRec.dist : '',
-                        currentRec.deg !== '' ? currentRec.deg : '',
-                        currentRec.min !== '' ? currentRec.min : '',
-                        currentRec.sec !== '' ? currentRec.sec : ''
+                        targetDeg,
+                        targetMin,
+                        targetSec
                     );
                 }
 
@@ -870,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ]);
 
         data.legsCalculated.forEach((r) => {
-            let mDMS = degToDMSParts(r.measuredAngleDeg);
+            let mDMS = r.measuredAngleDeg > 0 ? degToDMSParts(r.measuredAngleDeg) : { d: "", m: "", s: "" };
             excelRows.push([
                 r.targetId,
                 r.knownN !== null ? r.knownN.toFixed(4) : "",
@@ -879,7 +894,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 r.measuredDist,
                 r.distDiff.toFixed(1),
                 "-", "-", "-",
-                mDMS.d, mDMS.m, Number(mDMS.s.toFixed(1)),
+                mDMS.d, mDMS.m, mDMS.s !== "" ? Number(mDMS.s.toFixed(1)) : "",
                 "-", "是",
                 r.targetN.toFixed(4),
                 r.targetE.toFixed(4)
