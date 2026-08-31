@@ -1,975 +1,878 @@
 <!DOCTYPE html>
-
 <html lang="zh-Hant">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-```
-<title>平面控制點檢測成果表 - 自動化匯入系統</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-<!-- SheetJS：Excel 讀取與匯出 -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <title>平面控制點檢測成果表 - 自動化匯入系統</title>
 
-<style>
+    <!-- SheetJS：讀取與匯出 Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    :root {
-        --primary-color: #1e3a8a;
-        --success-color: #16a34a;
-        --danger-color: #dc2626;
-        --info-color: #0284c7;
-        --warning-color: #d97706;
+    <style>
 
-        --bg-color: #f8fafc;
-        --card-bg: #ffffff;
-        --border-color: #cbd5e1;
-        --text-color: #1e293b;
-    }
+        :root {
+            --primary-color: #1e3a8a;
+            --success-color: #16a34a;
+            --danger-color: #dc2626;
+            --info-color: #0284c7;
 
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family:
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            Roboto,
-            "Helvetica Neue",
-            Arial,
-            sans-serif;
-
-        background-color: var(--bg-color);
-        color: var(--text-color);
-
-        margin: 0;
-        padding: 20px;
-
-        line-height: 1.5;
-    }
-
-    .container {
-        max-width: 1400px;
-        margin: 0 auto;
-
-        background-color: var(--card-bg);
-
-        padding: 30px;
-
-        border-radius: 12px;
-
-        box-shadow:
-            0 4px 6px -1px rgb(0 0 0 / 0.1);
-    }
-
-    h1 {
-        font-size: 1.7rem;
-        margin-bottom: 25px;
-
-        color: var(--primary-color);
-
-        text-align: center;
-    }
-
-    h1 small {
-        font-size: 0.75em;
-    }
-
-    h3 {
-        margin: 0;
-    }
-
-    .section-box {
-        background-color: #f1f5f9;
-
-        border: 1px solid var(--border-color);
-
-        padding: 18px;
-
-        border-radius: 8px;
-
-        margin-bottom: 20px;
-    }
-
-    .section-title {
-        display: flex;
-
-        justify-content: space-between;
-        align-items: center;
-
-        margin-bottom: 15px;
-
-        gap: 10px;
-
-        flex-wrap: wrap;
-    }
-
-    .grid-2 {
-        display: grid;
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 15px;
-    }
-
-    .form-group {
-        margin-bottom: 10px;
-    }
-
-    .form-group label {
-        display: block;
-
-        font-weight: 600;
-
-        margin-bottom: 5px;
-
-        font-size: 0.9rem;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    textarea {
-        width: 100%;
-
-        padding: 9px;
-
-        border:
-            1px solid var(--border-color);
-
-        border-radius: 6px;
-
-        font-size: 0.95rem;
-
-        background-color: white;
-    }
-
-    textarea {
-        min-height: 130px;
-        resize: vertical;
-        font-family: Consolas, "Microsoft JhengHei", monospace;
-    }
-
-    input:focus,
-    textarea:focus {
-        outline: none;
-
-        border-color:
-            var(--primary-color);
-
-        box-shadow:
-            0 0 0 3px
-            rgba(30,58,138,0.1);
-    }
-
-    .table-container {
-        overflow-x: auto;
-    }
-
-    table {
-        width: 100%;
-
-        border-collapse: collapse;
-
-        background: white;
-    }
-
-    th,
-    td {
-        padding: 9px 10px;
-
-        border:
-            1px solid var(--border-color);
-
-        text-align: center;
-
-        font-size: 0.9rem;
-
-        vertical-align: middle;
-    }
-
-    th {
-        background-color: #e2e8f0;
-
-        font-weight: 600;
-    }
-
-    .angle-inputs {
-        display: grid;
-
-        grid-template-columns:
-            1fr 1fr 1fr;
-
-        gap: 5px;
-    }
-
-    .angle-inputs input {
-        text-align: center;
-
-        padding: 7px 4px;
-    }
-
-    button {
-        padding: 10px 18px;
-
-        border: none;
-
-        border-radius: 6px;
-
-        font-size: 0.95rem;
-
-        font-weight: 600;
-
-        cursor: pointer;
-
-        transition: 0.15s;
-    }
-
-    button:hover {
-        opacity: 0.88;
-    }
-
-    button:active {
-        transform: translateY(1px);
-    }
-
-    .btn-primary {
-        background-color:
-            var(--primary-color);
-
-        color: white;
-    }
-
-    .btn-success {
-        background-color:
-            var(--success-color);
-
-        color: white;
-    }
-
-    .btn-info {
-        background-color:
-            var(--info-color);
-
-        color: white;
-    }
-
-    .btn-secondary {
-        background-color:
-            #e2e8f0;
-
-        color:
-            var(--text-color);
-    }
-
-    .btn-danger {
-        background-color:
-            var(--danger-color);
-
-        color: white;
-    }
-
-    .btn-warning {
-        background-color:
-            var(--warning-color);
-
-        color: white;
-    }
-
-    .btn-group {
-        display: flex;
-
-        gap: 10px;
-
-        margin-bottom: 20px;
-
-        flex-wrap: wrap;
-    }
-
-    .btn-group button {
-        flex: 1;
-    }
-
-    .known-tag {
-        display: inline-block;
-
-        margin-top: 4px;
-
-        padding: 2px 6px;
-
-        border-radius: 4px;
-
-        font-size: 0.8rem;
-
-        color: #166534;
-
-        background:
-            #dcfce7;
-    }
-
-    .hint {
-        color: #64748b;
-
-        font-size: 0.85rem;
-
-        margin-bottom: 10px;
-    }
-
-    .paste-box {
-        background: #ffffff;
-
-        border: 1px dashed #94a3b8;
-
-        padding: 14px;
-
-        border-radius: 8px;
-
-        margin-bottom: 15px;
-    }
-
-    .paste-title {
-        font-weight: 700;
-
-        margin-bottom: 6px;
-    }
-
-    .paste-actions {
-        display: flex;
-
-        gap: 8px;
-
-        flex-wrap: wrap;
-
-        margin-top: 8px;
-    }
-
-    .db-count {
-        display: inline-block;
-
-        background: #dbeafe;
-
-        color: #1e40af;
-
-        border-radius: 999px;
-
-        padding: 4px 10px;
-
-        font-size: 0.82rem;
-
-        font-weight: 700;
-    }
-
-    #resultArea {
-        display: none;
-
-        background-color:
-            #f8fafc;
-
-        border:
-            1px solid var(--border-color);
-
-        border-left:
-            4px solid var(--primary-color);
-
-        padding: 20px;
-
-        border-radius: 6px;
-
-        white-space: pre-wrap;
-
-        font-family: monospace;
-
-        font-size: 0.9rem;
-
-        overflow-x: auto;
-    }
-
-    .excel-info {
-        background:
-            #eff6ff;
-
-        border:
-            1px solid #bfdbfe;
-
-        color:
-            #1e40af;
-
-        padding: 12px;
-
-        border-radius: 6px;
-
-        margin-bottom: 15px;
-    }
-
-    .protected-note {
-        background: #f0fdf4;
-
-        border: 1px solid #bbf7d0;
-
-        color: #166534;
-
-        padding: 10px 12px;
-
-        border-radius: 6px;
-
-        margin-top: 10px;
-
-        font-size: 0.88rem;
-    }
-
-    @media (max-width: 800px) {
-
-        .grid-2 {
-            grid-template-columns: 1fr;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --text-color: #1e293b;
         }
 
-        .container {
-            padding: 15px;
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            padding: 8px;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                "Helvetica Neue",
+                Arial,
+                sans-serif;
+
+            background-color: var(--bg-color);
+            color: var(--text-color);
+
+            margin: 0;
+            padding: 20px;
+
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+
+            background-color: var(--card-bg);
+
+            padding: 30px;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            font-size: 1.7rem;
+            margin-bottom: 25px;
+
+            color: var(--primary-color);
+
+            text-align: center;
+        }
+
+        h3 {
+            margin: 0;
+        }
+
+        .section-box {
+            background-color: #f1f5f9;
+
+            border: 1px solid var(--border-color);
+
+            padding: 18px;
+
+            border-radius: 8px;
+
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            display: flex;
+
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 15px;
+        }
+
+        .grid-2 {
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+
+            font-weight: 600;
+
+            margin-bottom: 5px;
+
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+
+            padding: 9px;
+
+            border:
+                1px solid var(--border-color);
+
+            border-radius: 6px;
+
+            font-size: 0.95rem;
+
+            background-color: white;
+        }
+
+        input:focus {
+            outline: none;
+
+            border-color:
+                var(--primary-color);
+
+            box-shadow:
+                0 0 0 3px
+                rgba(30,58,138,0.1);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            background: white;
         }
 
         th,
         td {
-            min-width: 100px;
+            padding: 9px 10px;
+
+            border:
+                1px solid var(--border-color);
+
+            text-align: center;
+
+            font-size: 0.9rem;
+
+            vertical-align: middle;
         }
 
-    }
+        th {
+            background-color: #e2e8f0;
 
-</style>
-```
+            font-weight: 600;
+        }
 
+        .angle-inputs {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr 1fr;
+
+            gap: 5px;
+        }
+
+        .angle-inputs input {
+            text-align: center;
+
+            padding: 7px 4px;
+        }
+
+        button {
+            padding: 10px 18px;
+
+            border: none;
+
+            border-radius: 6px;
+
+            font-size: 0.95rem;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: 0.15s;
+        }
+
+        button:hover {
+            opacity: 0.88;
+        }
+
+        .btn-primary {
+            background-color:
+                var(--primary-color);
+
+            color: white;
+        }
+
+        .btn-success {
+            background-color:
+                var(--success-color);
+
+            color: white;
+        }
+
+        .btn-info {
+            background-color:
+                var(--info-color);
+
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color:
+                #e2e8f0;
+
+            color:
+                var(--text-color);
+        }
+
+        .btn-danger {
+            background-color:
+                var(--danger-color);
+
+            color: white;
+        }
+
+        .btn-group {
+            display: flex;
+
+            gap: 10px;
+
+            margin-bottom: 20px;
+
+            flex-wrap: wrap;
+        }
+
+        .btn-group button {
+            flex: 1;
+        }
+
+        .known-tag {
+            display: inline-block;
+
+            margin-top: 4px;
+
+            padding: 2px 6px;
+
+            border-radius: 4px;
+
+            font-size: 0.8rem;
+
+            color: #166534;
+
+            background:
+                #dcfce7;
+        }
+
+        .hint {
+            color: #64748b;
+
+            font-size: 0.85rem;
+
+            margin-bottom: 10px;
+        }
+
+        #resultArea {
+            display: none;
+
+            background-color:
+                #f8fafc;
+
+            border:
+                1px solid var(--border-color);
+
+            border-left:
+                4px solid var(--primary-color);
+
+            padding: 20px;
+
+            border-radius: 6px;
+
+            white-space: pre-wrap;
+
+            font-family: monospace;
+
+            font-size: 0.9rem;
+
+            overflow-x: auto;
+        }
+
+        .excel-info {
+            background:
+                #eff6ff;
+
+            border:
+                1px solid #bfdbfe;
+
+            color:
+                #1e40af;
+
+            padding: 12px;
+
+            border-radius: 6px;
+
+            margin-bottom: 15px;
+        }
+
+        /* =========================================
+           已知點資料庫收起按鈕
+        ========================================= */
+
+        .collapse-btn {
+            background-color: #e2e8f0;
+
+            color: #1e293b;
+
+            min-width: 110px;
+
+            padding: 8px 14px;
+
+            font-size: 0.9rem;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 5px;
+        }
+
+        .collapse-btn:hover {
+            background-color: #cbd5e1;
+
+            opacity: 1;
+        }
+
+        .collapse-icon {
+            display: inline-block;
+
+            transition: transform 0.2s ease;
+        }
+
+        .known-db-content {
+            overflow: hidden;
+
+            max-height: 1000px;
+
+            opacity: 1;
+
+            transition:
+                max-height 0.25s ease,
+                opacity 0.2s ease;
+        }
+
+        .known-db-content.collapsed {
+            max-height: 0;
+
+            opacity: 0;
+
+            pointer-events: none;
+        }
+
+        .known-db-title {
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+        }
+
+        @media (max-width: 800px) {
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            body {
+                padding: 8px;
+            }
+
+            .section-title {
+                gap: 10px;
+            }
+
+            .collapse-btn {
+                min-width: 90px;
+            }
+        }
+
+    </style>
 </head>
+
 
 <body>
 
 <div class="container">
 
-```
-<h1>
-    平面控制點檢測成果表
-    <br>
-    <small>自動化匯入與計算系統</small>
-</h1>
+    <h1>
+        平面控制點檢測成果表
+        <br>
+        <small>自動化匯入與計算系統</small>
+    </h1>
 
 
-<!-- =====================================================
-     Excel 匯入說明
-====================================================== -->
+    <!-- ============================= -->
+    <!-- Excel 匯入說明 -->
+    <!-- ============================= -->
 
-<div class="excel-info">
+    <div class="excel-info">
 
-    <b>📌 Excel 匯入格式</b>
+        <b>📌 Excel 匯入格式</b>
 
-    <br><br>
+        <br><br>
 
-    <b>目標點號：</b>
-    A10、A11、A12……
+        目標點號：
+        <b>A10、A11、A12……</b>
 
-    <br>
+        <br>
 
-    <b>實測邊長：</b>
-    E9、E10、E11……
+        實測邊長：
+        <b>E9、E10、E11……</b>
 
-    <br>
+        <br>
 
-    <b>實測夾角：</b>
-    L8/M8/N8、L9/M9/N9……
+        實測夾角：
+        <b>L8/M8/N8、L9/M9/N9……</b>
 
-    <br><br>
+        <br><br>
 
-    <b>配對：</b>
+        配對：
 
-    A10 + E9 + L8/M8/N8
+        <b>
+            A10 + E9 + L8/M8/N8
+        </b>
 
-    <br>
+        <br>
 
-    A11 + E10 + L9/M9/N9
+        <b>
+            A11 + E10 + L9/M9/N9
+        </b>
 
-    <br>
+        <br>
 
-    A12 + E11 + L10/M10/N10
+        <b>
+            A12 + E11 + L10/M10/N10
+        </b>
 
-    <br><br>
-
-    <b>⚠️ 注意：</b>
-    Excel 匯入只會更新「起算點」及「導線資料」。
-    <b>已知點座標資料庫完全獨立，不會被 Excel 匯入修改。</b>
-
-</div>
-
-
-<!-- 隱藏 Excel 上傳 -->
-
-<input
-    type="file"
-    id="reportFileImporter"
-    accept=".xlsx,.xls,.csv"
-    style="display:none;"
->
+    </div>
 
 
-<!-- =====================================================
-     起算點
-====================================================== -->
+    <!-- 隱藏 Excel 上傳 -->
 
-<div class="section-box">
+    <input
+        type="file"
+        id="reportFileImporter"
+        accept=".xlsx,.xls,.csv"
+        style="display:none;"
+    >
 
-    <div class="section-title">
+
+    <!-- ============================= -->
+    <!-- 起算點 -->
+    <!-- ============================= -->
+
+    <div class="section-box">
+
+        <div class="section-title">
+
+            <h3>
+                📍 導線起算點與第一站
+            </h3>
+
+            <button
+                type="button"
+                id="selectFileBtn"
+                class="btn-info"
+            >
+                📂 一鍵匯入 Excel
+            </button>
+
+        </div>
+
+
+        <div class="grid-2">
+
+            <div class="form-group">
+
+                <label>
+                    初始後視點 點號
+                </label>
+
+                <input
+                    type="text"
+                    id="bsId"
+                    placeholder="例如：Y251"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    初始設站點 點號
+                </label>
+
+                <input
+                    type="text"
+                    id="stId"
+                    placeholder="例如：Y250"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    後視點 N 座標
+                </label>
+
+                <input
+                    type="number"
+                    step="any"
+                    id="bsN"
+                    placeholder="N 座標"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    設站點 N 座標
+                </label>
+
+                <input
+                    type="number"
+                    step="any"
+                    id="stN"
+                    placeholder="N 座標"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    後視點 E 座標
+                </label>
+
+                <input
+                    type="number"
+                    step="any"
+                    id="bsE"
+                    placeholder="E 座標"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    設站點 E 座標
+                </label>
+
+                <input
+                    type="number"
+                    step="any"
+                    id="stE"
+                    placeholder="E 座標"
+                >
+
+            </div>
+
+        </div>
+
+
+        <hr>
+
+
+        <div class="form-group">
+
+            <label>
+                後視點至設站點實測邊長 (m)
+            </label>
+
+            <input
+                type="number"
+                step="any"
+                id="bsToStDist"
+                placeholder="實測邊長"
+            >
+
+        </div>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- 已知點資料庫 -->
+    <!-- ============================= -->
+
+    <div class="section-box">
+
+        <div class="section-title">
+
+            <div class="known-db-title">
+
+                <h3>
+                    📂 已知點座標資料庫
+                </h3>
+
+            </div>
+
+
+            <!-- 收起 / 展開 -->
+
+            <button
+                type="button"
+                id="toggleKnownDbBtn"
+                class="collapse-btn"
+            >
+                <span
+                    id="collapseIcon"
+                    class="collapse-icon"
+                >
+                    ▼
+                </span>
+
+                <span id="collapseText">
+                    收起
+                </span>
+            </button>
+
+        </div>
+
+
+        <!-- =================================
+             ★ 已知點資料庫內容
+             ================================= -->
+
+        <div
+            id="knownDbContent"
+            class="known-db-content"
+        >
+
+            <div class="hint">
+                輸入已知點 ID、N、E 座標，
+                計算後可自動進行座標較差比對。
+                <br>
+                <b>
+                    ※ 已知點資料庫可直接複製 Excel 的「點號、N、E」資料後貼上。
+                </b>
+            </div>
+
+
+            <div class="table-container">
+
+                <table id="knownDbTable">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                已知點號 ID
+                            </th>
+
+                            <th>
+                                已知 N 座標
+                            </th>
+
+                            <th>
+                                已知 E 座標
+                            </th>
+
+                            <th>
+                                操作
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody></tbody>
+
+                </table>
+
+            </div>
+
+
+            <br>
+
+
+            <button
+                type="button"
+                id="addKnownRowBtn"
+                class="btn-secondary"
+            >
+                ＋ 新增已知點
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- 導線資料 -->
+    <!-- ============================= -->
+
+    <div class="section-box">
 
         <h3>
-            📍 導線起算點與第一站
+            📊 導線前瞻點序列
         </h3>
+
+        <div class="hint">
+
+            Excel：
+
+            <b>A10:A11:A12...</b>
+            ＝目標點號
+
+            <br>
+
+            Excel：
+
+            <b>E9:E10:E11...</b>
+            ＝實測邊長
+
+            <br>
+
+            Excel：
+
+            <b>L/M/N</b>
+            ＝實測夾角 度/分/秒
+
+        </div>
+
+
+        <div class="table-container">
+
+            <table id="traverseTable">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            站序
+                        </th>
+
+                        <th>
+                            目標點號 ID
+                        </th>
+
+                        <th>
+                            實測邊長 (m)
+                        </th>
+
+                        <th>
+                            實測夾角
+                            <br>
+                            度 / 分 / 秒
+                        </th>
+
+                        <th>
+                            操作
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody></tbody>
+
+            </table>
+
+        </div>
+
+
+        <br>
+
 
         <button
             type="button"
-            id="selectFileBtn"
-            class="btn-info"
+            id="addRowBtn"
+            class="btn-secondary"
         >
-            📂 一鍵匯入 Excel
+            ＋ 新增導線延伸點
         </button>
 
     </div>
 
 
-    <div class="grid-2">
+    <!-- ============================= -->
+    <!-- 按鈕 -->
+    <!-- ============================= -->
 
-        <div class="form-group">
+    <div class="btn-group">
 
-            <label>
-                初始後視點 點號
-            </label>
-
-            <input
-                type="text"
-                id="bsId"
-                placeholder="例如：Y251"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                初始設站點 點號
-            </label>
-
-            <input
-                type="text"
-                id="stId"
-                placeholder="例如：Y250"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                後視點 N 座標
-            </label>
-
-            <input
-                type="number"
-                step="any"
-                id="bsN"
-                placeholder="N 座標"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                設站點 N 座標
-            </label>
-
-            <input
-                type="number"
-                step="any"
-                id="stN"
-                placeholder="N 座標"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                後視點 E 座標
-            </label>
-
-            <input
-                type="number"
-                step="any"
-                id="bsE"
-                placeholder="E 座標"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                設站點 E 座標
-            </label>
-
-            <input
-                type="number"
-                step="any"
-                id="stE"
-                placeholder="E 座標"
-            >
-
-        </div>
-
-    </div>
-
-
-    <hr>
-
-
-    <div class="form-group">
-
-        <label>
-            後視點至設站點實測邊長 (m)
-        </label>
-
-        <input
-            type="number"
-            step="any"
-            id="bsToStDist"
-            placeholder="實測邊長"
+        <button
+            type="button"
+            id="clearBtn"
+            class="btn-danger"
         >
+            🗑️ 清空
+        </button>
+
+
+        <button
+            type="button"
+            id="calculateBtn"
+            class="btn-primary"
+        >
+            🧮 開始計算
+        </button>
+
+
+        <button
+            type="button"
+            id="exportExcelBtn"
+            class="btn-success"
+        >
+            📊 匯出 Excel
+        </button>
 
     </div>
+
+
+    <!-- ============================= -->
+    <!-- 計算結果 -->
+    <!-- ============================= -->
+
+    <div id="resultArea"></div>
 
 </div>
 
-
-<!-- =====================================================
-     已知點資料庫
-     ★ 完全獨立區域
-====================================================== -->
-
-<div class="section-box">
-
-    <div class="section-title">
-
-        <div>
-
-            <h3>
-                📂 已知點座標資料庫
-            </h3>
-
-            <span
-                id="knownCount"
-                class="db-count"
-            >
-                0 筆
-            </span>
-
-        </div>
-
-    </div>
-
-
-    <div class="hint">
-
-        已知點資料庫為獨立資料區。
-        <b>Excel 匯入、導線清空、計算均不會修改此資料庫。</b>
-
-    </div>
-
-
-    <!-- =================================================
-         快速貼上
-    ================================================== -->
-
-    <div class="paste-box">
-
-        <div class="paste-title">
-            📋 快速貼上多筆已知點
-        </div>
-
-        <div class="hint">
-
-            可以直接從 Excel 複製三欄資料貼進來：
-
-            <b>點號　N　E</b>
-
-            <br>
-
-            例如：
-
-            <br>
-
-            <code>
-                Y251　123456.1234　287654.5678
-            </code>
-
-            <br>
-
-            <code>
-                Y252　123460.5678　287660.1234
-            </code>
-
-        </div>
-
-
-        <textarea
-            id="knownPasteArea"
-            placeholder="請將 Excel 複製的資料貼在這裡
-```
-
-例如：
-Y251    123456.1234    287654.5678
-Y252    123460.5678    287660.1234
-Y253    123465.9876    287665.4321"
-></textarea>
-
-```
-        <div class="paste-actions">
-
-            <button
-                type="button"
-                id="pasteKnownBtn"
-                class="btn-info"
-            >
-                📋 匯入貼上資料
-            </button>
-
-
-            <button
-                type="button"
-                id="clearPasteBtn"
-                class="btn-secondary"
-            >
-                清除貼上框
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =================================================
-         已知點表格
-    ================================================== -->
-
-    <div class="table-container">
-
-        <table id="knownDbTable">
-
-            <thead>
-
-                <tr>
-
-                    <th>
-                        已知點號 ID
-                    </th>
-
-                    <th>
-                        已知 N 座標
-                    </th>
-
-                    <th>
-                        已知 E 座標
-                    </th>
-
-                    <th>
-                        操作
-                    </th>
-
-                </tr>
-
-            </thead>
-
-            <tbody></tbody>
-
-        </table>
-
-    </div>
-
-
-    <br>
-
-
-    <button
-        type="button"
-        id="addKnownRowBtn"
-        class="btn-secondary"
-    >
-        ＋ 新增已知點
-    </button>
-
-
-    <div class="protected-note">
-
-        🔒 <b>已知點資料庫保護中</b>
-
-        <br>
-
-        Excel 匯入：不動
-
-        ／
-
-        計算：不動
-
-        ／
-
-        導線資料清空：不動
-
-        ／
-
-        網頁重新整理：保留
-
-    </div>
-
-</div>
-
-
-<!-- =====================================================
-     導線資料
-====================================================== -->
-
-<div class="section-box">
-
-    <h3>
-        📊 導線前瞻點序列
-    </h3>
-
-    <div class="hint">
-
-        Excel：
-
-        <b>A10:A11:A12...</b>
-        ＝目標點號
-
-        <br>
-
-        Excel：
-
-        <b>E9:E10:E11...</b>
-        ＝實測邊長
-
-        <br>
-
-        Excel：
-
-        <b>L/M/N</b>
-        ＝實測夾角 度/分/秒
-
-    </div>
-
-
-    <div class="table-container">
-
-        <table id="traverseTable">
-
-            <thead>
-
-                <tr>
-
-                    <th>
-                        站序
-                    </th>
-
-                    <th>
-                        目標點號 ID
-                    </th>
-
-                    <th>
-                        實測邊長 (m)
-                    </th>
-
-                    <th>
-                        實測夾角
-                        <br>
-                        度 / 分 / 秒
-                    </th>
-
-                    <th>
-                        操作
-                    </th>
-
-                </tr>
-
-            </thead>
-
-
-            <tbody></tbody>
-
-        </table>
-
-    </div>
-
-
-    <br>
-
-
-    <button
-        type="button"
-        id="addRowBtn"
-        class="btn-secondary"
-    >
-        ＋ 新增導線延伸點
-    </button>
-
-</div>
-
-
-<!-- =====================================================
-     按鈕
-====================================================== -->
-
-<div class="btn-group">
-
-    <button
-        type="button"
-        id="clearBtn"
-        class="btn-danger"
-    >
-        🗑️ 清空導線資料
-    </button>
-
-
-    <button
-        type="button"
-        id="calculateBtn"
-        class="btn-primary"
-    >
-        🧮 開始計算
-    </button>
-
-
-    <button
-        type="button"
-        id="exportExcelBtn"
-        class="btn-success"
-    >
-        📊 匯出 Excel
-    </button>
-
-</div>
-
-
-<!-- =====================================================
-     計算結果
-====================================================== -->
-
-<div id="resultArea"></div>
-```
-
-</div>
 
 <script>
 
@@ -978,9 +881,9 @@ document.addEventListener(
     function () {
 
 
-        /* =====================================================
+        /* =========================================
            DOM
-        ===================================================== */
+        ========================================= */
 
         const knownTbody =
             document.querySelector(
@@ -1033,537 +936,126 @@ document.addEventListener(
                 "resultArea"
             );
 
-        const knownPasteArea =
+
+        /* =========================================
+           ★ 已知點資料庫收起 / 展開
+        ========================================= */
+
+        const toggleKnownDbBtn =
             document.getElementById(
-                "knownPasteArea"
+                "toggleKnownDbBtn"
             );
 
-        const pasteKnownBtn =
+        const knownDbContent =
             document.getElementById(
-                "pasteKnownBtn"
+                "knownDbContent"
             );
 
-        const clearPasteBtn =
+        const collapseIcon =
             document.getElementById(
-                "clearPasteBtn"
+                "collapseIcon"
             );
 
-        const knownCount =
+        const collapseText =
             document.getElementById(
-                "knownCount"
+                "collapseText"
             );
 
 
-        /* =====================================================
-           ★ LocalStorage Key
-           ★ 已知點與導線完全分離
-        ===================================================== */
-
-        const KNOWN_DB_KEY =
-            "survey_control_point_known_database_v1";
-
-        const TRAVERSE_KEY =
-            "survey_control_point_traverse_v12";
+        let knownDbCollapsed = false;
 
 
-        /* =====================================================
-           工具：HTML Escape
-        ===================================================== */
+        /*
+           更新收起狀態畫面
+        */
 
-        function escapeHtml(value) {
+        function updateKnownDbCollapseUI() {
 
-            return String(value ?? "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            if (knownDbCollapsed) {
 
-        }
-
-
-        /* =====================================================
-           更新已知點數量
-        ===================================================== */
-
-        function updateKnownCount() {
-
-            const count =
-                knownTbody.querySelectorAll("tr").length;
-
-            knownCount.textContent =
-                count + " 筆";
-
-        }
-
-
-        /* =====================================================
-           儲存「已知點資料庫」
-           ★ 唯一負責已知點儲存
-        ===================================================== */
-
-        function saveKnownDatabase() {
-
-            const data = [];
-
-            knownTbody
-                .querySelectorAll("tr")
-                .forEach(function (row) {
-
-                    data.push({
-
-                        id:
-                            row.querySelector(
-                                ".known-id"
-                            ).value,
-
-                        n:
-                            row.querySelector(
-                                ".known-n"
-                            ).value,
-
-                        e:
-                            row.querySelector(
-                                ".known-e"
-                            ).value
-
-                    });
-
-                });
-
-
-            localStorage.setItem(
-                KNOWN_DB_KEY,
-                JSON.stringify(data)
-            );
-
-
-            updateKnownCount();
-
-            updateKnownStatus();
-
-        }
-
-
-        /* =====================================================
-           載入「已知點資料庫」
-           ★ 不與 Excel 共用
-        ===================================================== */
-
-        function loadKnownDatabase() {
-
-            knownTbody.innerHTML = "";
-
-            const saved =
-                localStorage.getItem(
-                    KNOWN_DB_KEY
+                knownDbContent.classList.add(
+                    "collapsed"
                 );
 
+                collapseIcon.textContent =
+                    "▶";
 
-            if (!saved) {
-
-                addKnownRow();
-
-                return;
-
-            }
-
-
-            try {
-
-                const data =
-                    JSON.parse(saved);
-
-
-                if (
-                    Array.isArray(data) &&
-                    data.length > 0
-                ) {
-
-                    data.forEach(function (item) {
-
-                        addKnownRow(
-                            item.id || "",
-                            item.n || "",
-                            item.e || ""
-                        );
-
-                    });
-
-                }
-                else {
-
-                    addKnownRow();
-
-                }
+                collapseText.textContent =
+                    "展開";
 
             }
-            catch (error) {
+            else {
 
-                addKnownRow();
+                knownDbContent.classList.remove(
+                    "collapsed"
+                );
+
+                collapseIcon.textContent =
+                    "▼";
+
+                collapseText.textContent =
+                    "收起";
 
             }
-
-
-            updateKnownCount();
 
         }
 
 
-        /* =====================================================
-           新增已知點
-        ===================================================== */
+        /*
+           點擊收起 / 展開
+        */
 
-        function addKnownRow(
-            id = "",
-            n = "",
-            e = ""
+        toggleKnownDbBtn.addEventListener(
+            "click",
+            function () {
+
+                knownDbCollapsed =
+                    !knownDbCollapsed;
+
+
+                updateKnownDbCollapseUI();
+
+
+                /*
+                   儲存狀態
+                */
+
+                localStorage.setItem(
+                    "survey_known_db_collapsed",
+                    knownDbCollapsed
+                        ? "1"
+                        : "0"
+                );
+
+            }
+        );
+
+
+        /*
+           載入上次收起狀態
+        */
+
+        const savedCollapseState =
+            localStorage.getItem(
+                "survey_known_db_collapsed"
+            );
+
+
+        if (
+            savedCollapseState === "1"
         ) {
 
-            const row =
-                document.createElement("tr");
-
-
-            row.innerHTML = `
-
-                <td>
-                    <input
-                        type="text"
-                        class="known-id"
-                        value="${escapeHtml(id)}"
-                        placeholder="點號"
-                    >
-                </td>
-
-                <td>
-                    <input
-                        type="number"
-                        step="any"
-                        class="known-n"
-                        value="${escapeHtml(n)}"
-                        placeholder="N"
-                    >
-                </td>
-
-                <td>
-                    <input
-                        type="number"
-                        step="any"
-                        class="known-e"
-                        value="${escapeHtml(e)}"
-                        placeholder="E"
-                    >
-                </td>
-
-                <td>
-                    <button
-                        type="button"
-                        class="btn-danger delete-known"
-                    >
-                        刪除
-                    </button>
-                </td>
-
-            `;
-
-
-            row.querySelectorAll("input")
-                .forEach(function (input) {
-
-                    input.addEventListener(
-                        "input",
-                        function () {
-
-                            saveKnownDatabase();
-
-                        }
-                    );
-
-                });
-
-
-            row.querySelector(
-                ".delete-known"
-            ).addEventListener(
-                "click",
-                function () {
-
-                    row.remove();
-
-                    saveKnownDatabase();
-
-                    updateKnownStatus();
-
-                }
-            );
-
-
-            knownTbody.appendChild(row);
-
-            updateKnownCount();
+            knownDbCollapsed = true;
 
         }
 
 
-        /* =====================================================
-           快速貼上已知點
-           支援：
-           Tab
-           空白
-           逗號
-           分號
-        ===================================================== */
+        updateKnownDbCollapseUI();
 
-        pasteKnownBtn.addEventListener(
-            "click",
-            function () {
 
-                const text =
-                    knownPasteArea.value.trim();
-
-
-                if (!text) {
-
-                    alert(
-                        "請先貼上已知點資料！"
-                    );
-
-                    return;
-
-                }
-
-
-                const lines =
-                    text.split(/\r?\n/);
-
-
-                let added = 0;
-
-                let updated = 0;
-
-                let skipped = 0;
-
-
-                /*
-                   建立目前資料庫索引
-                */
-
-                const existing = {};
-
-
-                knownTbody
-                    .querySelectorAll("tr")
-                    .forEach(function (row) {
-
-                        const id =
-                            row.querySelector(
-                                ".known-id"
-                            ).value.trim();
-
-
-                        if (id) {
-
-                            existing[id] = row;
-
-                        }
-
-                    });
-
-
-                lines.forEach(function (line) {
-
-                    line =
-                        line.trim();
-
-
-                    if (!line) {
-                        return;
-                    }
-
-
-                    /*
-                       支援：
-                       Tab
-                       多個空白
-                       逗號
-                       中文逗號
-                       分號
-                       中文分號
-                    */
-
-                    const parts =
-                        line
-                            .split(
-                                /[\t,，;；]+|\s{2,}/
-                            )
-                            .map(function (v) {
-                                return v.trim();
-                            })
-                            .filter(function (v) {
-                                return v !== "";
-                            });
-
-
-                    if (parts.length < 3) {
-
-                        skipped++;
-
-                        return;
-
-                    }
-
-
-                    const id =
-                        parts[0];
-
-
-                    const n =
-                        parseFloat(
-                            parts[1]
-                        );
-
-
-                    const e =
-                        parseFloat(
-                            parts[2]
-                        );
-
-
-                    if (
-                        !id ||
-                        isNaN(n) ||
-                        isNaN(e)
-                    ) {
-
-                        skipped++;
-
-                        return;
-
-                    }
-
-
-                    /*
-                       已存在 → 更新
-                       不存在 → 新增
-                    */
-
-                    if (existing[id]) {
-
-                        existing[id]
-                            .querySelector(
-                                ".known-n"
-                            )
-                            .value =
-                            n;
-
-                        existing[id]
-                            .querySelector(
-                                ".known-e"
-                            )
-                            .value =
-                            e;
-
-                        updated++;
-
-                    }
-                    else {
-
-                        addKnownRow(
-                            id,
-                            n,
-                            e
-                        );
-
-                        added++;
-
-                        /*
-                           重新建立索引
-                        */
-
-                        const rows =
-                            knownTbody
-                                .querySelectorAll("tr");
-
-                        existing[id] =
-                            rows[rows.length - 1];
-
-                    }
-
-                });
-
-
-                /*
-                   ★ 只儲存已知點
-                */
-
-                saveKnownDatabase();
-
-
-                /*
-                   清除貼上框
-                */
-
-                knownPasteArea.value = "";
-
-
-                updateKnownStatus();
-
-
-                alert(
-                    "已知點貼上完成！\n\n" +
-
-                    "新增：" +
-                    added +
-                    " 筆\n" +
-
-                    "更新：" +
-                    updated +
-                    " 筆\n" +
-
-                    "略過：" +
-                    skipped +
-                    " 筆"
-                );
-
-            }
-        );
-
-
-        /* =====================================================
-           清除貼上框
-           ★ 不碰資料庫
-        ===================================================== */
-
-        clearPasteBtn.addEventListener(
-            "click",
-            function () {
-
-                knownPasteArea.value = "";
-
-            }
-        );
-
-
-        /* =====================================================
-           新增已知點按鈕
-        ===================================================== */
-
-        addKnownRowBtn.addEventListener(
-            "click",
-            function () {
-
-                addKnownRow();
-
-                saveKnownDatabase();
-
-            }
-        );
-
-
-        /* =====================================================
+        /* =========================================
            Excel 匯入按鈕
-           ★ 不碰已知點
-        ===================================================== */
+        ========================================= */
 
         selectFileBtn.addEventListener(
             "click",
@@ -1575,9 +1067,9 @@ document.addEventListener(
         );
 
 
-        /* =====================================================
+        /* =========================================
            Excel 匯入
-        ===================================================== */
+        ========================================= */
 
         reportFileImporter.addEventListener(
             "change",
@@ -1585,7 +1077,6 @@ document.addEventListener(
 
                 const file =
                     event.target.files[0];
-
 
                 if (!file) {
                     return;
@@ -1638,6 +1129,10 @@ document.addEventListener(
                                     );
 
 
+                            /* =================================
+                               讀取起算點
+                            ================================= */
+
                             const getCell =
                                 function (
                                     row,
@@ -1660,66 +1155,55 @@ document.addEventListener(
                                 };
 
 
-                            /* =================================================
-                               起算點
-                            ================================================= */
+                            /*
+                              後視點
+                              A6/A7
+                              C6/C7
+                            */
+
+                            const bsId =
+                                (
+                                    getCell(5,0)
+                                    + " "
+                                    + getCell(6,0)
+                                ).trim();
 
 
                             /*
-                               後視點
-                               A6 / A7
+                              設站點
+                              A8/A9
+                              C8/C9
                             */
 
-                            let bsId =
-                                getCell(5, 0);
-
-
-                            if (!bsId) {
-
-                                bsId =
-                                    getCell(6, 0);
-
-                            }
-
-
-                            /*
-                               設站點
-                               A8 / A9
-                            */
-
-                            let stId =
-                                getCell(7, 0);
-
-
-                            if (!stId) {
-
-                                stId =
-                                    getCell(8, 0);
-
-                            }
+                            const stId =
+                                (
+                                    getCell(7,0)
+                                    + " "
+                                    + getCell(8,0)
+                                ).trim();
 
 
                             const bsN =
                                 parseFloat(
-                                    getCell(5, 2)
+                                    getCell(5,2)
                                 );
 
 
                             const bsE =
                                 parseFloat(
-                                    getCell(6, 2)
+                                    getCell(6,2)
                                 );
 
 
                             const stN =
                                 parseFloat(
-                                    getCell(7, 2)
+                                    getCell(7,2)
                                 );
 
 
                             const stE =
                                 parseFloat(
-                                    getCell(8, 2)
+                                    getCell(8,2)
                                 );
 
 
@@ -1775,13 +1259,13 @@ document.addEventListener(
                             }
 
 
-                            /* =================================================
+                            /* =================================
                                後視 → 設站實測邊長
-                            ================================================= */
+                            ================================= */
 
                             let firstDist =
                                 parseFloat(
-                                    getCell(6, 4)
+                                    getCell(6,4)
                                 );
 
 
@@ -1789,7 +1273,7 @@ document.addEventListener(
 
                                 firstDist =
                                     parseFloat(
-                                        getCell(7, 4)
+                                        getCell(7,4)
                                     );
 
                             }
@@ -1805,26 +1289,22 @@ document.addEventListener(
                             }
 
 
-                            /* =================================================
-                               清除「導線資料」
-                               ★ 注意：絕對不碰 knownTbody
-                            ================================================= */
+                            /* =================================
+                               清除舊導線
+                            ================================= */
 
                             tbody.innerHTML = "";
 
 
-                            /* =================================================
+                            /* =================================
                                新 Excel 導線格式
-                            ================================================= */
+                            ================================= */
 
                             const extractedRows = [];
 
 
                             const maxCount =
-                                Math.max(
-                                    0,
-                                    rows.length - 7
-                                );
+                                rows.length - 7;
 
 
                             for (
@@ -1945,9 +1425,9 @@ document.addEventListener(
                             }
 
 
-                            /* =================================================
-                               建立導線資料
-                            ================================================= */
+                            /* =================================
+                               建立導線資料列
+                            ================================= */
 
                             extractedRows.forEach(
                                 function (item) {
@@ -1973,27 +1453,15 @@ document.addEventListener(
                             }
 
 
-                            saveTraverseData();
-
-
-                            /*
-                               ★ 再次確認：
-                               這裡沒有任何
-                               knownTbody.innerHTML
-                               操作
-                            */
+                            saveData();
 
 
                             alert(
                                 "Excel 匯入完成！\n\n" +
 
                                 "目標點：A10:A11...\n" +
-
                                 "邊長：E9:E10...\n" +
-
-                                "角度：L/M/N...\n\n" +
-
-                                "🔒 已知點座標資料庫未變更。"
+                                "角度：L/M/N..."
                             );
 
 
@@ -2007,13 +1475,6 @@ document.addEventListener(
 
                         }
 
-
-                        /*
-                           允許再次選擇相同檔案
-                        */
-
-                        reportFileImporter.value = "";
-
                     };
 
 
@@ -2023,9 +1484,100 @@ document.addEventListener(
         );
 
 
-        /* =====================================================
+        /* =========================================
+           新增已知點
+        ========================================= */
+
+        function addKnownRow(
+            id = "",
+            n = "",
+            e = ""
+        ) {
+
+            const row =
+                document.createElement("tr");
+
+
+            row.innerHTML = `
+
+                <td>
+                    <input
+                        type="text"
+                        class="known-id"
+                        value="${id}"
+                        placeholder="點號"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        step="any"
+                        class="known-n"
+                        value="${n}"
+                        placeholder="N"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        step="any"
+                        class="known-e"
+                        value="${e}"
+                        placeholder="E"
+                    >
+                </td>
+
+                <td>
+                    <button
+                        type="button"
+                        class="btn-danger delete-known"
+                    >
+                        刪除
+                    </button>
+                </td>
+
+            `;
+
+
+            row.querySelectorAll("input")
+                .forEach(
+                    function (input) {
+
+                        input.addEventListener(
+                            "input",
+                            saveData
+                        );
+
+                    }
+                );
+
+
+            row.querySelector(
+                ".delete-known"
+            ).addEventListener(
+                "click",
+                function () {
+
+                    row.remove();
+
+                    saveData();
+
+                    updateKnownStatus();
+
+                }
+            );
+
+
+            knownTbody.appendChild(row);
+
+        }
+
+
+        /* =========================================
            新增導線列
-        ===================================================== */
+        ========================================= */
 
         function addRow(
             id = "",
@@ -2048,7 +1600,7 @@ document.addEventListener(
                     <input
                         type="text"
                         class="input-id"
-                        value="${escapeHtml(id)}"
+                        value="${id}"
                         placeholder="例如：A10"
                     >
 
@@ -2064,7 +1616,7 @@ document.addEventListener(
                         type="number"
                         step="any"
                         class="input-dist"
-                        value="${escapeHtml(dist)}"
+                        value="${dist}"
                         placeholder="m"
                     >
 
@@ -2077,14 +1629,14 @@ document.addEventListener(
                         <input
                             type="number"
                             class="input-deg"
-                            value="${escapeHtml(deg)}"
+                            value="${deg}"
                             placeholder="度"
                         >
 
                         <input
                             type="number"
                             class="input-min"
-                            value="${escapeHtml(min)}"
+                            value="${min}"
                             placeholder="分"
                         >
 
@@ -2092,7 +1644,7 @@ document.addEventListener(
                             type="number"
                             step="any"
                             class="input-sec"
-                            value="${escapeHtml(sec)}"
+                            value="${sec}"
                             placeholder="秒"
                         >
 
@@ -2115,20 +1667,22 @@ document.addEventListener(
 
 
             row.querySelectorAll("input")
-                .forEach(function (input) {
+                .forEach(
+                    function (input) {
 
-                    input.addEventListener(
-                        "input",
-                        function () {
+                        input.addEventListener(
+                            "input",
+                            function () {
 
-                            saveTraverseData();
+                                saveData();
 
-                            updateKnownStatus();
+                                updateKnownStatus();
 
-                        }
-                    );
+                            }
+                        );
 
-                });
+                    }
+                );
 
 
             row.querySelector(
@@ -2141,9 +1695,7 @@ document.addEventListener(
 
                     updateRowIndices();
 
-                    saveTraverseData();
-
-                    updateKnownStatus();
+                    saveData();
 
                 }
             );
@@ -2154,14 +1706,12 @@ document.addEventListener(
 
             updateRowIndices();
 
-            updateKnownStatus();
-
         }
 
 
-        /* =====================================================
+        /* =========================================
            更新站序
-        ===================================================== */
+        ========================================= */
 
         function updateRowIndices() {
 
@@ -2181,11 +1731,9 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
-           取得已知點資料庫
-           ★ 只讀取
-           ★ 不修改
-        ===================================================== */
+        /* =========================================
+           已知點資料庫
+        ========================================= */
 
         function getKnownDatabase() {
 
@@ -2241,9 +1789,9 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
+        /* =========================================
            顯示已知點狀態
-        ===================================================== */
+        ========================================= */
 
         function updateKnownStatus() {
 
@@ -2293,9 +1841,9 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
+        /* =========================================
            度分秒 → 十進位
-        ===================================================== */
+        ========================================= */
 
         function dmsToDecimal(
             deg,
@@ -2314,9 +1862,9 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
+        /* =========================================
            十進位 → 度分秒
-        ===================================================== */
+        ========================================= */
 
         function decimalToDMS(
             value
@@ -2365,11 +1913,11 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
+        /* =========================================
            方位角
            北 = 0°
            順時針
-        ===================================================== */
+        ========================================= */
 
         function getAzimuth(
             n1,
@@ -2408,9 +1956,9 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
+        /* =========================================
            距離
-        ===================================================== */
+        ========================================= */
 
         function getDistance(
             n1,
@@ -2438,241 +1986,9 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
-           導線資料儲存
-           ★ 與已知點完全分開
-        ===================================================== */
-
-        function saveTraverseData() {
-
-            const data = {
-
-                bsId:
-                    document.getElementById(
-                        "bsId"
-                    ).value,
-
-                stId:
-                    document.getElementById(
-                        "stId"
-                    ).value,
-
-                bsN:
-                    document.getElementById(
-                        "bsN"
-                    ).value,
-
-                bsE:
-                    document.getElementById(
-                        "bsE"
-                    ).value,
-
-                stN:
-                    document.getElementById(
-                        "stN"
-                    ).value,
-
-                stE:
-                    document.getElementById(
-                        "stE"
-                    ).value,
-
-                bsToStDist:
-                    document.getElementById(
-                        "bsToStDist"
-                    ).value,
-
-                traverse: []
-
-            };
-
-
-            tbody
-                .querySelectorAll("tr")
-                .forEach(
-                    function (row) {
-
-                        data.traverse.push({
-
-                            id:
-                                row.querySelector(
-                                    ".input-id"
-                                ).value,
-
-                            dist:
-                                row.querySelector(
-                                    ".input-dist"
-                                ).value,
-
-                            deg:
-                                row.querySelector(
-                                    ".input-deg"
-                                ).value,
-
-                            min:
-                                row.querySelector(
-                                    ".input-min"
-                                ).value,
-
-                            sec:
-                                row.querySelector(
-                                    ".input-sec"
-                                ).value
-
-                        });
-
-                    }
-                );
-
-
-            localStorage.setItem(
-                TRAVERSE_KEY,
-                JSON.stringify(data)
-            );
-
-        }
-
-
-        /* =====================================================
-           載入導線資料
-           ★ 不碰已知點
-        ===================================================== */
-
-        function loadTraverseData() {
-
-            const saved =
-                localStorage.getItem(
-                    TRAVERSE_KEY
-                );
-
-
-            if (!saved) {
-
-                addRow();
-
-                return;
-
-            }
-
-
-            try {
-
-                const data =
-                    JSON.parse(saved);
-
-
-                document.getElementById(
-                    "bsId"
-                ).value =
-                    data.bsId || "";
-
-
-                document.getElementById(
-                    "stId"
-                ).value =
-                    data.stId || "";
-
-
-                document.getElementById(
-                    "bsN"
-                ).value =
-                    data.bsN || "";
-
-
-                document.getElementById(
-                    "bsE"
-                ).value =
-                    data.bsE || "";
-
-
-                document.getElementById(
-                    "stN"
-                ).value =
-                    data.stN || "";
-
-
-                document.getElementById(
-                    "stE"
-                ).value =
-                    data.stE || "";
-
-
-                document.getElementById(
-                    "bsToStDist"
-                ).value =
-                    data.bsToStDist || "";
-
-
-                tbody.innerHTML = "";
-
-
-                if (
-                    data.traverse &&
-                    data.traverse.length
-                ) {
-
-                    data.traverse.forEach(
-                        function (item) {
-
-                            addRow(
-                                item.id,
-                                item.dist,
-                                item.deg,
-                                item.min,
-                                item.sec
-                            );
-
-                        }
-                    );
-
-                }
-                else {
-
-                    addRow();
-
-                }
-
-
-            }
-            catch (error) {
-
-                tbody.innerHTML = "";
-
-                addRow();
-
-            }
-
-        }
-
-
-        /* =====================================================
-           起算點輸入自動儲存
-           ★ 只儲存導線資料
-        ===================================================== */
-
-        [
-            "bsId",
-            "stId",
-            "bsN",
-            "bsE",
-            "stN",
-            "stE",
-            "bsToStDist"
-        ]
-        .forEach(function (id) {
-
-            document.getElementById(id)
-                .addEventListener(
-                    "input",
-                    saveTraverseData
-                );
-
-        });
-
-
-        /* =====================================================
+        /* =========================================
            完整計算
-        ===================================================== */
+        ========================================= */
 
         function runCalculation() {
 
@@ -2743,10 +2059,6 @@ document.addEventListener(
 
             }
 
-
-            /*
-               ★ 只讀取已知點
-            */
 
             const knownDb =
                 getKnownDatabase();
@@ -2959,7 +2271,7 @@ document.addEventListener(
 
 
                     /*
-                       目標點座標
+                       計算目標點座標
                     */
 
                     const targetN =
@@ -3129,9 +2441,9 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
+        /* =========================================
            顯示計算結果
-        ===================================================== */
+        ========================================= */
 
         calculateBtn.addEventListener(
             "click",
@@ -3275,9 +2587,9 @@ document.addEventListener(
         );
 
 
-        /* =====================================================
+        /* =========================================
            匯出 Excel
-        ===================================================== */
+        ========================================= */
 
         exportExcelBtn.addEventListener(
             "click",
@@ -3515,11 +2827,9 @@ document.addEventListener(
         );
 
 
-        /* =====================================================
+        /* =========================================
            清空
-           ★ 只清除導線資料
-           ★ 絕對不清除已知點
-        ===================================================== */
+        ========================================= */
 
         clearBtn.addEventListener(
             "click",
@@ -3527,8 +2837,7 @@ document.addEventListener(
 
                 if (
                     !confirm(
-                        "確定要清空導線資料嗎？\n\n" +
-                        "⚠️ 已知點座標資料庫不會被清除。"
+                        "確定要清空全部資料嗎？"
                     )
                 ) {
 
@@ -3572,12 +2881,15 @@ document.addEventListener(
                 ).value = "";
 
 
-                /*
-                   ★ 只清除導線 tbody
-                */
+                knownTbody.innerHTML =
+                    "";
 
-                tbody.innerHTML = "";
 
+                tbody.innerHTML =
+                    "";
+
+
+                addKnownRow();
 
                 addRow();
 
@@ -3586,36 +2898,314 @@ document.addEventListener(
                     "none";
 
 
-                /*
-                   ★ 只儲存導線
-                */
-
-                saveTraverseData();
-
-
-                /*
-                   ★ 已知點完全不碰
-                */
-
-                updateKnownStatus();
+                saveData();
 
             }
         );
 
 
-        /* =====================================================
+        /* =========================================
+           新增按鈕
+        ========================================= */
+
+        addKnownRowBtn.addEventListener(
+            "click",
+            function () {
+
+                addKnownRow();
+
+                saveData();
+
+            }
+        );
+
+
+        addRowBtn.addEventListener(
+            "click",
+            function () {
+
+                addRow();
+
+                saveData();
+
+            }
+        );
+
+
+        /* =========================================
+           LocalStorage
+        ========================================= */
+
+        function saveData() {
+
+            const data = {
+
+                bsId:
+                    document.getElementById(
+                        "bsId"
+                    ).value,
+
+                stId:
+                    document.getElementById(
+                        "stId"
+                    ).value,
+
+                bsN:
+                    document.getElementById(
+                        "bsN"
+                    ).value,
+
+                bsE:
+                    document.getElementById(
+                        "bsE"
+                    ).value,
+
+                stN:
+                    document.getElementById(
+                        "stN"
+                    ).value,
+
+                stE:
+                    document.getElementById(
+                        "stE"
+                    ).value,
+
+                bsToStDist:
+                    document.getElementById(
+                        "bsToStDist"
+                    ).value,
+
+                knownDb: [],
+
+                traverse: []
+
+            };
+
+
+            knownTbody
+                .querySelectorAll("tr")
+                .forEach(
+                    function (row) {
+
+                        data.knownDb.push({
+
+                            id:
+                                row.querySelector(
+                                    ".known-id"
+                                ).value,
+
+                            n:
+                                row.querySelector(
+                                    ".known-n"
+                                ).value,
+
+                            e:
+                                row.querySelector(
+                                    ".known-e"
+                                ).value
+
+                        });
+
+                    }
+                );
+
+
+            tbody
+                .querySelectorAll("tr")
+                .forEach(
+                    function (row) {
+
+                        data.traverse.push({
+
+                            id:
+                                row.querySelector(
+                                    ".input-id"
+                                ).value,
+
+                            dist:
+                                row.querySelector(
+                                    ".input-dist"
+                                ).value,
+
+                            deg:
+                                row.querySelector(
+                                    ".input-deg"
+                                ).value,
+
+                            min:
+                                row.querySelector(
+                                    ".input-min"
+                                ).value,
+
+                            sec:
+                                row.querySelector(
+                                    ".input-sec"
+                                ).value
+
+                        });
+
+                    }
+                );
+
+
+            localStorage.setItem(
+                "survey_control_point_v11",
+                JSON.stringify(data)
+            );
+
+        }
+
+
+        /* =========================================
+           載入資料
+        ========================================= */
+
+        function loadData() {
+
+            const saved =
+                localStorage.getItem(
+                    "survey_control_point_v11"
+                );
+
+
+            if (!saved) {
+
+                addKnownRow();
+
+                addRow();
+
+                return;
+
+            }
+
+
+            try {
+
+                const data =
+                    JSON.parse(saved);
+
+
+                document.getElementById(
+                    "bsId"
+                ).value =
+                    data.bsId || "";
+
+
+                document.getElementById(
+                    "stId"
+                ).value =
+                    data.stId || "";
+
+
+                document.getElementById(
+                    "bsN"
+                ).value =
+                    data.bsN || "";
+
+
+                document.getElementById(
+                    "bsE"
+                ).value =
+                    data.bsE || "";
+
+
+                document.getElementById(
+                    "stN"
+                ).value =
+                    data.stN || "";
+
+
+                document.getElementById(
+                    "stE"
+                ).value =
+                    data.stE || "";
+
+
+                document.getElementById(
+                    "bsToStDist"
+                ).value =
+                    data.bsToStDist || "";
+
+
+                knownTbody.innerHTML =
+                    "";
+
+
+                tbody.innerHTML =
+                    "";
+
+
+                if (
+                    data.knownDb &&
+                    data.knownDb.length
+                ) {
+
+                    data.knownDb.forEach(
+                        function (item) {
+
+                            addKnownRow(
+                                item.id,
+                                item.n,
+                                item.e
+                            );
+
+                        }
+                    );
+
+                }
+                else {
+
+                    addKnownRow();
+
+                }
+
+
+                if (
+                    data.traverse &&
+                    data.traverse.length
+                ) {
+
+                    data.traverse.forEach(
+                        function (item) {
+
+                            addRow(
+                                item.id,
+                                item.dist,
+                                item.deg,
+                                item.min,
+                                item.sec
+                            );
+
+                        }
+                    );
+
+                }
+                else {
+
+                    addRow();
+
+                }
+
+
+                updateKnownStatus();
+
+            }
+            catch (error) {
+
+                addKnownRow();
+
+                addRow();
+
+            }
+
+        }
+
+
+        /* =========================================
            啟動
-           ★ 先載入已知點
-           ★ 再載入導線
-        ===================================================== */
+        ========================================= */
 
-        loadKnownDatabase();
-
-        loadTraverseData();
-
-        updateKnownStatus();
-
-        updateKnownCount();
+        loadData();
 
     }
 
