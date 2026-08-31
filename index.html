@@ -201,38 +201,38 @@
     <!-- 起始後視點與設站點 -->
     <div class="section-box">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3 style="margin:0;">📍 導線起算點與第一站實測資料 (第 1 站)</h3>
+            <h3 style="margin:0;">📍 導線起算點與第一站實測資料 (對應指定儲存格)</h3>
             <button type="button" id="selectFileBtn" class="btn-info" style="padding: 6px 12px; font-size: 0.85rem;">📂 一鍵匯入 Excel 成果表</button>
         </div>
         <div class="grid-2" style="margin-top: 10px;">
             <div class="form-group">
-                <label>初始後視點 點號 (BS):</label>
+                <label>初始後視點 點號 (BS) [A6:A7]:</label>
                 <input type="text" id="bsId" value="" placeholder="例: Y251">
             </div>
             <div class="form-group">
-                <label>初始設站點 點號 (ST):</label>
+                <label>初始設站點 點號 (ST) [A8:A9]:</label>
                 <input type="text" id="stId" value="" placeholder="例: Y250">
             </div>
             <div class="form-group">
-                <label>後視點 縱座標 (N):</label>
+                <label>後視點 縱座標 (N) [C6]:</label>
                 <input type="number" step="any" id="bsN" value="" placeholder="請輸入 N 坐標">
             </div>
             <div class="form-group">
-                <label>設站點 縱座標 (N):</label>
+                <label>設站點 縱座標 (N) [C8]:</label>
                 <input type="number" step="any" id="stN" value="" placeholder="請輸入 N 坐標">
             </div>
             <div class="form-group">
-                <label>後視點 橫座標 (E):</label>
+                <label>後視點 橫座標 (E) [C7]:</label>
                 <input type="number" step="any" id="bsE" value="" placeholder="請輸入 E 坐標">
             </div>
             <div class="form-group">
-                <label>設站點 橫座標 (E):</label>
+                <label>設站點 橫座標 (E) [C9]:</label>
                 <input type="number" step="any" id="stE" value="" placeholder="請輸入 E 坐標">
             </div>
         </div>
         <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 15px 0;">
         <div class="form-group" style="max-width: 50%;">
-            <label>後視點至設站點 實測邊長 (m):</label>
+            <label>後視點至設站點 實測邊長 (m) [E6:E87]:</label>
             <input type="number" step="any" id="bsToStDist" value="" placeholder="請輸入實測邊長">
         </div>
     </div>
@@ -347,76 +347,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const rowsData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                // 自動化解析設定（預設對應您的固定欄位索引）
-                const startRow = 4;
-                const colId = 0;
-                const colN = 1;
-                const colE = 2;
-                const colDist = 4;
-                const colAngle = 9;
+                // 依據您指定的儲存格位置精準讀取 (0-indexed 轉換：Excel列6=索引5, 7=6, 8=7, 9=8)
+                let bsIdVal = rowsData[5] && rowsData[5][0] !== undefined ? String(rowsData[5][0]).trim() : ''; // A6
+                let stIdVal = rowsData[7] && rowsData[7][0] !== undefined ? String(rowsData[7][0]).trim() : ''; // A8
 
-                let extractedRows = [];
+                let bsNVal = rowsData[5] && rowsData[5][2] !== undefined ? parseFloat(rowsData[5][2]) : NaN; // C6
+                let bsEVal = rowsData[6] && rowsData[6][2] !== undefined ? parseFloat(rowsData[6][2]) : NaN; // C7
+                let stNVal = rowsData[7] && rowsData[7][2] !== undefined ? parseFloat(rowsData[7][2]) : NaN; // C8
+                let stEVal = rowsData[8] && rowsData[8][2] !== undefined ? parseFloat(rowsData[8][2]) : NaN; // C9
 
-                for (let i = startRow; i < rowsData.length; i++) {
-                    let r = rowsData[i];
-                    if (!r || r.length === 0) continue;
+                document.getElementById('bsId').value = bsIdVal;
+                document.getElementById('stId').value = stIdVal;
+                document.getElementById('bsN').value = !isNaN(bsNVal) ? bsNVal.toFixed(4) : '';
+                document.getElementById('bsE').value = !isNaN(bsEVal) ? bsEVal.toFixed(4) : '';
+                document.getElementById('stN').value = !isNaN(stNVal) ? stNVal.toFixed(4) : '';
+                document.getElementById('stE').value = !isNaN(stEVal) ? stEVal.toFixed(4) : '';
 
-                    let id = String(r[colId] || '').trim();
-                    let n = parseFloat(r[colN]);
-                    let e = parseFloat(r[colE]);
-                    let dist = colDist >= 0 && r[colDist] !== undefined ? parseFloat(r[colDist]) : '';
-                    
-                    let deg = '', min = '', sec = '';
-                    if (colAngle >= 0 && r[colAngle] !== undefined) {
-                        deg = parseFloat(r[colAngle]) || 0;
-                        min = colAngle + 1 < r.length ? (parseFloat(r[colAngle + 1]) || 0) : 0;
-                        sec = colAngle + 2 < r.length ? (parseFloat(r[colAngle + 2]) || 0) : 0;
-                    }
-
-                    if (id && !isNaN(n) && !isNaN(e)) {
-                        extractedRows.push({
-                            id, n, e,
-                            dist: !isNaN(dist) ? dist : '',
-                            deg, min, sec
-                        });
-                    }
+                // 讀取後視點至設站點實測邊長 (E6:E87 對應 E 欄 index 4)
+                let bsToStDistVal = rowsData[5] && rowsData[5][4] !== undefined ? parseFloat(rowsData[5][4]) : ''; // E6
+                if (bsToStDistVal !== '') {
+                    document.getElementById('bsToStDist').value = bsToStDistVal;
                 }
 
-                if (extractedRows.length < 2) {
-                    alert('抓取到的有效點位少於 2 個，請檢查檔案格式是否正確。');
-                    return;
-                }
-
-                let bs = extractedRows[0];
-                let st = extractedRows[1];
-
-                document.getElementById('bsId').value = bs.id;
-                document.getElementById('bsN').value = bs.n.toFixed(4);
-                document.getElementById('bsE').value = bs.e.toFixed(4);
-
-                document.getElementById('stId').value = st.id;
-                document.getElementById('stN').value = st.n.toFixed(4);
-                document.getElementById('stE').value = st.e.toFixed(4);
-
-                if (bs.dist !== '') {
-                    document.getElementById('bsToStDist').value = bs.dist;
-                }
-
+                // 自動將初始點加入已知點資料庫
                 let db = getKnownDatabase();
-                extractedRows.forEach(p => {
-                    if (!db[p.id]) addKnownRow(p.id, p.n.toFixed(4), p.e.toFixed(4));
-                });
+                if (bsIdVal && !isNaN(bsNVal) && !isNaN(bsEVal) && !db[bsIdVal]) {
+                    addKnownRow(bsIdVal, bsNVal.toFixed(4), bsEVal.toFixed(4));
+                }
+                if (stIdVal && !isNaN(stNVal) && !isNaN(stEVal) && !db[stIdVal]) {
+                    addKnownRow(stIdVal, stNVal.toFixed(4), stEVal.toFixed(4));
+                }
 
-                tbody.innerHTML = '';
-                for (let i = 1; i < extractedRows.length; i++) {
-                    let cur = extractedRows[i];
-                    addRow(cur.id, cur.dist, cur.deg, cur.min, cur.sec);
+                // 批次讀取 E6:E87 區段的導線前瞻點與夾角資料
+                let extractedRows = [];
+                for (let i = 5; i <= 86; i++) { // 對應 Excel 第 6 列到第 87 列
+                    let r = rowsData[i];
+                    if (!r) continue;
+                    let id = String(r[0] || '').trim(); // A 欄：點號
+                    let dist = r[4] !== undefined ? parseFloat(r[4]) : ''; // E 欄：實測邊長
+                    let n = parseFloat(r[1]);
+                    let e = parseFloat(r[2]);
+
+                    // 如果有夾角資料，可從指定欄位讀取（預設支援 J, K, L 欄 / 索引 9, 10, 11）
+                    let deg = r[9] !== undefined ? parseFloat(r[9]) || 0 : 0;
+                    let min = r[10] !== undefined ? parseFloat(r[10]) || 0 : 0;
+                    let sec = r[11] !== undefined ? parseFloat(r[11]) || 0 : 0;
+
+                    if (id && id !== bsIdVal && id !== stIdVal) {
+                        extractedRows.push({ id, dist, deg, min, sec, n, e });
+                        if (!isNaN(n) && !isNaN(e)) {
+                            let currentDb = getKnownDatabase();
+                            if (!currentDb[id]) {
+                                addKnownRow(id, n.toFixed(4), e.toFixed(4));
+                            }
+                        }
+                    }
+                }
+
+                if (extractedRows.length > 0) {
+                    tbody.innerHTML = '';
+                    extractedRows.forEach(cur => {
+                        addRow(cur.id, cur.dist, cur.deg, cur.min, cur.sec);
+                    });
                 }
 
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`成功自動匯入 ${extractedRows.length} 筆點位資料！`);
+                alert(`已根據指定儲存格規則成功匯入資料！`);
             } catch (err) {
                 alert('讀取 Excel 失敗：' + err.message);
             }
@@ -574,11 +572,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data_v8', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v9', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data_v8');
+        const saved = localStorage.getItem('traverse_tool_data_v9');
         if (!saved) {
             addKnownRow();
             addRow();
