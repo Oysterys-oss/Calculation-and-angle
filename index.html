@@ -12,30 +12,27 @@
 
 <style>
 
-:root {
+:root{
     --primary-color:#1e3a8a;
     --success-color:#16a34a;
     --danger-color:#dc2626;
     --info-color:#0284c7;
-    --warning-color:#d97706;
-
     --bg-color:#f8fafc;
     --card-bg:#ffffff;
     --border-color:#cbd5e1;
     --text-color:#1e293b;
 }
 
-* {
+*{
     box-sizing:border-box;
 }
 
-body {
+body{
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         Roboto,
-        "Helvetica Neue",
         Arial,
         sans-serif;
 
@@ -44,12 +41,11 @@ body {
 
     margin:0;
     padding:20px;
-
     line-height:1.5;
 }
 
-.container {
-    max-width:1500px;
+.container{
+    max-width:1400px;
     margin:0 auto;
 
     background:var(--card-bg);
@@ -62,104 +58,82 @@ body {
         0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
-h1 {
+h1{
     font-size:1.7rem;
-
     margin-bottom:25px;
-
     color:var(--primary-color);
-
     text-align:center;
 }
 
-h3 {
+h3{
     margin:0;
 }
 
-.section-box {
+.section-box{
     background:#f1f5f9;
-
     border:1px solid var(--border-color);
-
     padding:18px;
-
     border-radius:8px;
-
     margin-bottom:20px;
 }
 
-.section-title {
+.section-title{
     display:flex;
-
     justify-content:space-between;
     align-items:center;
-
-    gap:10px;
-
     margin-bottom:15px;
+    gap:10px;
 }
 
-.grid-2 {
+.grid-2{
     display:grid;
-
-    grid-template-columns:
-        repeat(2,minmax(0,1fr));
-
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:15px;
 }
 
-.form-group {
+.form-group{
     margin-bottom:10px;
 }
 
-.form-group label {
+.form-group label{
     display:block;
-
     font-weight:600;
-
     margin-bottom:5px;
-
     font-size:.9rem;
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"]{
     width:100%;
-
     padding:9px;
 
     border:1px solid var(--border-color);
-
     border-radius:6px;
 
     font-size:.95rem;
-
     background:white;
 }
 
-input:focus {
+input:focus{
     outline:none;
-
     border-color:var(--primary-color);
 
     box-shadow:
         0 0 0 3px rgba(30,58,138,.1);
 }
 
-.table-container {
+.table-container{
     overflow-x:auto;
 }
 
-table {
+table{
     width:100%;
-
     border-collapse:collapse;
-
     background:white;
 }
 
 th,
-td {
+td{
     padding:9px 10px;
 
     border:1px solid var(--border-color);
@@ -171,36 +145,29 @@ td {
     vertical-align:middle;
 }
 
-th {
+th{
     background:#e2e8f0;
-
     font-weight:600;
 }
 
-.angle-inputs {
+.angle-inputs{
     display:grid;
-
-    grid-template-columns:
-        1fr 1fr 1fr;
-
+    grid-template-columns:1fr 1fr 1fr;
     gap:5px;
 }
 
-.angle-inputs input {
+.angle-inputs input{
     text-align:center;
-
     padding:7px 4px;
 }
 
-button {
+button{
     padding:10px 18px;
 
     border:none;
-
     border-radius:6px;
 
     font-size:.95rem;
-
     font-weight:600;
 
     cursor:pointer;
@@ -208,55 +175,52 @@ button {
     transition:.15s;
 }
 
-button:hover {
+button:hover{
     opacity:.88;
 }
 
-.btn-primary {
+.btn-primary{
     background:var(--primary-color);
     color:white;
 }
 
-.btn-success {
+.btn-success{
     background:var(--success-color);
     color:white;
 }
 
-.btn-info {
+.btn-info{
     background:var(--info-color);
     color:white;
 }
 
-.btn-secondary {
+.btn-secondary{
     background:#e2e8f0;
     color:var(--text-color);
 }
 
-.btn-danger {
+.btn-danger{
     background:var(--danger-color);
     color:white;
 }
 
-.btn-warning {
-    background:var(--warning-color);
+.btn-warning{
+    background:#d97706;
     color:white;
 }
 
-.btn-group {
+.btn-group{
     display:flex;
-
     gap:10px;
-
     margin-bottom:20px;
-
     flex-wrap:wrap;
 }
 
-.btn-group button {
+.btn-group button{
     flex:1;
 }
 
-.known-tag {
+.known-tag{
     display:inline-block;
 
     margin-top:4px;
@@ -268,19 +232,16 @@ button:hover {
     font-size:.8rem;
 
     color:#166534;
-
     background:#dcfce7;
 }
 
-.hint {
+.hint{
     color:#64748b;
-
     font-size:.85rem;
-
     margin-bottom:10px;
 }
 
-.excel-info {
+.excel-info{
     background:#eff6ff;
 
     border:1px solid #bfdbfe;
@@ -294,24 +255,33 @@ button:hover {
     margin-bottom:15px;
 }
 
-.paste-box {
-    background:#ffffff;
-
-    border:1px dashed #94a3b8;
-
-    padding:12px;
-
-    border-radius:6px;
-
-    margin-top:12px;
+.collapse-content{
+    display:block;
 }
 
-.paste-box textarea {
+.collapse-content.hidden{
+    display:none;
+}
+
+.db-tools{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:12px;
+}
+
+.paste-box{
+    display:none;
+    margin-bottom:15px;
+}
+
+.paste-box.show{
+    display:block;
+}
+
+.paste-box textarea{
     width:100%;
-
-    min-height:90px;
-
-    resize:vertical;
+    min-height:150px;
 
     padding:10px;
 
@@ -319,54 +289,41 @@ button:hover {
 
     border-radius:6px;
 
-    font-family:monospace;
+    resize:vertical;
 
+    font-family:monospace;
     font-size:.9rem;
 }
 
-.paste-box textarea:focus {
-    outline:none;
+.paste-help{
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+    color:#9a3412;
 
-    border-color:var(--primary-color);
+    padding:10px;
+
+    border-radius:6px;
+
+    margin-bottom:8px;
+
+    font-size:.85rem;
 }
 
-.paste-buttons {
-    display:flex;
+.angle-note{
+    background:#fefce8;
+    border:1px solid #fde68a;
+    color:#854d0e;
 
-    gap:8px;
+    padding:10px;
 
-    margin-top:8px;
+    border-radius:6px;
 
-    flex-wrap:wrap;
+    margin-bottom:15px;
+
+    font-size:.85rem;
 }
 
-.collapse-content {
-    overflow:hidden;
-
-    transition:
-        max-height .25s ease,
-        opacity .2s ease;
-}
-
-.collapse-content.collapsed {
-    max-height:0 !important;
-
-    opacity:0;
-
-    pointer-events:none;
-}
-
-.toggle-icon {
-    display:inline-block;
-
-    transition:transform .2s ease;
-}
-
-.toggle-icon.closed {
-    transform:rotate(-90deg);
-}
-
-#resultArea {
+#resultArea{
     display:none;
 
     background:#f8fafc;
@@ -388,42 +345,23 @@ button:hover {
     overflow-x:auto;
 }
 
-.status-bar {
-    margin-top:10px;
-
-    padding:8px 10px;
-
-    background:#ecfdf5;
-
-    border:1px solid #bbf7d0;
-
-    color:#166534;
-
-    border-radius:5px;
-
-    font-size:.85rem;
-
-    display:none;
+.small-info{
+    color:#64748b;
+    font-size:.82rem;
 }
 
-@media(max-width:800px) {
+@media(max-width:800px){
 
-    .grid-2 {
+    .grid-2{
         grid-template-columns:1fr;
     }
 
-    .container {
+    .container{
         padding:15px;
     }
 
-    body {
+    body{
         padding:8px;
-    }
-
-    .section-title {
-        flex-direction:column;
-
-        align-items:stretch;
     }
 
 }
@@ -441,6 +379,12 @@ button:hover {
     <br>
     <small>自動化匯入與計算系統</small>
 </h1>
+
+<!-- ================================================= -->
+
+<!-- Excel 匯入說明 -->
+
+<!-- ================================================= -->
 
 <div class="excel-info">
 
@@ -462,21 +406,21 @@ button:hover {
 
 配對：
 
-<b>A10 + E9 + L8/M8/N8</b>
+<b>
+A10 + E9 + L8/M8/N8
+</b>
 
 <br>
 
-<b>A11 + E10 + L9/M9/N9</b>
+<b>
+A11 + E10 + L9/M9/N9
+</b>
 
 <br>
 
-<b>A12 + E11 + L10/M10/N10</b>
-
-<br><br>
-
-<b>⚠️ 方位角：</b>
-
-本系統已修正「後視方向與前進方向相差 180°」問題。
+<b>
+A12 + E11 + L10/M10/N10
+</b>
 
 </div>
 
@@ -488,7 +432,11 @@ style="display:none;"
 
 >
 
+<!-- ================================================= -->
+
 <!-- 起算點 -->
+
+<!-- ================================================= -->
 
 <div class="section-box">
 
@@ -615,7 +563,11 @@ placeholder="實測邊長"
 
 </div>
 
-<!-- 已知點 -->
+<!-- ================================================= -->
+
+<!-- 已知點座標資料庫 -->
+
+<!-- ================================================= -->
 
 <div class="section-box">
 
@@ -623,10 +575,6 @@ placeholder="實測邊長"
 
 <h3>
 📂 已知點座標資料庫
-<span id="knownCount"
-      style="font-size:.85rem;color:#64748b;">
-(0 筆)
-</span>
 </h3>
 
 <button
@@ -636,47 +584,113 @@ class="btn-secondary"
 
 >
 
-<span
-id="toggleKnownIcon"
-class="toggle-icon"
+▲ 收起 </button>
+
+</div>
+
+<div id="knownContent" class="collapse-content">
+
+<div class="hint">
+
+已知點資料庫獨立保存。 <br>
+
+<strong>
+不會因為新增、刪除或匯入導線資料而被修改。
+</strong>
+
+<br>
+
+可以一次從 Excel / 文字資料複製多筆資料貼上。
+
+</div>
+
+<!-- 大量貼上只存在「已知點資料庫」 -->
+
+<div class="db-tools">
+
+<button
+type="button"
+id="pasteKnownBtn"
+class="btn-info"
 
 >
 
-▼ </span>
+📋 大量貼上已知點 </button>
 
-<span id="toggleKnownText">
-收起
-</span>
+<button
+type="button"
+id="clearKnownBtn"
+class="btn-danger"
 
-</button>
+>
+
+🗑️ 清空已知點 </button>
 
 </div>
 
 <div
-    id="knownContent"
-    class="collapse-content"
-    style="max-height:2000px;"
+    id="pasteKnownBox"
+    class="paste-box"
 >
 
-<div class="hint">
+<div class="paste-help">
 
-輸入已知點 ID、N、E 座標。
-
-<br>
-
-也可以直接從 Excel 複製大量資料後貼上。
+<strong>大量貼上格式：</strong>
 
 <br>
 
-格式：
+每一行一個點：
 
-<b>點號　N　E</b>
+<code>
+點號　N座標　E座標
+</code>
 
-<br>
+<br><br>
 
 例如：
 
-<b>A10　250123.4567　27512345.6789</b>
+<br>
+
+<code>
+A01    2500000.1234    300000.5678
+</code>
+
+<br>
+
+<code>
+A02    2500010.5678    300010.1234
+</code>
+
+<br>
+
+也支援從 Excel 直接複製三欄後貼上。
+
+</div>
+
+<textarea
+    id="knownPasteArea"
+    placeholder="將 Excel 的點號、N、E 三欄資料直接貼在這裡..."
+></textarea>
+
+<br><br>
+
+<button
+type="button"
+id="applyKnownPasteBtn"
+class="btn-success"
+
+>
+
+✅ 匯入這些已知點 </button>
+
+<button
+type="button"
+id="cancelKnownPasteBtn"
+class="btn-secondary"
+
+>
+
+取消 </button>
 
 </div>
 
@@ -708,52 +722,6 @@ class="toggle-icon"
 
 <br>
 
-<div class="paste-box">
-
-<b>📋 大量貼上已知點</b>
-
-<br>
-
-<div class="hint">
-
-可直接把 Excel 的三欄資料貼到下面。
-
-</div>
-
-<textarea
-    id="knownPasteArea"
-    placeholder="例如：
-A10	250000.1234	27500000.5678
-A11	250010.1234	27500010.5678
-A12	250020.1234	27500020.5678"
-></textarea>
-
-<div class="paste-buttons">
-
-<button
-type="button"
-id="pasteKnownBtn"
-class="btn-info"
-
->
-
-📋 貼上並建立資料 </button>
-
-<button
-type="button"
-id="clearKnownPasteBtn"
-class="btn-secondary"
-
->
-
-清除貼上區 </button>
-
-</div>
-
-</div>
-
-<br>
-
 <button
 type="button"
 id="addKnownRowBtn"
@@ -763,16 +731,15 @@ class="btn-secondary"
 
 ＋ 新增已知點 </button>
 
-<div
-    id="knownStatusBar"
-    class="status-bar"
-></div>
-
 </div>
 
 </div>
+
+<!-- ================================================= -->
 
 <!-- 導線資料 -->
+
+<!-- ================================================= -->
 
 <div class="section-box">
 
@@ -807,9 +774,29 @@ Excel：
 
 <br><br>
 
-也可以直接大量貼上：
+<strong>
+⚠️ 本區已移除「大量貼上導線資料」功能。
+</strong>
 
-<b>點號　邊長　度　分　秒</b>
+</div>
+
+<div class="angle-note">
+
+<strong>📐 方位角計算：</strong>
+
+本系統使用測量導線常用方式：
+
+<br>
+
+後視方向 →
+反向後視方向（+180°） →
+加入實測夾角 →
+得到下一邊方位角。
+
+<br><br>
+
+因此不會再出現原本
+「方位角差 180°」的問題。
 
 </div>
 
@@ -847,54 +834,6 @@ Excel：
 
 <br>
 
-<div class="paste-box">
-
-<b>📋 大量貼上導線資料</b>
-
-<br>
-
-<div class="hint">
-
-可直接從 Excel 複製 5 欄資料：
-
-點號、邊長、度、分、秒
-
-</div>
-
-<textarea
-    id="traversePasteArea"
-    placeholder="例如：
-A10	25.1234	30	15	20
-A11	28.4567	42	10	15
-A12	31.7890	55	20	30"
-></textarea>
-
-<div class="paste-buttons">
-
-<button
-type="button"
-id="pasteTraverseBtn"
-class="btn-info"
-
->
-
-📋 貼上並建立導線 </button>
-
-<button
-type="button"
-id="clearTraversePasteBtn"
-class="btn-secondary"
-
->
-
-清除貼上區 </button>
-
-</div>
-
-</div>
-
-<br>
-
 <button
 type="button"
 id="addRowBtn"
@@ -906,7 +845,11 @@ class="btn-secondary"
 
 </div>
 
+<!-- ================================================= -->
+
 <!-- 按鈕 -->
+
+<!-- ================================================= -->
 
 <div class="btn-group">
 
@@ -939,20 +882,24 @@ class="btn-success"
 
 </div>
 
+<!-- ================================================= -->
+
+<!-- 計算結果 -->
+
+<!-- ================================================= -->
+
 <div id="resultArea"></div>
 
 </div>
 
 <script>
 
-document.addEventListener(
-"DOMContentLoaded",
-function() {
+document.addEventListener("DOMContentLoaded",function(){
 
 
-/* =====================================================
+/* =================================================
    DOM
-===================================================== */
+================================================= */
 
 const knownTbody =
 document.querySelector("#knownDbTable tbody");
@@ -987,231 +934,80 @@ document.getElementById("resultArea");
 const toggleKnownBtn =
 document.getElementById("toggleKnownBtn");
 
-const toggleKnownIcon =
-document.getElementById("toggleKnownIcon");
-
-const toggleKnownText =
-document.getElementById("toggleKnownText");
-
 const knownContent =
 document.getElementById("knownContent");
-
-const knownCount =
-document.getElementById("knownCount");
-
-const knownPasteArea =
-document.getElementById("knownPasteArea");
 
 const pasteKnownBtn =
 document.getElementById("pasteKnownBtn");
 
-const clearKnownPasteBtn =
-document.getElementById("clearKnownPasteBtn");
+const clearKnownBtn =
+document.getElementById("clearKnownBtn");
 
-const traversePasteArea =
-document.getElementById("traversePasteArea");
+const pasteKnownBox =
+document.getElementById("pasteKnownBox");
 
-const pasteTraverseBtn =
-document.getElementById("pasteTraverseBtn");
+const knownPasteArea =
+document.getElementById("knownPasteArea");
 
-const clearTraversePasteBtn =
-document.getElementById("clearTraversePasteBtn");
+const applyKnownPasteBtn =
+document.getElementById("applyKnownPasteBtn");
 
-const knownStatusBar =
-document.getElementById("knownStatusBar");
-
-
-/* =====================================================
-   HTML 安全處理
-===================================================== */
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
-
-}
+const cancelKnownPasteBtn =
+document.getElementById("cancelKnownPasteBtn");
 
 
-/* =====================================================
+/* =================================================
    已知點收起 / 展開
-===================================================== */
+================================================= */
 
-toggleKnownBtn.addEventListener(
-"click",
-function() {
+toggleKnownBtn.addEventListener("click",function(){
 
-    const collapsed =
-        knownContent.classList.contains("collapsed");
+    const hidden =
+        knownContent.classList.toggle("hidden");
 
-    if(collapsed) {
+    if(hidden){
 
-        knownContent.classList.remove("collapsed");
+        toggleKnownBtn.textContent =
+            "▼ 展開";
 
-        toggleKnownText.textContent =
-            "收起";
+    }else{
 
-        toggleKnownIcon.classList.remove("closed");
-
-    }
-    else {
-
-        knownContent.classList.add("collapsed");
-
-        toggleKnownText.textContent =
-            "展開";
-
-        toggleKnownIcon.classList.add("closed");
+        toggleKnownBtn.textContent =
+            "▲ 收起";
 
     }
-
-    /*
-       ★ 注意：
-       這裡只改顯示狀態。
-       不刪除、不重建、不排序任何資料。
-    */
 
 });
 
 
-/* =====================================================
-   Excel 開啟
-===================================================== */
-
-selectFileBtn.addEventListener(
-"click",
-function() {
-
-    reportFileImporter.click();
-
-});
-
-
-/* =====================================================
-   新增已知點
-===================================================== */
-
-function addKnownRow(
-id="",
-n="",
-e=""
-) {
-
-    const row =
-    document.createElement("tr");
-
-    row.innerHTML = `
-
-        <td>
-            <input
-                type="text"
-                class="known-id"
-                value="${escapeHTML(id)}"
-                placeholder="點號"
-            >
-        </td>
-
-        <td>
-            <input
-                type="number"
-                step="any"
-                class="known-n"
-                value="${escapeHTML(n)}"
-                placeholder="N"
-            >
-        </td>
-
-        <td>
-            <input
-                type="number"
-                step="any"
-                class="known-e"
-                value="${escapeHTML(e)}"
-                placeholder="E"
-            >
-        </td>
-
-        <td>
-            <button
-                type="button"
-                class="btn-danger delete-known"
-            >
-                刪除
-            </button>
-        </td>
-
-    `;
-
-
-    row.querySelectorAll("input")
-    .forEach(
-    function(input) {
-
-        input.addEventListener(
-        "input",
-        function() {
-
-            saveData();
-
-            updateKnownStatus();
-
-        });
-
-    });
-
-
-    row.querySelector(".delete-known")
-    .addEventListener(
-    "click",
-    function() {
-
-        row.remove();
-
-        saveData();
-
-        updateKnownStatus();
-
-    });
-
-
-    knownTbody.appendChild(row);
-
-    updateKnownCount();
-
-}
-
-
-/* =====================================================
-   已知點數量
-===================================================== */
-
-function updateKnownCount() {
-
-    const count =
-        knownTbody.querySelectorAll("tr").length;
-
-    knownCount.textContent =
-        `(${count} 筆)`;
-
-}
-
-
-/* =====================================================
+/* =================================================
    大量貼上已知點
-===================================================== */
+================================================= */
 
-pasteKnownBtn.addEventListener(
-"click",
-function() {
+pasteKnownBtn.addEventListener("click",function(){
+
+    pasteKnownBox.classList.add("show");
+
+    knownPasteArea.focus();
+
+});
+
+
+cancelKnownPasteBtn.addEventListener("click",function(){
+
+    pasteKnownBox.classList.remove("show");
+
+    knownPasteArea.value="";
+
+});
+
+
+applyKnownPasteBtn.addEventListener("click",function(){
 
     const text =
         knownPasteArea.value.trim();
 
-    if(!text) {
+    if(!text){
 
         alert("請先貼上已知點資料。");
 
@@ -1223,54 +1019,34 @@ function() {
     const lines =
         text.split(/\r?\n/);
 
-    let count = 0;
+    let count=0;
+
+    lines.forEach(function(line){
+
+        if(!line.trim()) return;
 
 
-    lines.forEach(
-    function(line) {
+        const parts =
+            line.trim().split(/\t+|,| +/);
 
-        const clean =
-            line.trim();
-
-        if(!clean) {
-            return;
-        }
-
-
-        let parts =
-            clean.split(/\t+/);
-
-
-        if(parts.length < 3) {
-
-            parts =
-                clean.split(/\s+/);
-
-        }
-
-
-        if(parts.length < 3) {
-            return;
-        }
+        if(parts.length<3) return;
 
 
         const id =
             parts[0].trim();
 
         const n =
-            parts[1].trim();
+            parseFloat(parts[1]);
 
         const e =
-            parts[2].trim();
+            parseFloat(parts[2]);
 
 
         if(
-            id !== "" &&
-            n !== "" &&
-            e !== "" &&
-            !isNaN(parseFloat(n)) &&
-            !isNaN(parseFloat(e))
-        ) {
+            id &&
+            !isNaN(n) &&
+            !isNaN(e)
+        ){
 
             addKnownRow(
                 id,
@@ -1290,154 +1066,603 @@ function() {
     saveData();
 
 
-    knownPasteArea.value = "";
+    knownPasteArea.value="";
+
+    pasteKnownBox.classList.remove("show");
 
 
-    knownStatusBar.textContent =
-        `✓ 已新增 ${count} 筆已知點資料`;
-
-    knownStatusBar.style.display =
-        "block";
-
-
-    setTimeout(
-    function() {
-
-        knownStatusBar.style.display =
-            "none";
-
-    },3000);
+    alert(
+        "已知點大量匯入完成！\n\n" +
+        "成功匯入：" +
+        count +
+        " 筆"
+    );
 
 });
 
 
-clearKnownPasteBtn.addEventListener(
-"click",
-function() {
+/* =================================================
+   清空已知點
+================================================= */
 
-    knownPasteArea.value = "";
+clearKnownBtn.addEventListener("click",function(){
+
+    if(
+        !confirm(
+            "確定要清空「已知點座標資料庫」嗎？\n\n" +
+            "這只會清除已知點資料，不會影響導線資料。"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    knownTbody.innerHTML="";
+
+    addKnownRow();
+
+    saveData();
+
+    updateKnownStatus();
 
 });
 
 
-/* =====================================================
-   新增導線列
-===================================================== */
+/* =================================================
+   Excel 按鈕
+================================================= */
 
-function addRow(
-id="",
-dist="",
-deg="",
-min="",
-sec=""
-) {
+selectFileBtn.addEventListener("click",function(){
+
+    reportFileImporter.click();
+
+});
+
+
+/* =================================================
+   Excel 匯入
+================================================= */
+
+reportFileImporter.addEventListener(
+"change",
+function(event){
+
+    const file =
+        event.target.files[0];
+
+    if(!file) return;
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload=function(e){
+
+        try{
+
+            const data =
+                new Uint8Array(
+                    e.target.result
+                );
+
+
+            const workbook =
+                XLSX.read(
+                    data,
+                    {type:"array"}
+                );
+
+
+            const sheetName =
+                workbook.SheetNames[0];
+
+
+            const worksheet =
+                workbook.Sheets[sheetName];
+
+
+            const rows =
+                XLSX.utils.sheet_to_json(
+                    worksheet,
+                    {
+                        header:1,
+                        defval:""
+                    }
+                );
+
+
+            function getCell(row,col){
+
+                if(
+                    rows[row] &&
+                    rows[row][col] !== undefined
+                ){
+
+                    return String(
+                        rows[row][col]
+                    ).trim();
+
+                }
+
+                return "";
+
+            }
+
+
+            /* -----------------------------------------
+               起算點
+            ----------------------------------------- */
+
+            const bsId =
+                (
+                    getCell(5,0)
+                    +" "+
+                    getCell(6,0)
+                ).trim();
+
+
+            const stId =
+                (
+                    getCell(7,0)
+                    +" "+
+                    getCell(8,0)
+                ).trim();
+
+
+            const bsN =
+                parseFloat(getCell(5,2));
+
+            const bsE =
+                parseFloat(getCell(6,2));
+
+            const stN =
+                parseFloat(getCell(7,2));
+
+            const stE =
+                parseFloat(getCell(8,2));
+
+
+            document.getElementById("bsId").value =
+                bsId;
+
+            document.getElementById("stId").value =
+                stId;
+
+
+            if(!isNaN(bsN))
+                document.getElementById("bsN").value =
+                    bsN.toFixed(4);
+
+            if(!isNaN(bsE))
+                document.getElementById("bsE").value =
+                    bsE.toFixed(4);
+
+            if(!isNaN(stN))
+                document.getElementById("stN").value =
+                    stN.toFixed(4);
+
+            if(!isNaN(stE))
+                document.getElementById("stE").value =
+                    stE.toFixed(4);
+
+
+            /* -----------------------------------------
+               起算邊
+            ----------------------------------------- */
+
+            let firstDist =
+                parseFloat(getCell(6,4));
+
+
+            if(isNaN(firstDist)){
+
+                firstDist =
+                    parseFloat(getCell(7,4));
+
+            }
+
+
+            if(!isNaN(firstDist)){
+
+                document.getElementById(
+                    "bsToStDist"
+                ).value=firstDist;
+
+            }
+
+
+            /* -----------------------------------------
+               重要：
+               Excel 匯入只清除導線資料。
+               絕對不碰已知點資料庫。
+            ----------------------------------------- */
+
+            tbody.innerHTML="";
+
+
+            /* -----------------------------------------
+               導線資料
+            ----------------------------------------- */
+
+            const extractedRows=[];
+
+            const maxCount =
+                rows.length-7;
+
+
+            for(
+                let i=0;
+                i<maxCount;
+                i++
+            ){
+
+                const idRow =
+                    i+9;
+
+                const distRow =
+                    i+8;
+
+                const angleRow =
+                    i+7;
+
+
+                const id =
+                    rows[idRow] &&
+                    rows[idRow][0] !== undefined
+                        ? String(
+                            rows[idRow][0]
+                        ).trim()
+                        :"";
+
+
+                const dist =
+                    rows[distRow] &&
+                    rows[distRow][4] !== undefined
+                        ? parseFloat(
+                            rows[distRow][4]
+                        )
+                        :NaN;
+
+
+                const deg =
+                    rows[angleRow] &&
+                    rows[angleRow][11] !== undefined
+                        ? parseFloat(
+                            rows[angleRow][11]
+                        )
+                        :NaN;
+
+
+                const min =
+                    rows[angleRow] &&
+                    rows[angleRow][12] !== undefined
+                        ? parseFloat(
+                            rows[angleRow][12]
+                        )
+                        :NaN;
+
+
+                const sec =
+                    rows[angleRow] &&
+                    rows[angleRow][13] !== undefined
+                        ? parseFloat(
+                            rows[angleRow][13]
+                        )
+                        :NaN;
+
+
+                if(
+                    id!="" ||
+                    !isNaN(dist) ||
+                    !isNaN(deg) ||
+                    !isNaN(min) ||
+                    !isNaN(sec)
+                ){
+
+                    extractedRows.push({
+
+                        id:id,
+
+                        dist:
+                            !isNaN(dist)
+                                ?dist:"",
+
+                        deg:
+                            !isNaN(deg)
+                                ?deg:"",
+
+                        min:
+                            !isNaN(min)
+                                ?min:"",
+
+                        sec:
+                            !isNaN(sec)
+                                ?sec:""
+
+                    });
+
+                }
+
+            }
+
+
+            extractedRows.forEach(function(item){
+
+                addRow(
+                    item.id,
+                    item.dist,
+                    item.deg,
+                    item.min,
+                    item.sec
+                );
+
+            });
+
+
+            if(
+                extractedRows.length===0
+            ){
+
+                addRow();
+
+            }
+
+
+            updateKnownStatus();
+
+            saveData();
+
+
+            alert(
+                "Excel 匯入完成！\n\n"+
+                "導線資料已更新。\n"+
+                "已知點座標資料庫保持不變。"
+            );
+
+
+        }
+        catch(error){
+
+            alert(
+                "Excel 讀取失敗：\n"+
+                error.message
+            );
+
+        }
+
+    };
+
+
+    reader.readAsArrayBuffer(file);
+
+});
+
+
+
+/* =================================================
+   新增已知點
+================================================= */
+
+function addKnownRow(
+    id="",
+    n="",
+    e=""
+){
 
     const row =
-    document.createElement("tr");
+        document.createElement("tr");
 
 
-    row.innerHTML = `
+    row.innerHTML=`
 
-        <td class="row-index"></td>
+<td>
+<input
+type="text"
+class="known-id"
+value="${escapeHtml(id)}"
+placeholder="點號">
+</td>
 
-        <td>
+<td>
+<input
+type="number"
+step="any"
+class="known-n"
+value="${escapeHtml(n)}"
+placeholder="N">
+</td>
 
-            <input
-                type="text"
-                class="input-id"
-                value="${escapeHTML(id)}"
-                placeholder="例如：A10"
-            >
+<td>
+<input
+type="number"
+step="any"
+class="known-e"
+value="${escapeHtml(e)}"
+placeholder="E">
+</td>
 
-            <div class="known-status"></div>
+<td>
+<button
+type="button"
+class="btn-danger delete-known">
+刪除
+</button>
+</td>
 
-        </td>
-
-        <td>
-
-            <input
-                type="number"
-                step="any"
-                class="input-dist"
-                value="${escapeHTML(dist)}"
-                placeholder="m"
-            >
-
-        </td>
-
-        <td>
-
-            <div class="angle-inputs">
-
-                <input
-                    type="number"
-                    class="input-deg"
-                    value="${escapeHTML(deg)}"
-                    placeholder="度"
-                >
-
-                <input
-                    type="number"
-                    class="input-min"
-                    value="${escapeHTML(min)}"
-                    placeholder="分"
-                >
-
-                <input
-                    type="number"
-                    step="any"
-                    class="input-sec"
-                    value="${escapeHTML(sec)}"
-                    placeholder="秒"
-                >
-
-            </div>
-
-        </td>
-
-        <td>
-
-            <button
-                type="button"
-                class="btn-danger delete-row"
-            >
-                刪除
-            </button>
-
-        </td>
-
-    `;
+`;
 
 
     row.querySelectorAll("input")
-    .forEach(
-    function(input) {
+        .forEach(function(input){
 
-        input.addEventListener(
-        "input",
-        function() {
+            input.addEventListener(
+                "input",
+                function(){
+
+                    saveData();
+
+                    updateKnownStatus();
+
+                }
+            );
+
+        });
+
+
+    row.querySelector(
+        ".delete-known"
+    ).addEventListener(
+        "click",
+        function(){
+
+            row.remove();
 
             saveData();
 
             updateKnownStatus();
 
+        }
+    );
+
+
+    knownTbody.appendChild(row);
+
+}
+
+
+/* =================================================
+   HTML 安全處理
+================================================= */
+
+function escapeHtml(value){
+
+    return String(value)
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
+
+
+/* =================================================
+   新增導線
+================================================= */
+
+function addRow(
+    id="",
+    dist="",
+    deg="",
+    min="",
+    sec=""
+){
+
+    const row =
+        document.createElement("tr");
+
+
+    row.innerHTML=`
+
+<td class="row-index"></td>
+
+<td>
+
+<input
+type="text"
+class="input-id"
+value="${escapeHtml(id)}"
+placeholder="例如：A10">
+
+<div class="known-status"></div>
+
+</td>
+
+<td>
+
+<input
+type="number"
+step="any"
+class="input-dist"
+value="${escapeHtml(dist)}"
+placeholder="m">
+
+</td>
+
+<td>
+
+<div class="angle-inputs">
+
+<input
+type="number"
+class="input-deg"
+value="${escapeHtml(deg)}"
+placeholder="度">
+
+<input
+type="number"
+class="input-min"
+value="${escapeHtml(min)}"
+placeholder="分">
+
+<input
+type="number"
+step="any"
+class="input-sec"
+value="${escapeHtml(sec)}"
+placeholder="秒">
+
+</div>
+
+</td>
+
+<td>
+
+<button
+type="button"
+class="btn-danger delete-row">
+刪除
+</button>
+
+</td>
+
+`;
+
+
+    row.querySelectorAll("input")
+        .forEach(function(input){
+
+            input.addEventListener(
+                "input",
+                function(){
+
+                    saveData();
+
+                    updateKnownStatus();
+
+                }
+            );
+
         });
 
-    });
 
+    row.querySelector(
+        ".delete-row"
+    ).addEventListener(
+        "click",
+        function(){
 
-    row.querySelector(".delete-row")
-    .addEventListener(
-    "click",
-    function() {
+            row.remove();
 
-        row.remove();
+            updateRowIndices();
 
-        updateRowIndices();
+            saveData();
 
-        saveData();
-
-    });
+        }
+    );
 
 
     tbody.appendChild(row);
@@ -1447,198 +1672,74 @@ sec=""
 }
 
 
-/* =====================================================
-   大量貼上導線
-===================================================== */
+/* =================================================
+   站序
+================================================= */
 
-pasteTraverseBtn.addEventListener(
-"click",
-function() {
-
-    const text =
-        traversePasteArea.value.trim();
-
-    if(!text) {
-
-        alert("請先貼上導線資料。");
-
-        return;
-
-    }
-
-
-    const lines =
-        text.split(/\r?\n/);
-
-    let count = 0;
-
-
-    lines.forEach(
-    function(line) {
-
-        const clean =
-            line.trim();
-
-        if(!clean) {
-            return;
-        }
-
-
-        let parts =
-            clean.split(/\t+/);
-
-
-        if(parts.length < 5) {
-
-            parts =
-                clean.split(/\s+/);
-
-        }
-
-
-        if(parts.length < 5) {
-            return;
-        }
-
-
-        const id =
-            parts[0].trim();
-
-        const dist =
-            parts[1].trim();
-
-        const deg =
-            parts[2].trim();
-
-        const min =
-            parts[3].trim();
-
-        const sec =
-            parts[4].trim();
-
-
-        if(
-            id !== "" &&
-            !isNaN(parseFloat(dist))
-        ) {
-
-            addRow(
-                id,
-                dist,
-                deg,
-                min,
-                sec
-            );
-
-            count++;
-
-        }
-
-    });
-
-
-    updateRowIndices();
-
-    updateKnownStatus();
-
-    saveData();
-
-
-    traversePasteArea.value = "";
-
-
-    alert(
-        `已新增 ${count} 筆導線資料。`
-    );
-
-});
-
-
-clearTraversePasteBtn.addEventListener(
-"click",
-function() {
-
-    traversePasteArea.value = "";
-
-});
-
-
-/* =====================================================
-   更新站序
-===================================================== */
-
-function updateRowIndices() {
+function updateRowIndices(){
 
     tbody
-    .querySelectorAll("tr")
-    .forEach(
-    function(row,index) {
+        .querySelectorAll("tr")
+        .forEach(function(row,index){
 
-        const cell =
-            row.querySelector(".row-index");
+            row.querySelector(
+                ".row-index"
+            ).textContent=index+1;
 
-        if(cell) {
-
-            cell.textContent =
-                index + 1;
-
-        }
-
-    });
+        });
 
 }
 
 
-/* =====================================================
+/* =================================================
    已知點資料庫
-===================================================== */
+================================================= */
 
-function getKnownDatabase() {
+function getKnownDatabase(){
 
-    const db = {};
+    const db={};
 
 
     knownTbody
-    .querySelectorAll("tr")
-    .forEach(
-    function(row) {
+        .querySelectorAll("tr")
+        .forEach(function(row){
 
-        const id =
-            row.querySelector(
-                ".known-id"
-            ).value.trim();
-
-
-        const n =
-            parseFloat(
+            const id =
                 row.querySelector(
-                    ".known-n"
-                ).value
-            );
+                    ".known-id"
+                ).value.trim();
 
 
-        const e =
-            parseFloat(
-                row.querySelector(
-                    ".known-e"
-                ).value
-            );
+            const n =
+                parseFloat(
+                    row.querySelector(
+                        ".known-n"
+                    ).value
+                );
 
 
-        if(
-            id &&
-            !isNaN(n) &&
-            !isNaN(e)
-        ) {
+            const e =
+                parseFloat(
+                    row.querySelector(
+                        ".known-e"
+                    ).value
+                );
 
-            db[id] = {
-                n:n,
-                e:e
-            };
 
-        }
+            if(
+                id &&
+                !isNaN(n) &&
+                !isNaN(e)
+            ){
 
-    });
+                db[id]={
+                    n:n,
+                    e:e
+                };
+
+            }
+
+        });
 
 
     return db;
@@ -1646,108 +1747,98 @@ function getKnownDatabase() {
 }
 
 
-/* =====================================================
-   顯示已知點狀態
-===================================================== */
+/* =================================================
+   已知點狀態
+================================================= */
 
-function updateKnownStatus() {
+function updateKnownStatus(){
 
     const db =
         getKnownDatabase();
 
 
     tbody
-    .querySelectorAll("tr")
-    .forEach(
-    function(row) {
+        .querySelectorAll("tr")
+        .forEach(function(row){
 
-        const id =
-            row.querySelector(
-                ".input-id"
-            ).value.trim();
-
-
-        const status =
-            row.querySelector(
-                ".known-status"
-            );
+            const id =
+                row.querySelector(
+                    ".input-id"
+                ).value.trim();
 
 
-        if(
-            id &&
-            db[id]
-        ) {
+            const status =
+                row.querySelector(
+                    ".known-status"
+                );
 
-            status.innerHTML =
-            `
-            <span class="known-tag">
-                ✓ 已對應已知點
-            </span>
-            `;
 
-        }
-        else {
+            if(
+                id &&
+                db[id]
+            ){
 
-            status.innerHTML = "";
+                status.innerHTML=`
+<span class="known-tag">
+✓ 已對應已知點
+</span>
+`;
 
-        }
+            }
+            else{
 
-    });
+                status.innerHTML="";
+
+            }
+
+        });
 
 }
 
 
-/* =====================================================
-   度分秒 → 十進位
-===================================================== */
+/* =================================================
+   DMS
+================================================= */
 
 function dmsToDecimal(
-deg,
-min,
-sec
-) {
+    deg,
+    min,
+    sec
+){
 
     const d =
-        Number(deg || 0);
+        Number(deg||0);
 
     const m =
-        Number(min || 0);
+        Number(min||0);
 
     const s =
-        Number(sec || 0);
+        Number(sec||0);
 
 
-    return (
-        d +
-        m / 60 +
-        s / 3600
-    );
+    const sign =
+        d<0 ? -1 : 1;
+
+
+    return d+
+        sign*m/60+
+        sign*s/3600;
 
 }
 
 
-/* =====================================================
-   十進位 → DMS
-===================================================== */
+function decimalToDMS(value){
 
-function decimalToDMS(
-value
-) {
-
-    let v =
-        Number(value) || 0;
-
-
-    v =
-        ((v % 360) + 360) % 360;
+    value =
+        ((value%360)+360)%360;
 
 
     let d =
-        Math.floor(v);
+        Math.floor(value);
 
 
     let remain =
-        (v - d) * 60;
+        (value-d)*60;
 
 
     let m =
@@ -1755,35 +1846,35 @@ value
 
 
     let s =
-        (remain - m) * 60;
+        (remain-m)*60;
 
 
-    if(s >= 59.99995) {
+    if(s>=59.99995){
 
-        s = 0;
+        s=0;
 
         m++;
 
     }
 
 
-    if(m >= 60) {
+    if(m>=60){
 
-        m = 0;
+        m=0;
 
         d++;
 
     }
 
 
-    if(d >= 360) {
+    if(d>=360){
 
-        d = 0;
+        d=0;
 
     }
 
 
-    return {
+    return{
         d:d,
         m:m,
         s:s
@@ -1792,24 +1883,24 @@ value
 }
 
 
-/* =====================================================
+/* =================================================
    方位角
    北 = 0°
    順時針
-===================================================== */
+================================================= */
 
 function getAzimuth(
-n1,
-e1,
-n2,
-e2
-) {
+    n1,
+    e1,
+    n2,
+    e2
+){
 
     const dN =
-        n2 - n1;
+        n2-n1;
 
     const dE =
-        e2 - e1;
+        e2-e1;
 
 
     let angle =
@@ -1819,10 +1910,10 @@ e2
         );
 
 
-    if(angle < 0) {
+    if(angle<0){
 
-        angle +=
-            2 * Math.PI;
+        angle+=
+            2*Math.PI;
 
     }
 
@@ -1832,41 +1923,99 @@ e2
 }
 
 
-/* =====================================================
+/* =================================================
+   正規化角度
+================================================= */
+
+function normalizeRad(angle){
+
+    angle =
+        angle%(2*Math.PI);
+
+
+    if(angle<0){
+
+        angle+=
+            2*Math.PI;
+
+    }
+
+
+    return angle;
+
+}
+
+
+/* =================================================
    距離
-===================================================== */
+================================================= */
 
 function getDistance(
-n1,
-e1,
-n2,
-e2
-) {
+    n1,
+    e1,
+    n2,
+    e2
+){
 
     return Math.sqrt(
 
-        Math.pow(
-            n2 - n1,
-            2
-        )
-
-        +
-
-        Math.pow(
-            e2 - e1,
-            2
-        )
+        Math.pow(n2-n1,2)+
+        Math.pow(e2-e1,2)
 
     );
 
 }
 
 
-/* =====================================================
-   完整計算
-===================================================== */
+/* =================================================
+   ★ 核心：
+   測量導線方位角計算
 
-function runCalculation() {
+   後視線方向 A → B
+
+   儀器在 B 站：
+
+   後視方向為 B → A
+
+   因此：
+   後視方位角 + 180°
+
+   再加實測水平角
+
+   = B → 下一點
+================================================= */
+
+function calculateNextAzimuth(
+    backAzimuth,
+    angleDeg
+){
+
+    const backsightDirection =
+        normalizeRad(
+            backAzimuth +
+            Math.PI
+        );
+
+
+    const angleRad =
+        angleDeg *
+        Math.PI /
+        180;
+
+
+    return normalizeRad(
+        backsightDirection +
+        angleRad
+    );
+
+}
+
+
+/* =================================================
+   完整計算
+================================================= */
+
+function runCalculation(){
 
     const bsN =
         parseFloat(
@@ -1888,13 +2037,18 @@ function runCalculation() {
             document.getElementById("stE").value
         );
 
+
     const bsId =
-        document.getElementById("bsId")
-        .value.trim();
+        document.getElementById(
+            "bsId"
+        ).value.trim();
+
 
     const stId =
-        document.getElementById("stId")
-        .value.trim();
+        document.getElementById(
+            "stId"
+        ).value.trim();
+
 
     const bsToStDist =
         parseFloat(
@@ -1909,7 +2063,7 @@ function runCalculation() {
         isNaN(bsE) ||
         isNaN(stN) ||
         isNaN(stE)
-    ) {
+    ){
 
         alert(
             "請完整輸入後視點及設站點座標！"
@@ -1924,15 +2078,14 @@ function runCalculation() {
         getKnownDatabase();
 
 
-    const tableRows =
+    const rows =
         tbody.querySelectorAll("tr");
 
 
-    const legs = [];
+    const legs=[];
 
 
-    tableRows.forEach(
-    function(row,index) {
+    rows.forEach(function(row,index){
 
         const id =
             row.querySelector(
@@ -1945,7 +2098,7 @@ function runCalculation() {
                 row.querySelector(
                     ".input-dist"
                 ).value
-            );
+            ) || 0;
 
 
         const deg =
@@ -1953,7 +2106,7 @@ function runCalculation() {
                 row.querySelector(
                     ".input-deg"
                 ).value
-            );
+            ) || 0;
 
 
         const min =
@@ -1961,7 +2114,7 @@ function runCalculation() {
                 row.querySelector(
                     ".input-min"
                 ).value
-            );
+            ) || 0;
 
 
         const sec =
@@ -1969,7 +2122,7 @@ function runCalculation() {
                 row.querySelector(
                     ".input-sec"
                 ).value
-            );
+            ) || 0;
 
 
         const known =
@@ -1979,36 +2132,33 @@ function runCalculation() {
         legs.push({
 
             id:
-                id || `P${index + 1}`,
+                id ||
+                `P${index+1}`,
 
-            dist:
-                isNaN(dist) ? 0 : dist,
+            dist:dist,
 
-            deg:
-                isNaN(deg) ? 0 : deg,
+            deg:deg,
 
-            min:
-                isNaN(min) ? 0 : min,
+            min:min,
 
-            sec:
-                isNaN(sec) ? 0 : sec,
+            sec:sec,
 
             knownN:
                 known
-                    ? known.n
-                    : null,
+                    ?known.n
+                    :null,
 
             knownE:
                 known
-                    ? known.e
-                    : null
+                    ?known.e
+                    :null
 
         });
 
     });
 
 
-    if(legs.length === 0) {
+    if(!legs.length){
 
         alert(
             "請至少輸入一個導線點！"
@@ -2019,23 +2169,18 @@ function runCalculation() {
     }
 
 
-    let curBsN =
-        bsN;
+    let curBsN=bsN;
+    let curBsE=bsE;
 
-    let curBsE =
-        bsE;
-
-    let curStN =
-        stN;
-
-    let curStE =
-        stE;
+    let curStN=stN;
+    let curStE=stE;
 
     let curStId =
-        stId || "ST";
+        stId ||
+        "ST";
 
 
-    const results = [];
+    const results=[];
 
 
     const firstCalcDist =
@@ -2047,29 +2192,12 @@ function runCalculation() {
         );
 
 
-    legs.forEach(
-    function(leg) {
+    legs.forEach(function(leg){
 
-
-        /*
-        =================================================
-        ★★★ 方位角 180° 修正 ★★★
-
-        getAzimuth(curBs → curSt)
-        得到的是：
-
-        前一點 → 目前測站
-
-        但測站實際觀測的「後視方向」是：
-
-        目前測站 → 前一點
-
-        因此必須 +180°。
-
-        最後再加上實測夾角。
-        =================================================
-        */
-
+        /* -----------------------------------------
+           原後視線：
+           BS → ST
+        ----------------------------------------- */
 
         const azBS =
             getAzimuth(
@@ -2080,6 +2208,10 @@ function runCalculation() {
             );
 
 
+        /* -----------------------------------------
+           實測夾角
+        ----------------------------------------- */
+
         const angleDeg =
             dmsToDecimal(
                 leg.deg,
@@ -2088,88 +2220,46 @@ function runCalculation() {
             );
 
 
-        const angleRad =
-            angleDeg *
-            Math.PI /
-            180;
+        /* -----------------------------------------
+           ★ 修正 180°
+        ----------------------------------------- */
+
+        const azimuth =
+            calculateNextAzimuth(
+                azBS,
+                angleDeg
+            );
 
 
-        /*
-        ★ 修正核心：
-
-        原本：
-
-        azBS + angleRad
-
-        現在：
-
-        azBS + 180° + angleRad
-        */
-
-
-        let azimuth =
-            azBS +
-            Math.PI +
-            angleRad;
-
-
-        /*
-        正規化 0～360°
-        */
-
-        azimuth =
-            azimuth %
-            (2 * Math.PI);
-
-
-        if(azimuth < 0) {
-
-            azimuth +=
-                2 * Math.PI;
-
-        }
-
-
-        /*
-        =================================================
-        ΔN / ΔE
-        =================================================
-        */
+        /* -----------------------------------------
+           ΔN / ΔE
+        ----------------------------------------- */
 
         const dN =
             leg.dist *
-            Math.cos(
-                azimuth
-            );
+            Math.cos(azimuth);
 
 
         const dE =
             leg.dist *
-            Math.sin(
-                azimuth
-            );
+            Math.sin(azimuth);
 
 
-        /*
-        =================================================
-        目標點座標
-        =================================================
-        */
+        /* -----------------------------------------
+           目標點座標
+        ----------------------------------------- */
 
         const targetN =
-            curStN +
-            dN;
+            curStN+dN;
+
 
         const targetE =
-            curStE +
-            dE;
+            curStE+dE;
 
 
-        /*
-        =================================================
-        反算距離
-        =================================================
-        */
+        /* -----------------------------------------
+           反算距離
+        ----------------------------------------- */
 
         const calcDist =
             getDistance(
@@ -2180,47 +2270,31 @@ function runCalculation() {
             );
 
 
-        /*
-        =================================================
-        距離較差 mm
-        =================================================
-        */
-
         const distDiff =
             (
-                calcDist -
-                leg.dist
-            ) * 1000;
+                calcDist-leg.dist
+            )*1000;
 
 
-        /*
-        =================================================
-        已知點較差
-        =================================================
-        */
-
-        let diffN = null;
-
-        let diffE = null;
+        let diffN=null;
+        let diffE=null;
 
 
         if(
-            leg.knownN !== null &&
-            leg.knownE !== null
-        ) {
+            leg.knownN!==null &&
+            leg.knownE!==null
+        ){
 
             diffN =
                 (
-                    targetN -
-                    leg.knownN
-                ) * 1000;
+                    targetN-leg.knownN
+                )*1000;
 
 
             diffE =
                 (
-                    targetE -
-                    leg.knownE
-                ) * 1000;
+                    targetE-leg.knownE
+                )*1000;
 
         }
 
@@ -2245,10 +2319,11 @@ function runCalculation() {
             measuredAngleDeg:
                 angleDeg,
 
+            backAzimuth:
+                azBS*180/Math.PI,
+
             azimuth:
-                azimuth *
-                180 /
-                Math.PI,
+                azimuth*180/Math.PI,
 
             targetN:
                 targetN,
@@ -2271,47 +2346,34 @@ function runCalculation() {
         });
 
 
-        /*
-        下一站
-        */
+        /* -----------------------------------------
+           下一站
+        ----------------------------------------- */
 
-        curBsN =
-            curStN;
+        curBsN=curStN;
+        curBsE=curStE;
 
-        curBsE =
-            curStE;
+        curStN=targetN;
+        curStE=targetE;
 
-        curStN =
-            targetN;
-
-        curStE =
-            targetE;
-
-        curStId =
-            leg.id;
+        curStId=leg.id;
 
     });
 
 
-    return {
+    return{
 
         initialBsId:
-            bsId || "BS",
+            bsId||"BS",
 
         initialStId:
-            stId || "ST",
+            stId||"ST",
 
-        bsN:
-            bsN,
+        bsN:bsN,
+        bsE:bsE,
 
-        bsE:
-            bsE,
-
-        stN:
-            stN,
-
-        stE:
-            stE,
+        stN:stN,
+        stE:stE,
 
         bsToStDist:
             bsToStDist,
@@ -2327,157 +2389,121 @@ function runCalculation() {
 }
 
 
-/* =====================================================
-   顯示計算結果
-===================================================== */
+/* =================================================
+   顯示結果
+================================================= */
 
 calculateBtn.addEventListener(
 "click",
-function() {
+function(){
 
     const data =
         runCalculation();
 
 
-    if(!data) {
-        return;
-    }
+    if(!data) return;
 
 
     let text =
         "========================================\n";
 
-    text +=
+    text+=
         "     平面控制點檢測成果表\n";
 
-    text +=
+    text+=
         "========================================\n\n";
 
 
-    text +=
+    text+=
         `後視點：${data.initialBsId}\n`;
 
-    text +=
+    text+=
         `N：${data.bsN.toFixed(4)}\n`;
 
-    text +=
+    text+=
         `E：${data.bsE.toFixed(4)}\n\n`;
 
 
-    text +=
+    text+=
         `設站點：${data.initialStId}\n`;
 
-    text +=
+    text+=
         `N：${data.stN.toFixed(4)}\n`;
 
-    text +=
+    text+=
         `E：${data.stE.toFixed(4)}\n\n`;
 
 
-    text +=
-        "後視→設站實測邊長：";
-
-    text +=
-        isNaN(data.bsToStDist)
-            ? "-"
-            : data.bsToStDist + " m";
+    text+=
+        "方位角計算方式：後視反向 + 實測夾角\n\n";
 
 
-    text += "\n\n";
+    data.legsCalculated
+        .forEach(function(r,index){
+
+            const dms =
+                decimalToDMS(
+                    r.measuredAngleDeg
+                );
 
 
-    data.legsCalculated.forEach(
-    function(r,index) {
+            text+=
+                `第 ${index+1} 站\n`;
 
-        const dms =
-            decimalToDMS(
-                r.measuredAngleDeg
-            );
+            text+=
+                `測站：${r.stationId}\n`;
 
+            text+=
+                `目標點：${r.targetId}\n`;
 
-        const azDMS =
-            decimalToDMS(
-                r.azimuth
-            );
+            text+=
+                `實測邊長：${r.measuredDist.toFixed(4)} m\n`;
 
+            text+=
+                `反算邊長：${r.calcDist.toFixed(4)} m\n`;
 
-        text +=
-            `第 ${index + 1} 站\n`;
+            text+=
+                `距離較差：${r.distDiff.toFixed(2)} mm\n`;
 
-        text +=
-            `測站：${r.stationId}\n`;
+            text+=
+                `實測夾角：`+
+                `${dms.d}° `+
+                `${dms.m}' `+
+                `${dms.s.toFixed(2)}"\n`;
 
-        text +=
-            `目標點：${r.targetId}\n`;
+            text+=
+                `後視方位角：${r.backAzimuth.toFixed(6)}°\n`;
 
-        text +=
-            `實測邊長：${r.measuredDist.toFixed(4)} m\n`;
+            text+=
+                `計算方位角：${r.azimuth.toFixed(6)}°\n`;
 
-        text +=
-            `反算邊長：${r.calcDist.toFixed(4)} m\n`;
+            text+=
+                `計算 N：${r.targetN.toFixed(4)}\n`;
 
-        text +=
-            `距離較差：${r.distDiff.toFixed(2)} mm\n`;
-
-        text +=
-            `實測夾角：`;
-
-        text +=
-            `${dms.d}° `;
-
-        text +=
-            `${dms.m}' `;
-
-        text +=
-            `${dms.s.toFixed(2)}"\n`;
+            text+=
+                `計算 E：${r.targetE.toFixed(4)}\n`;
 
 
-        text +=
-            `方位角：${r.azimuth.toFixed(6)}°\n`;
+            if(r.knownN!==null){
 
-        text +=
-            `方位角 DMS：`;
+                text+=
+                    `ΔN：${r.diffN.toFixed(2)} mm\n`;
 
-        text +=
-            `${azDMS.d}° `;
+                text+=
+                    `ΔE：${r.diffE.toFixed(2)} mm\n`;
 
-        text +=
-            `${azDMS.m}' `;
-
-        text +=
-            `${azDMS.s.toFixed(2)}"\n`;
+            }
 
 
-        text +=
-            `計算 N：${r.targetN.toFixed(4)}\n`;
+            text+=
+                "----------------------------------------\n";
 
-        text +=
-            `計算 E：${r.targetE.toFixed(4)}\n`;
-
-
-        if(r.knownN !== null) {
-
-            text +=
-                `ΔN：${r.diffN.toFixed(2)} mm\n`;
-
-            text +=
-                `ΔE：${r.diffE.toFixed(2)} mm\n`;
-
-        }
+        });
 
 
-        text +=
-            "----------------------------------------\n";
+    resultArea.textContent=text;
 
-    });
-
-
-    resultArea.textContent =
-        text;
-
-
-    resultArea.style.display =
-        "block";
+    resultArea.style.display="block";
 
 
     resultArea.scrollIntoView({
@@ -2487,24 +2513,22 @@ function() {
 });
 
 
-/* =====================================================
-   匯出 Excel
-===================================================== */
+/* =================================================
+   Excel 匯出
+================================================= */
 
 exportExcelBtn.addEventListener(
 "click",
-function() {
+function(){
 
     const data =
         runCalculation();
 
 
-    if(!data) {
-        return;
-    }
+    if(!data) return;
 
 
-    const excelRows = [];
+    const excelRows=[];
 
 
     excelRows.push([
@@ -2531,62 +2555,21 @@ function() {
 
         "距離較差(mm)",
 
-        "反算夾角",
-
-        "",
-
-        "",
+        "後視方位角",
 
         "實測夾角",
 
-        "",
-
-        "",
-
-        "較差",
-
-        "是否容許",
+        "計算方位角",
 
         "計算座標(N)",
 
-        "計算座標(E)"
+        "計算座標(E)",
 
-    ]);
+        "ΔN(mm)",
 
+        "ΔE(mm)",
 
-    excelRows.push([
-
-        "",
-
-        "",
-
-        "",
-
-        "",
-
-        "",
-
-        "",
-
-        "度",
-
-        "分",
-
-        "秒",
-
-        "度",
-
-        "分",
-
-        "秒",
-
-        "",
-
-        "",
-
-        "",
-
-        ""
+        "是否對應已知點"
 
     ]);
 
@@ -2595,35 +2578,24 @@ function() {
 
         data.initialBsId,
 
-        data.bsN.toFixed(4),
+        data.bsN,
 
-        data.bsE.toFixed(4),
-
-        "-",
+        data.bsE,
 
         "-",
-
+        "-",
+        "-",
+        "-",
+        "-",
         "-",
 
-        "-",
+        data.bsN,
+        data.bsE,
 
         "-",
-
         "-",
 
-        "-",
-
-        "-",
-
-        "-",
-
-        "-",
-
-        "-",
-
-        data.bsN.toFixed(4),
-
-        data.bsE.toFixed(4)
+        "否"
 
     ]);
 
@@ -2632,91 +2604,83 @@ function() {
 
         data.initialStId,
 
-        data.stN.toFixed(4),
+        data.stN,
+        data.stE,
 
-        data.stE.toFixed(4),
-
-        data.firstCalcDist.toFixed(4),
+        data.firstCalcDist,
 
         isNaN(data.bsToStDist)
             ? "-"
             : data.bsToStDist,
 
         "-",
-
+        "-",
+        "-",
         "-",
 
-        "-",
+        data.stN,
+        data.stE,
 
         "-",
-
         "-",
 
-        "-",
-
-        "-",
-
-        "-",
-
-        "-",
-
-        data.stN.toFixed(4),
-
-        data.stE.toFixed(4)
+        "否"
 
     ]);
 
 
-    data.legsCalculated.forEach(
-    function(r) {
+    data.legsCalculated
+        .forEach(function(r){
 
-        const dms =
-            decimalToDMS(
-                r.measuredAngleDeg
-            );
+            const dms =
+                decimalToDMS(
+                    r.measuredAngleDeg
+                );
 
 
-        excelRows.push([
+            excelRows.push([
 
-            r.targetId,
+                r.targetId,
 
-            r.knownN !== null
-                ? r.knownN.toFixed(4)
-                : "",
+                r.knownN!==null
+                    ?r.knownN
+                    :"",
 
-            r.knownE !== null
-                ? r.knownE.toFixed(4)
-                : "",
+                r.knownE!==null
+                    ?r.knownE
+                    :"",
 
-            r.calcDist.toFixed(4),
+                r.calcDist,
 
-            r.measuredDist,
+                r.measuredDist,
 
-            r.distDiff.toFixed(2),
+                r.distDiff,
 
-            "-",
+                r.backAzimuth,
 
-            "-",
+                `${dms.d}° ${dms.m}' ${dms.s.toFixed(2)}"`,
 
-            "-",
+                r.azimuth,
 
-            dms.d,
+                r.targetN,
 
-            dms.m,
+                r.targetE,
 
-            dms.s.toFixed(2),
+                r.diffN!==null
+                    ?r.diffN
+                    :"",
 
-            "-",
+                r.diffE!==null
+                    ?r.diffE
+                    :"",
 
-            "是",
+                r.knownN!==null
+                    ?"是"
+                    :"否"
 
-            r.targetN.toFixed(4),
+            ]);
 
-            r.targetE.toFixed(4)
-
-        ]);
-
-    });
+        });
 
 
     const workbook =
@@ -2744,68 +2708,67 @@ function() {
 });
 
 
-/* =====================================================
-   清空
-===================================================== */
+/* =================================================
+   清空全部
+   注意：
+   這裡仍然「包含」已知點資料庫。
+   因為這是使用者按下「清空全部」的明確操作。
+
+   Excel 匯入、導線新增、導線刪除
+   都不會動已知點資料庫。
+================================================= */
 
 clearBtn.addEventListener(
 "click",
-function() {
+function(){
 
     if(
         !confirm(
-            "確定要清空全部資料嗎？"
+            "確定要清空全部資料嗎？\n\n"+
+            "包含：起算點、導線資料、已知點資料庫。"
         )
-    ) {
+    ){
 
         return;
 
     }
 
 
-    document.getElementById("bsId").value = "";
+    document.getElementById("bsId").value="";
+    document.getElementById("stId").value="";
 
-    document.getElementById("stId").value = "";
+    document.getElementById("bsN").value="";
+    document.getElementById("bsE").value="";
 
-    document.getElementById("bsN").value = "";
+    document.getElementById("stN").value="";
+    document.getElementById("stE").value="";
 
-    document.getElementById("bsE").value = "";
-
-    document.getElementById("stN").value = "";
-
-    document.getElementById("stE").value = "";
-
-    document.getElementById("bsToStDist").value = "";
+    document.getElementById("bsToStDist").value="";
 
 
-    knownTbody.innerHTML = "";
-
-    tbody.innerHTML = "";
+    knownTbody.innerHTML="";
+    tbody.innerHTML="";
 
 
     addKnownRow();
-
     addRow();
 
 
-    resultArea.style.display =
-        "none";
+    resultArea.style.display="none";
 
-
-    updateKnownCount();
 
     saveData();
 
 });
 
 
-/* =====================================================
-   新增按鈕
-===================================================== */
+/* =================================================
+   新增
+================================================= */
 
 addKnownRowBtn.addEventListener(
 "click",
-function() {
+function(){
 
     addKnownRow();
 
@@ -2816,7 +2779,7 @@ function() {
 
 addRowBtn.addEventListener(
 "click",
-function() {
+function(){
 
     addRow();
 
@@ -2825,43 +2788,31 @@ function() {
 });
 
 
-/* =====================================================
+/* =================================================
    LocalStorage
-===================================================== */
+================================================= */
 
-function saveData() {
+function saveData(){
 
-    const data = {
+    const data={
 
         bsId:
-            document.getElementById(
-                "bsId"
-            ).value,
+            document.getElementById("bsId").value,
 
         stId:
-            document.getElementById(
-                "stId"
-            ).value,
+            document.getElementById("stId").value,
 
         bsN:
-            document.getElementById(
-                "bsN"
-            ).value,
+            document.getElementById("bsN").value,
 
         bsE:
-            document.getElementById(
-                "bsE"
-            ).value,
+            document.getElementById("bsE").value,
 
         stN:
-            document.getElementById(
-                "stN"
-            ).value,
+            document.getElementById("stN").value,
 
         stE:
-            document.getElementById(
-                "stE"
-            ).value,
+            document.getElementById("stE").value,
 
         bsToStDist:
             document.getElementById(
@@ -2876,67 +2827,65 @@ function saveData() {
 
 
     knownTbody
-    .querySelectorAll("tr")
-    .forEach(
-    function(row) {
+        .querySelectorAll("tr")
+        .forEach(function(row){
 
-        data.knownDb.push({
+            data.knownDb.push({
 
-            id:
-                row.querySelector(
-                    ".known-id"
-                ).value,
+                id:
+                    row.querySelector(
+                        ".known-id"
+                    ).value,
 
-            n:
-                row.querySelector(
-                    ".known-n"
-                ).value,
+                n:
+                    row.querySelector(
+                        ".known-n"
+                    ).value,
 
-            e:
-                row.querySelector(
-                    ".known-e"
-                ).value
+                e:
+                    row.querySelector(
+                        ".known-e"
+                    ).value
+
+            });
 
         });
-
-    });
 
 
     tbody
-    .querySelectorAll("tr")
-    .forEach(
-    function(row) {
+        .querySelectorAll("tr")
+        .forEach(function(row){
 
-        data.traverse.push({
+            data.traverse.push({
 
-            id:
-                row.querySelector(
-                    ".input-id"
-                ).value,
+                id:
+                    row.querySelector(
+                        ".input-id"
+                    ).value,
 
-            dist:
-                row.querySelector(
-                    ".input-dist"
-                ).value,
+                dist:
+                    row.querySelector(
+                        ".input-dist"
+                    ).value,
 
-            deg:
-                row.querySelector(
-                    ".input-deg"
-                ).value,
+                deg:
+                    row.querySelector(
+                        ".input-deg"
+                    ).value,
 
-            min:
-                row.querySelector(
-                    ".input-min"
-                ).value,
+                min:
+                    row.querySelector(
+                        ".input-min"
+                    ).value,
 
-            sec:
-                row.querySelector(
-                    ".input-sec"
-                ).value
+                sec:
+                    row.querySelector(
+                        ".input-sec"
+                    ).value
+
+            });
 
         });
-
-    });
 
 
     localStorage.setItem(
@@ -2947,61 +2896,21 @@ function saveData() {
 }
 
 
-/* =====================================================
-   監聽起算點
-===================================================== */
+/* =================================================
+   載入
+================================================= */
 
-[
-    "bsId",
-    "stId",
-    "bsN",
-    "bsE",
-    "stN",
-    "stE",
-    "bsToStDist"
-]
-.forEach(
-function(id) {
+function loadData(){
 
-    document.getElementById(id)
-    .addEventListener(
-        "input",
-        saveData
-    );
-
-});
-
-
-/* =====================================================
-   載入資料
-===================================================== */
-
-function loadData() {
-
-    let saved =
+    const saved =
         localStorage.getItem(
             "survey_control_point_v12"
         );
 
 
-    /*
-       相容舊版 v11
-    */
-
-    if(!saved) {
-
-        saved =
-            localStorage.getItem(
-                "survey_control_point_v11"
-            );
-
-    }
-
-
-    if(!saved) {
+    if(!saved){
 
         addKnownRow();
-
         addRow();
 
         return;
@@ -3009,46 +2918,44 @@ function loadData() {
     }
 
 
-    try {
+    try{
 
         const data =
             JSON.parse(saved);
 
 
         document.getElementById("bsId").value =
-            data.bsId || "";
+            data.bsId||"";
 
         document.getElementById("stId").value =
-            data.stId || "";
+            data.stId||"";
 
         document.getElementById("bsN").value =
-            data.bsN || "";
+            data.bsN||"";
 
         document.getElementById("bsE").value =
-            data.bsE || "";
+            data.bsE||"";
 
         document.getElementById("stN").value =
-            data.stN || "";
+            data.stN||"";
 
         document.getElementById("stE").value =
-            data.stE || "";
+            data.stE||"";
 
         document.getElementById("bsToStDist").value =
-            data.bsToStDist || "";
+            data.bsToStDist||"";
 
 
-        knownTbody.innerHTML = "";
-
-        tbody.innerHTML = "";
+        knownTbody.innerHTML="";
+        tbody.innerHTML="";
 
 
         if(
             data.knownDb &&
             data.knownDb.length
-        ) {
+        ){
 
-            data.knownDb.forEach(
-            function(item) {
+            data.knownDb.forEach(function(item){
 
                 addKnownRow(
                     item.id,
@@ -3059,7 +2966,7 @@ function loadData() {
             });
 
         }
-        else {
+        else{
 
             addKnownRow();
 
@@ -3069,10 +2976,9 @@ function loadData() {
         if(
             data.traverse &&
             data.traverse.length
-        ) {
+        ){
 
-            data.traverse.forEach(
-            function(item) {
+            data.traverse.forEach(function(item){
 
                 addRow(
                     item.id,
@@ -3085,30 +2991,22 @@ function loadData() {
             });
 
         }
-        else {
+        else{
 
             addRow();
 
         }
 
 
-        updateRowIndices();
-
         updateKnownStatus();
 
-        updateKnownCount();
-
     }
-    catch(error) {
+    catch(error){
 
-        console.error(error);
-
-        knownTbody.innerHTML = "";
-
-        tbody.innerHTML = "";
+        knownTbody.innerHTML="";
+        tbody.innerHTML="";
 
         addKnownRow();
-
         addRow();
 
     }
@@ -3116,413 +3014,35 @@ function loadData() {
 }
 
 
-/* =====================================================
-   Excel 匯入
-===================================================== */
-
-reportFileImporter.addEventListener(
-"change",
-function(event) {
-
-    const file =
-        event.target.files[0];
-
-
-    if(!file) {
-        return;
-    }
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload =
-    function(e) {
-
-        try {
-
-            const data =
-                new Uint8Array(
-                    e.target.result
-                );
-
-
-            const workbook =
-                XLSX.read(
-                    data,
-                    {
-                        type:"array"
-                    }
-                );
-
-
-            const sheetName =
-                workbook.SheetNames[0];
-
-
-            const worksheet =
-                workbook.Sheets[
-                    sheetName
-                ];
-
-
-            const rows =
-                XLSX.utils.sheet_to_json(
-                    worksheet,
-                    {
-                        header:1,
-                        defval:""
-                    }
-                );
-
-
-            function getCell(
-                row,
-                col
-            ) {
-
-                if(
-                    rows[row] &&
-                    rows[row][col] !== undefined
-                ) {
-
-                    return String(
-                        rows[row][col]
-                    ).trim();
-
-                }
-
-                return "";
-
-            }
-
-
-            /*
-            =================================================
-            起算點
-            =================================================
-            */
-
-            const importedBsId =
-                (
-                    getCell(5,0)
-                    + " "
-                    + getCell(6,0)
-                ).trim();
-
-
-            const importedStId =
-                (
-                    getCell(7,0)
-                    + " "
-                    + getCell(8,0)
-                ).trim();
-
-
-            const importedBsN =
-                parseFloat(
-                    getCell(5,2)
-                );
-
-
-            const importedBsE =
-                parseFloat(
-                    getCell(6,2)
-                );
-
-
-            const importedStN =
-                parseFloat(
-                    getCell(7,2)
-                );
-
-
-            const importedStE =
-                parseFloat(
-                    getCell(8,2)
-                );
-
-
-            document.getElementById(
-                "bsId"
-            ).value =
-                importedBsId;
-
-
-            document.getElementById(
-                "stId"
-            ).value =
-                importedStId;
-
-
-            if(!isNaN(importedBsN)) {
-
-                document.getElementById(
-                    "bsN"
-                ).value =
-                    importedBsN.toFixed(4);
-
-            }
-
-
-            if(!isNaN(importedBsE)) {
-
-                document.getElementById(
-                    "bsE"
-                ).value =
-                    importedBsE.toFixed(4);
-
-            }
-
-
-            if(!isNaN(importedStN)) {
-
-                document.getElementById(
-                    "stN"
-                ).value =
-                    importedStN.toFixed(4);
-
-            }
-
-
-            if(!isNaN(importedStE)) {
-
-                document.getElementById(
-                    "stE"
-                ).value =
-                    importedStE.toFixed(4);
-
-            }
-
-
-            /*
-            =================================================
-            第一條邊長
-            =================================================
-            */
-
-            let firstDist =
-                parseFloat(
-                    getCell(6,4)
-                );
-
-
-            if(isNaN(firstDist)) {
-
-                firstDist =
-                    parseFloat(
-                        getCell(7,4)
-                    );
-
-            }
-
-
-            if(!isNaN(firstDist)) {
-
-                document.getElementById(
-                    "bsToStDist"
-                ).value =
-                    firstDist;
-
-            }
-
-
-            /*
-            =================================================
-            清除舊導線
-            =================================================
-            */
-
-            tbody.innerHTML = "";
-
-
-            /*
-            =================================================
-            新 Excel 格式
-
-            ID：
-            A10、A11、A12...
-
-            邊長：
-            E9、E10、E11...
-
-            角度：
-            L8/M8/N8...
-            =================================================
-            */
-
-            const extractedRows = [];
-
-
-            const maxCount =
-                rows.length - 7;
-
-
-            for(
-                let i=0;
-                i<maxCount;
-                i++
-            ) {
-
-                const idRow =
-                    i + 9;
-
-
-                const id =
-                    rows[idRow] &&
-                    rows[idRow][0] !== undefined
-                        ? String(
-                            rows[idRow][0]
-                        ).trim()
-                        : "";
-
-
-                const distRow =
-                    i + 8;
-
-
-                const dist =
-                    rows[distRow] &&
-                    rows[distRow][4] !== undefined
-                        ? parseFloat(
-                            rows[distRow][4]
-                        )
-                        : NaN;
-
-
-                const angleRow =
-                    i + 7;
-
-
-                const deg =
-                    rows[angleRow] &&
-                    rows[angleRow][11] !== undefined
-                        ? parseFloat(
-                            rows[angleRow][11]
-                        )
-                        : NaN;
-
-
-                const min =
-                    rows[angleRow] &&
-                    rows[angleRow][12] !== undefined
-                        ? parseFloat(
-                            rows[angleRow][12]
-                        )
-                        : NaN;
-
-
-                const sec =
-                    rows[angleRow] &&
-                    rows[angleRow][13] !== undefined
-                        ? parseFloat(
-                            rows[angleRow][13]
-                        )
-                        : NaN;
-
-
-                if(
-                    id !== "" ||
-                    !isNaN(dist) ||
-                    !isNaN(deg) ||
-                    !isNaN(min) ||
-                    !isNaN(sec)
-                ) {
-
-                    extractedRows.push({
-
-                        id:id,
-
-                        dist:
-                            !isNaN(dist)
-                                ? dist
-                                : "",
-
-                        deg:
-                            !isNaN(deg)
-                                ? deg
-                                : "",
-
-                        min:
-                            !isNaN(min)
-                                ? min
-                                : "",
-
-                        sec:
-                            !isNaN(sec)
-                                ? sec
-                                : ""
-
-                    });
-
-                }
-
-            }
-
-
-            extractedRows.forEach(
-            function(item) {
-
-                addRow(
-                    item.id,
-                    item.dist,
-                    item.deg,
-                    item.min,
-                    item.sec
-                );
-
-            });
-
-
-            if(
-                extractedRows.length === 0
-            ) {
-
-                addRow();
-
-            }
-
-
-            updateKnownStatus();
-
-            saveData();
-
-
-            alert(
-                "Excel 匯入完成！\n\n" +
-
-                "目標點：A10:A11...\n" +
-
-                "邊長：E9:E10...\n" +
-
-                "角度：L/M/N..."
-            );
-
-
-        }
-        catch(error) {
-
-            alert(
-                "Excel 讀取失敗：\n"
-                + error.message
-            );
-
-        }
-
-    };
-
-
-    reader.readAsArrayBuffer(file);
+/* =================================================
+   自動保存起算點
+================================================= */
+
+[
+    "bsId",
+    "stId",
+    "bsN",
+    "bsE",
+    "stN",
+    "stE",
+    "bsToStDist"
+].forEach(function(id){
+
+    document.getElementById(id)
+        .addEventListener(
+            "input",
+            saveData
+        );
 
 });
 
 
-/* =====================================================
+/* =================================================
    啟動
-===================================================== */
+================================================= */
 
 loadData();
+
 
 });
 
