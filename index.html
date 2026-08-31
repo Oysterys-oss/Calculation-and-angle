@@ -201,50 +201,50 @@
     <!-- 起始後視點與設站點 -->
     <div class="section-box">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3 style="margin:0;">📍 導線起算點與第一站實測資料 (對應指定儲存格)</h3>
+            <h3 style="margin:0;">📍 導線起算點與第一站實測資料 (第 1 站)</h3>
             <button type="button" id="selectFileBtn" class="btn-info" style="padding: 6px 12px; font-size: 0.85rem;">📂 一鍵匯入 Excel 成果表</button>
         </div>
         <div class="grid-2" style="margin-top: 10px;">
             <div class="form-group">
-                <label>初始後視點 點號 (BS) [A6:A7]:</label>
+                <label>初始後視點 點號 (BS):</label>
                 <input type="text" id="bsId" value="" placeholder="例: Y251">
             </div>
             <div class="form-group">
-                <label>初始設站點 點號 (ST) [A8:A9]:</label>
+                <label>初始設站點 點號 (ST):</label>
                 <input type="text" id="stId" value="" placeholder="例: Y250">
             </div>
             <div class="form-group">
-                <label>後視點 縱座標 (N) [C6]:</label>
+                <label>後視點 縱座標 (N):</label>
                 <input type="number" step="any" id="bsN" value="" placeholder="請輸入 N 坐標">
             </div>
             <div class="form-group">
-                <label>設站點 縱座標 (N) [C8]:</label>
+                <label>設站點 縱座標 (N):</label>
                 <input type="number" step="any" id="stN" value="" placeholder="請輸入 N 坐標">
             </div>
             <div class="form-group">
-                <label>後視點 橫座標 (E) [C7]:</label>
+                <label>後視點 橫座標 (E):</label>
                 <input type="number" step="any" id="bsE" value="" placeholder="請輸入 E 坐標">
             </div>
             <div class="form-group">
-                <label>設站點 橫座標 (E) [C9]:</label>
+                <label>設站點 橫座標 (E):</label>
                 <input type="number" step="any" id="stE" value="" placeholder="請輸入 E 坐標">
             </div>
         </div>
         <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 15px 0;">
         <div class="form-group" style="max-width: 50%;">
-            <label>後視點至設站點 實測邊長 (m) [E6:E87]:</label>
+            <label>後視點至設站點 實測邊長 (m):</label>
             <input type="number" step="any" id="bsToStDist" value="" placeholder="請輸入實測邊長">
         </div>
     </div>
 
-    <!-- 已知點座標資料庫 -->
+    <!-- 已知點座標資料庫 (完全保留原狀) -->
     <div class="section-box">
         <h3 id="toggleKnownDbHeader">
             <span>📂 已知點座標資料庫 (點擊可展開/收合)</span>
             <span class="toggle-icon" id="toggleIcon">▼ 展開</span>
         </h3>
         <div class="collapsible-content" id="knownDbContent">
-            <div class="hint-text">💡 <b>說明</b>：匯入檢測表時，原表上的已知座標會自動同步存入此資料庫中。</div>
+            <div class="hint-text">💡 <b>說明</b>：管理您的已知點座標資料庫。</div>
             <div class="table-container">
                 <table id="knownDbTable">
                     <thead>
@@ -347,60 +347,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const rowsData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                // 依據您指定的儲存格位置精準讀取 (0-indexed 轉換：Excel列6=索引5, 7=6, 8=7, 9=8)
-                let bsIdVal = rowsData[5] && rowsData[5][0] !== undefined ? String(rowsData[5][0]).trim() : ''; // A6
-                let stIdVal = rowsData[7] && rowsData[7][0] !== undefined ? String(rowsData[7][0]).trim() : ''; // A8
+                // 根據您指定的儲存格精準讀取 (Excel 索引從 0 開始: A6->Row 5, Col 0; C6->Row 5, Col 2 等)
+                const getCellVal = (rIdx, cIdx) => {
+                    if (rowsData[rIdx] && rowsData[rIdx][cIdx] !== undefined) {
+                        return String(rowsData[rIdx][cIdx]).trim();
+                    }
+                    return '';
+                };
 
-                let bsNVal = rowsData[5] && rowsData[5][2] !== undefined ? parseFloat(rowsData[5][2]) : NaN; // C6
-                let bsEVal = rowsData[6] && rowsData[6][2] !== undefined ? parseFloat(rowsData[6][2]) : NaN; // C7
-                let stNVal = rowsData[7] && rowsData[7][2] !== undefined ? parseFloat(rowsData[7][2]) : NaN; // C8
-                let stEVal = rowsData[8] && rowsData[8][2] !== undefined ? parseFloat(rowsData[8][2]) : NaN; // C9
+                // 1. 後視點點號 (A6:A7) -> 結合 A6 與 A7
+                let bsId = (getCellVal(5, 0) + " " + getCellVal(6, 0)).trim();
+                // 2. 設站點點號 (A8:A9) -> 結合 A8 與 A9
+                let stId = (getCellVal(7, 0) + " " + getCellVal(8, 0)).trim();
 
-                document.getElementById('bsId').value = bsIdVal;
-                document.getElementById('stId').value = stIdVal;
-                document.getElementById('bsN').value = !isNaN(bsNVal) ? bsNVal.toFixed(4) : '';
-                document.getElementById('bsE').value = !isNaN(bsEVal) ? bsEVal.toFixed(4) : '';
-                document.getElementById('stN').value = !isNaN(stNVal) ? stNVal.toFixed(4) : '';
-                document.getElementById('stE').value = !isNaN(stEVal) ? stEVal.toFixed(4) : '';
+                // 3. 座標與邊長對應
+                let bsN = parseFloat(getCellVal(5, 2)) || ''; // C6
+                let bsE = parseFloat(getCellVal(6, 2)) || ''; // C7
+                let stN = parseFloat(getCellVal(7, 2)) || ''; // C8
+                let stE = parseFloat(getCellVal(8, 2)) || ''; // C9
 
-                // 讀取後視點至設站點實測邊長 (E6:E87 對應 E 欄 index 4)
-                let bsToStDistVal = rowsData[5] && rowsData[5][4] !== undefined ? parseFloat(rowsData[5][4]) : ''; // E6
-                if (bsToStDistVal !== '') {
-                    document.getElementById('bsToStDist').value = bsToStDistVal;
+                // 後視點至設站點實測邊長 (E7:E8) -> 檢查 Row 6 Col 4 或 Row 7 Col 4
+                let bsToStDist = parseFloat(getCellVal(6, 4));
+                if (isNaN(bsToStDist)) bsToStDist = parseFloat(getCellVal(7, 4));
+                if (isNaN(bsToStDist)) bsToStDist = '';
+
+                document.getElementById('bsId').value = bsId;
+                document.getElementById('stId').value = stId;
+                document.getElementById('bsN').value = !isNaN(bsN) ? bsN.toFixed(4) : '';
+                document.getElementById('bsE').value = !isNaN(bsE) ? bsE.toFixed(4) : '';
+                document.getElementById('stN').value = !isNaN(stN) ? stN.toFixed(4) : '';
+                document.getElementById('stE').value = !isNaN(stE) ? stE.toFixed(4) : '';
+                if (bsToStDist !== '') {
+                    document.getElementById('bsToStDist').value = bsToStDist;
                 }
 
-                // 自動將初始點加入已知點資料庫
-                let db = getKnownDatabase();
-                if (bsIdVal && !isNaN(bsNVal) && !isNaN(bsEVal) && !db[bsIdVal]) {
-                    addKnownRow(bsIdVal, bsNVal.toFixed(4), bsEVal.toFixed(4));
-                }
-                if (stIdVal && !isNaN(stNVal) && !isNaN(stEVal) && !db[stIdVal]) {
-                    addKnownRow(stIdVal, stNVal.toFixed(4), stEVal.toFixed(4));
-                }
-
-                // 批次讀取 E6:E87 區段的導線前瞻點與夾角資料
+                // 4. 自動化讀取後續導線點序列 (從第 4 列 / Index 4 開始往下掃描)
                 let extractedRows = [];
-                for (let i = 5; i <= 86; i++) { // 對應 Excel 第 6 列到第 87 列
+                for (let i = 4; i < rowsData.length; i++) {
                     let r = rowsData[i];
-                    if (!r) continue;
-                    let id = String(r[0] || '').trim(); // A 欄：點號
-                    let dist = r[4] !== undefined ? parseFloat(r[4]) : ''; // E 欄：實測邊長
-                    let n = parseFloat(r[1]);
-                    let e = parseFloat(r[2]);
+                    if (!r || r.length === 0) continue;
 
-                    // 如果有夾角資料，可從指定欄位讀取（預設支援 J, K, L 欄 / 索引 9, 10, 11）
-                    let deg = r[9] !== undefined ? parseFloat(r[9]) || 0 : 0;
-                    let min = r[10] !== undefined ? parseFloat(r[10]) || 0 : 0;
-                    let sec = r[11] !== undefined ? parseFloat(r[11]) || 0 : 0;
+                    let id = String(r[0] || '').trim(); // 點號在 Col 0
+                    let n = parseFloat(r[1]);          // N 坐標在 Col 1
+                    let e = parseFloat(r[2]);          // E 坐標在 Col 2
+                    let dist = r[4] !== undefined ? parseFloat(r[4]) : ''; // 平距在 Col 4
+                    
+                    let deg = '', min = '', sec = '';
+                    // 夾角從 Col 9 開始 (度、分、秒)
+                    if (r[9] !== undefined) {
+                        deg = parseFloat(r[9]) || 0;
+                        min = r[10] !== undefined ? (parseFloat(r[10]) || 0) : 0;
+                        sec = r[11] !== undefined ? (parseFloat(r[11]) || 0) : 0;
+                    }
 
-                    if (id && id !== bsIdVal && id !== stIdVal) {
-                        extractedRows.push({ id, dist, deg, min, sec, n, e });
-                        if (!isNaN(n) && !isNaN(e)) {
-                            let currentDb = getKnownDatabase();
-                            if (!currentDb[id]) {
-                                addKnownRow(id, n.toFixed(4), e.toFixed(4));
-                            }
-                        }
+                    // 過濾掉前面起算點列，只抓後面有座標或邊長的導線點
+                    if (i >= 9 && id && (!isNaN(n) || !isNaN(dist))) {
+                        extractedRows.push({
+                            id, dist: !isNaN(dist) ? dist : '',
+                            deg, min, sec
+                        });
                     }
                 }
 
@@ -414,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert(`已根據指定儲存格規則成功匯入資料！`);
+                alert('成功依指定儲存格規則匯入起始點與導線資料！');
             } catch (err) {
                 alert('讀取 Excel 失敗：' + err.message);
             }
