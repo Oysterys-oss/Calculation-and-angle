@@ -347,7 +347,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 const rowsData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                // 根據您指定的儲存格精準讀取 (Excel 索引從 0 開始: A6->Row 5, Col 0; C6->Row 5, Col 2 等)
                 const getCellVal = (rIdx, cIdx) => {
                     if (rowsData[rIdx] && rowsData[rIdx][cIdx] !== undefined) {
                         return String(rowsData[rIdx][cIdx]).trim();
@@ -355,18 +354,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     return '';
                 };
 
-                // 1. 後視點點號 (A6:A7) -> 結合 A6 與 A7
+                // 1. 初始後視點 點號 (A6:A7) -> Row 5~6, Col 0
                 let bsId = (getCellVal(5, 0) + " " + getCellVal(6, 0)).trim();
-                // 2. 設站點點號 (A8:A9) -> 結合 A8 與 A9
+                // 2. 初始設站點 點號 (A8:A9) -> Row 7~8, Col 0
                 let stId = (getCellVal(7, 0) + " " + getCellVal(8, 0)).trim();
 
-                // 3. 座標與邊長對應
+                // 3. 坐標與邊長對應
                 let bsN = parseFloat(getCellVal(5, 2)) || ''; // C6
                 let bsE = parseFloat(getCellVal(6, 2)) || ''; // C7
                 let stN = parseFloat(getCellVal(7, 2)) || ''; // C8
                 let stE = parseFloat(getCellVal(8, 2)) || ''; // C9
 
-                // 後視點至設站點實測邊長 (E7:E8) -> 檢查 Row 6 Col 4 或 Row 7 Col 4
+                // 後視點至設站點 實測邊長 (E7:E8) -> Row 6~7, Col 4
                 let bsToStDist = parseFloat(getCellVal(6, 4));
                 if (isNaN(bsToStDist)) bsToStDist = parseFloat(getCellVal(7, 4));
                 if (isNaN(bsToStDist)) bsToStDist = '';
@@ -381,27 +380,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('bsToStDist').value = bsToStDist;
                 }
 
-                // 4. 自動化讀取後續導線點序列 (從第 4 列 / Index 4 開始往下掃描)
+                // 4. 導線前瞻點序列：目標點號與實測邊長從 E9 開始往下 (Row 8 之後, 點號在 Col 0, 邊長在 Col 4)
+                // 實測夾角：度在 L 欄 (Col 11)、分在 M 欄 (Col 12)、秒在 N 欄 (Col 13)，從 Row 7 (索引 7，對應 L8, M8, N8) 開始向下
                 let extractedRows = [];
-                for (let i = 4; i < rowsData.length; i++) {
+                for (let i = 8; i < rowsData.length; i++) {
                     let r = rowsData[i];
                     if (!r || r.length === 0) continue;
 
                     let id = String(r[0] || '').trim(); // 點號在 Col 0
-                    let n = parseFloat(r[1]);          // N 坐標在 Col 1
-                    let e = parseFloat(r[2]);          // E 坐標在 Col 2
-                    let dist = r[4] !== undefined ? parseFloat(r[4]) : ''; // 平距在 Col 4
+                    let dist = r[4] !== undefined ? parseFloat(r[4]) : ''; // 實測邊長在 Col 4 (E 欄)
                     
+                    // 對應夾角起始從 Row 7 (Index 7) 開始讀取 L(11), M(12), N(13)
+                    let angleRowIdx = i - 1; 
                     let deg = '', min = '', sec = '';
-                    // 夾角從 Col 9 開始 (度、分、秒)
-                    if (r[9] !== undefined) {
-                        deg = parseFloat(r[9]) || 0;
-                        min = r[10] !== undefined ? (parseFloat(r[10]) || 0) : 0;
-                        sec = r[11] !== undefined ? (parseFloat(r[11]) || 0) : 0;
+                    if (rowsData[angleRowIdx]) {
+                        deg = parseFloat(rowsData[angleRowIdx][11]) || 0; // L 欄
+                        min = parseFloat(rowsData[angleRowIdx][12]) || 0; // M 欄
+                        sec = parseFloat(rowsData[angleRowIdx][13]) || 0; // N 欄
                     }
 
-                    // 過濾掉前面起算點列，只抓後面有座標或邊長的導線點
-                    if (i >= 9 && id && (!isNaN(n) || !isNaN(dist))) {
+                    if (id && (!isNaN(dist) || deg > 0 || min > 0 || sec > 0)) {
                         extractedRows.push({
                             id, dist: !isNaN(dist) ? dist : '',
                             deg, min, sec
@@ -419,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowIndices();
                 updateKnownStatusUI();
                 saveDataToLocalStorage();
-                alert('成功依指定儲存格規則匯入起始點與導線資料！');
+                alert('成功依指定儲存格規則 (E9, L8-N8 起) 匯入導線資料！');
             } catch (err) {
                 alert('讀取 Excel 失敗：' + err.message);
             }
@@ -577,11 +575,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        localStorage.setItem('traverse_tool_data_v9', JSON.stringify(data));
+        localStorage.setItem('traverse_tool_data_v10', JSON.stringify(data));
     }
 
     function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem('traverse_tool_data_v9');
+        const saved = localStorage.getItem('traverse_tool_data_v10');
         if (!saved) {
             addKnownRow();
             addRow();
