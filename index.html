@@ -97,6 +97,42 @@
             margin-bottom: 15px;
         }
 
+        .section-title.clickable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-title.clickable:hover {
+            opacity: 0.85;
+        }
+
+        .collapse-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .collapse-arrow {
+            font-size: 1rem;
+            width: 22px;
+            text-align: center;
+            transition: transform 0.15s ease;
+        }
+
+        .collapse-button {
+            min-width: 100px;
+            padding: 7px 12px;
+            font-size: 0.85rem;
+        }
+
+        .collapse-content {
+            display: block;
+        }
+
+        .collapse-content.collapsed {
+            display: none;
+        }
+
         .grid-2 {
             display: grid;
 
@@ -331,68 +367,16 @@
             margin-bottom: 15px;
         }
 
-        /* =========================================
-           已知點資料庫收起按鈕
-        ========================================= */
+        /* ================================
+           已知點收起後的標題樣式
+        ================================= */
 
-        .collapse-btn {
-            background-color: #e2e8f0;
-
-            color: #1e293b;
-
-            min-width: 110px;
-
-            padding: 8px 14px;
-
-            font-size: 0.9rem;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            gap: 5px;
+        #knownDatabaseSection .section-title {
+            margin-bottom: 0;
         }
 
-        .collapse-btn:hover {
-            background-color: #cbd5e1;
-
-            opacity: 1;
-        }
-
-        .collapse-icon {
-            display: inline-block;
-
-            transition: transform 0.2s ease;
-        }
-
-        .known-db-content {
-            overflow: hidden;
-
-            max-height: 1000px;
-
-            opacity: 1;
-
-            transition:
-                max-height 0.25s ease,
-                opacity 0.2s ease;
-        }
-
-        .known-db-content.collapsed {
-            max-height: 0;
-
-            opacity: 0;
-
-            pointer-events: none;
-        }
-
-        .known-db-title {
-            display: flex;
-
-            align-items: center;
-
-            gap: 8px;
+        #knownDatabaseSection.expanded .section-title {
+            margin-bottom: 15px;
         }
 
         @media (max-width: 800px) {
@@ -409,13 +393,11 @@
                 padding: 8px;
             }
 
-            .section-title {
-                gap: 10px;
+            .collapse-button {
+                min-width: 85px;
+                padding: 7px 8px;
             }
 
-            .collapse-btn {
-                min-width: 90px;
-            }
         }
 
     </style>
@@ -633,13 +615,28 @@
 
     <!-- ============================= -->
     <!-- 已知點資料庫 -->
+    <!-- 可收起 / 展開 -->
     <!-- ============================= -->
 
-    <div class="section-box">
+    <div
+        class="section-box"
+        id="knownDatabaseSection"
+    >
 
-        <div class="section-title">
+        <div
+            class="section-title clickable"
+            id="knownDatabaseHeader"
+            title="點擊收起或展開已知點座標資料庫"
+        >
 
-            <div class="known-db-title">
+            <div class="collapse-title">
+
+                <span
+                    class="collapse-arrow"
+                    id="knownCollapseArrow"
+                >
+                    ▶
+                </span>
 
                 <h3>
                     📂 已知點座標資料庫
@@ -648,44 +645,34 @@
             </div>
 
 
-            <!-- 收起 / 展開 -->
-
             <button
                 type="button"
-                id="toggleKnownDbBtn"
-                class="collapse-btn"
+                id="toggleKnownBtn"
+                class="btn-secondary collapse-button"
             >
-                <span
-                    id="collapseIcon"
-                    class="collapse-icon"
-                >
-                    ▼
-                </span>
-
-                <span id="collapseText">
-                    收起
-                </span>
+                ＋ 展開
             </button>
 
         </div>
 
 
-        <!-- =================================
-             ★ 已知點資料庫內容
-             ================================= -->
-
         <div
-            id="knownDbContent"
-            class="known-db-content"
+            class="collapse-content collapsed"
+            id="knownDatabaseContent"
         >
 
             <div class="hint">
+
                 輸入已知點 ID、N、E 座標，
                 計算後可自動進行座標較差比對。
+
                 <br>
+
                 <b>
-                    ※ 已知點資料庫可直接複製 Excel 的「點號、N、E」資料後貼上。
+                    💡 可直接從 Excel 複製 ID、N、E
+                    三欄後貼到表格中。
                 </b>
+
             </div>
 
 
@@ -697,21 +684,13 @@
 
                         <tr>
 
-                            <th>
-                                已知點號 ID
-                            </th>
+                            <th>已知點號 ID</th>
 
-                            <th>
-                                已知 N 座標
-                            </th>
+                            <th>已知 N 座標</th>
 
-                            <th>
-                                已知 E 座標
-                            </th>
+                            <th>已知 E 座標</th>
 
-                            <th>
-                                操作
-                            </th>
+                            <th>操作</th>
 
                         </tr>
 
@@ -938,119 +917,126 @@ document.addEventListener(
 
 
         /* =========================================
-           ★ 已知點資料庫收起 / 展開
+           已知點資料庫 收起 / 展開
+           ★ 不修改資料內容
         ========================================= */
 
-        const toggleKnownDbBtn =
+        const knownDatabaseSection =
             document.getElementById(
-                "toggleKnownDbBtn"
+                "knownDatabaseSection"
             );
 
-        const knownDbContent =
+        const knownDatabaseHeader =
             document.getElementById(
-                "knownDbContent"
+                "knownDatabaseHeader"
             );
 
-        const collapseIcon =
+        const knownDatabaseContent =
             document.getElementById(
-                "collapseIcon"
+                "knownDatabaseContent"
             );
 
-        const collapseText =
+        const toggleKnownBtn =
             document.getElementById(
-                "collapseText"
+                "toggleKnownBtn"
+            );
+
+        const knownCollapseArrow =
+            document.getElementById(
+                "knownCollapseArrow"
             );
 
 
-        let knownDbCollapsed = false;
+        let knownDatabaseCollapsed = true;
 
 
-        /*
-           更新收起狀態畫面
-        */
+        function updateKnownDatabaseDisplay() {
 
-        function updateKnownDbCollapseUI() {
+            if (
+                knownDatabaseCollapsed
+            ) {
 
-            if (knownDbCollapsed) {
+                knownDatabaseContent
+                    .classList
+                    .add("collapsed");
 
-                knownDbContent.classList.add(
-                    "collapsed"
-                );
+                knownDatabaseSection
+                    .classList
+                    .remove("expanded");
 
-                collapseIcon.textContent =
+                knownCollapseArrow.textContent =
                     "▶";
 
-                collapseText.textContent =
-                    "展開";
+                toggleKnownBtn.textContent =
+                    "＋ 展開";
 
             }
             else {
 
-                knownDbContent.classList.remove(
-                    "collapsed"
-                );
+                knownDatabaseContent
+                    .classList
+                    .remove("collapsed");
 
-                collapseIcon.textContent =
+                knownDatabaseSection
+                    .classList
+                    .add("expanded");
+
+                knownCollapseArrow.textContent =
                     "▼";
 
-                collapseText.textContent =
-                    "收起";
+                toggleKnownBtn.textContent =
+                    "－ 收起";
 
             }
 
         }
 
 
-        /*
-           點擊收起 / 展開
-        */
+        function toggleKnownDatabase() {
 
-        toggleKnownDbBtn.addEventListener(
+            knownDatabaseCollapsed =
+                !knownDatabaseCollapsed;
+
+            updateKnownDatabaseDisplay();
+
+        }
+
+
+        knownDatabaseHeader.addEventListener(
             "click",
-            function () {
-
-                knownDbCollapsed =
-                    !knownDbCollapsed;
-
-
-                updateKnownDbCollapseUI();
-
+            function (event) {
 
                 /*
-                   儲存狀態
+                   如果點擊的是按鈕，
+                   由按鈕本身處理，
+                   避免重複切換兩次。
                 */
 
-                localStorage.setItem(
-                    "survey_known_db_collapsed",
-                    knownDbCollapsed
-                        ? "1"
-                        : "0"
-                );
+                if (
+                    event.target ===
+                    toggleKnownBtn
+                ) {
+
+                    return;
+
+                }
+
+                toggleKnownDatabase();
 
             }
         );
 
 
-        /*
-           載入上次收起狀態
-        */
+        toggleKnownBtn.addEventListener(
+            "click",
+            function (event) {
 
-        const savedCollapseState =
-            localStorage.getItem(
-                "survey_known_db_collapsed"
-            );
+                event.stopPropagation();
 
+                toggleKnownDatabase();
 
-        if (
-            savedCollapseState === "1"
-        ) {
-
-            knownDbCollapsed = true;
-
-        }
-
-
-        updateKnownDbCollapseUI();
+            }
+        );
 
 
         /* =========================================
@@ -1297,8 +1283,25 @@ document.addEventListener(
 
 
                             /* =================================
-                               新 Excel 導線格式
-                            ================================= */
+                               ★ 新 Excel 導線格式
+                            =================================
+
+                               ID：
+
+                               A10、A11、A12...
+
+                               邊長：
+
+                               E9、E10、E11...
+
+                               角度：
+
+                               L8/M8/N8
+                               L9/M9/N9
+                               L10/M10/N10
+
+                               ================================= */
+
 
                             const extractedRows = [];
 
@@ -1312,6 +1315,7 @@ document.addEventListener(
                                 i < maxCount;
                                 i++
                             ) {
+
 
                                 /*
                                   ID
@@ -1384,6 +1388,10 @@ document.addEventListener(
                                         )
                                         : NaN;
 
+
+                                /*
+                                  有任何資料就加入
+                                */
 
                                 if (
                                     id !== "" ||
@@ -1480,6 +1488,13 @@ document.addEventListener(
 
                 reader.readAsArrayBuffer(file);
 
+                /*
+                   允許下次選擇同一個檔案時
+                   change 事件仍然觸發。
+                */
+
+                event.target.value = "";
+
             }
         );
 
@@ -1547,7 +1562,13 @@ document.addEventListener(
 
                         input.addEventListener(
                             "input",
-                            saveData
+                            function () {
+
+                                saveData();
+
+                                updateKnownStatus();
+
+                            }
                         );
 
                     }
@@ -2898,6 +2919,15 @@ document.addEventListener(
                     "none";
 
 
+                /*
+                   清空後仍保持資料庫收起。
+                */
+
+                knownDatabaseCollapsed = true;
+
+                updateKnownDatabaseDisplay();
+
+
                 saveData();
 
             }
@@ -3074,6 +3104,8 @@ document.addEventListener(
 
                 addRow();
 
+                updateKnownDatabaseDisplay();
+
                 return;
 
             }
@@ -3189,12 +3221,24 @@ document.addEventListener(
 
                 updateKnownStatus();
 
+
+                /*
+                   每次重新開啟網頁
+                   已知點資料庫預設收起。
+                */
+
+                knownDatabaseCollapsed = true;
+
+                updateKnownDatabaseDisplay();
+
             }
             catch (error) {
 
                 addKnownRow();
 
                 addRow();
+
+                updateKnownDatabaseDisplay();
 
             }
 
@@ -3204,6 +3248,10 @@ document.addEventListener(
         /* =========================================
            啟動
         ========================================= */
+
+        knownDatabaseCollapsed = true;
+
+        updateKnownDatabaseDisplay();
 
         loadData();
 
