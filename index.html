@@ -1,8 +1,9 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>平面控制點檢測成果表｜工程版</title>
 
@@ -19,15 +20,10 @@
     --purple:#7c3aed;
 
     --bg:#f1f5f9;
-    --card:#fff;
+    --card:#ffffff;
     --border:#cbd5e1;
     --text:#1e293b;
     --muted:#64748b;
-
-    --known:#16a34a;
-    --calc:#dc2626;
-    --start:#2563eb;
-    --diff:#f97316;
 }
 
 *{
@@ -43,14 +39,15 @@ body{
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
+        Roboto,
         Arial,
         sans-serif;
 }
 
 .container{
-    max-width:1600px;
+    max-width:1500px;
     margin:auto;
-    background:#fff;
+    background:white;
     padding:28px;
     border-radius:14px;
     box-shadow:0 6px 20px rgba(0,0,0,.08);
@@ -63,7 +60,7 @@ h1{
 }
 
 h1 small{
-    font-size:.6em;
+    font-size:.65em;
     color:var(--muted);
 }
 
@@ -108,7 +105,7 @@ input{
     padding:9px;
     border:1px solid var(--border);
     border-radius:6px;
-    background:#fff;
+    background:white;
     font-size:.95rem;
 }
 
@@ -133,22 +130,22 @@ button:hover{
 
 .btn-primary{
     background:var(--primary);
-    color:#fff;
+    color:white;
 }
 
 .btn-success{
     background:var(--success);
-    color:#fff;
+    color:white;
 }
 
 .btn-info{
     background:var(--info);
-    color:#fff;
+    color:white;
 }
 
 .btn-danger{
     background:var(--danger);
-    color:#fff;
+    color:white;
 }
 
 .btn-secondary{
@@ -158,12 +155,12 @@ button:hover{
 
 .btn-warning{
     background:var(--warning);
-    color:#fff;
+    color:white;
 }
 
 .btn-purple{
     background:var(--purple);
-    color:#fff;
+    color:white;
 }
 
 .btn-group{
@@ -181,7 +178,6 @@ button:hover{
     color:var(--muted);
     font-size:.85rem;
     margin-bottom:10px;
-    line-height:1.6;
 }
 
 .excel-info{
@@ -191,7 +187,6 @@ button:hover{
     padding:14px;
     border-radius:8px;
     margin-bottom:20px;
-    line-height:1.7;
 }
 
 .table-container{
@@ -201,7 +196,7 @@ button:hover{
 table{
     width:100%;
     border-collapse:collapse;
-    background:#fff;
+    background:white;
 }
 
 th,
@@ -214,7 +209,6 @@ td{
 
 th{
     background:#e2e8f0;
-    white-space:nowrap;
 }
 
 .angle-inputs{
@@ -230,16 +224,16 @@ th{
 .known-tag{
     display:inline-block;
     margin-top:4px;
-    padding:2px 7px;
+    padding:2px 6px;
     border-radius:4px;
     font-size:.78rem;
     color:#166534;
     background:#dcfce7;
 }
 
-/* ============================
-   已知點資料庫
-============================ */
+/* =========================
+   已知點座標段
+========================= */
 
 .collapsible-header{
     cursor:pointer;
@@ -264,54 +258,65 @@ th{
     display:block;
 }
 
-.database-status{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    align-items:center;
-}
-
-/* ============================
+/* =========================
    統整表格
-============================ */
+========================= */
 
 .summary-wrapper{
     overflow-x:auto;
 }
 
 .summary-table{
-    min-width:1500px;
+    min-width:1450px;
 }
 
 .summary-table th{
-    background:#dbeafe;
+    white-space:nowrap;
 }
 
-.summary-table .known-cell{
-    background:#f0fdf4;
+.summary-table td{
+    white-space:nowrap;
 }
 
-.summary-table .calc-cell{
-    background:#fef2f2;
-}
-
-.summary-table .diff-cell{
-    background:#fff7ed;
-}
-
-.good{
+.diff-good{
     color:#15803d;
     font-weight:bold;
 }
 
-.bad{
+.diff-warning{
+    color:#d97706;
+    font-weight:bold;
+}
+
+.diff-bad{
     color:#dc2626;
     font-weight:bold;
 }
 
-/* ============================
+/* =========================
+   結果
+========================= */
+
+#resultArea{
+    display:none;
+    background:#f8fafc;
+    border:1px solid var(--border);
+    border-left:4px solid var(--primary);
+    padding:20px;
+    border-radius:8px;
+    white-space:pre-wrap;
+    font-family:Consolas,monospace;
+    font-size:.9rem;
+    overflow-x:auto;
+}
+
+/* =========================
    地圖
-============================ */
+========================= */
+
+.map-section{
+    margin-top:20px;
+}
 
 .map-toolbar{
     display:flex;
@@ -319,6 +324,10 @@ th{
     gap:8px;
     align-items:center;
     margin-bottom:12px;
+}
+
+.map-toolbar button{
+    min-width:48px;
 }
 
 .zoom-value{
@@ -332,15 +341,15 @@ th{
 
 .map-layout{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 285px;
+    grid-template-columns:1fr 270px;
     gap:15px;
 }
 
 .map-container{
     position:relative;
     width:100%;
-    height:680px;
-    background:#fff;
+    height:650px;
+    background:white;
     border:1px solid var(--border);
     border-radius:8px;
     overflow:hidden;
@@ -358,7 +367,7 @@ th{
 }
 
 .map-controls{
-    background:#fff;
+    background:white;
     border:1px solid var(--border);
     border-radius:8px;
     padding:15px;
@@ -390,27 +399,8 @@ th{
     display:flex;
     align-items:center;
     gap:8px;
-    margin:8px 0;
+    margin:7px 0;
     font-size:.88rem;
-}
-
-.legend-line{
-    width:28px;
-    height:4px;
-    display:inline-block;
-    border-radius:3px;
-}
-
-.line-traverse{
-    background:#334155;
-}
-
-.line-known{
-    background:#16a34a;
-}
-
-.line-diff{
-    background:#f97316;
 }
 
 .legend-dot{
@@ -437,6 +427,17 @@ th{
     background:#f97316;
 }
 
+.legend-purple{
+    background:#7c3aed;
+}
+
+.legend-known-line{
+    width:22px;
+    height:0;
+    border-top:3px solid #16a34a;
+    display:inline-block;
+}
+
 .map-info{
     position:absolute;
     left:12px;
@@ -453,13 +454,22 @@ th{
     display:none;
     pointer-events:none;
     background:rgba(15,23,42,.96);
-    color:#fff;
+    color:white;
     padding:10px;
     border-radius:6px;
     font-size:.82rem;
     z-index:10;
-    max-width:320px;
-    line-height:1.6;
+    max-width:300px;
+}
+
+.status-good{
+    color:#15803d;
+    font-weight:bold;
+}
+
+.status-bad{
+    color:#dc2626;
+    font-weight:bold;
 }
 
 .map-help{
@@ -473,11 +483,11 @@ th{
     line-height:1.6;
 }
 
-#resultArea{
-    display:none;
-}
+/* =========================
+   RWD
+========================= */
 
-@media(max-width:1000px){
+@media(max-width:900px){
 
     .grid-2{
         grid-template-columns:1fr;
@@ -488,7 +498,7 @@ th{
     }
 
     .map-container{
-        height:520px;
+        height:500px;
     }
 }
 
@@ -505,6 +515,7 @@ th{
     .btn-group{
         flex-direction:column;
     }
+
 }
 </style>
 </head>
@@ -516,7 +527,7 @@ th{
 <h1>
     平面控制點檢測成果表
     <br>
-    <small>工程版｜Excel 匯入・統整表格・座標較差・已知對應點座標線段</small>
+    <small>Excel 匯入・座標計算・已知點比對・統整成果・平面控制點座標圖</small>
 </h1>
 
 <!-- =========================
@@ -527,7 +538,7 @@ th{
 
 <b>📌 Excel 匯入格式</b>
 
-<br>
+<br><br>
 
 目標點號：
 <b>A10、A11、A12……</b>
@@ -559,21 +570,14 @@ th{
 <br><br>
 
 方位角：
-<b>北 = 0°、順時針</b>
+
+<strong>北 = 0°、順時針</strong>
 
 <br>
 
 下一段方位角：
-<b>前一方位角 − 180° + 實測夾角</b>
 
-<br><br>
-
-🟣 <b>已知點座標段</b>可以獨立保存。
-
-<br>
-
-🟢 <b>已知對應點座標線段</b>只會連接「導線點號有對應到已知點資料庫」的點，
-而且連線順序依照導線點序列。
+<strong>前一方位角 − 180° + 實測夾角</strong>
 
 </div>
 
@@ -581,7 +585,7 @@ th{
     type="file"
     id="reportFileImporter"
     accept=".xlsx,.xls,.csv"
-    style="display:none"
+    style="display:none;"
 >
 
 <!-- =========================
@@ -680,7 +684,8 @@ th{
 </div>
 
 <!-- =========================
-     已知點座標段
+     🟣 已知點座標段
+     預設收起
 ========================= -->
 
 <div class="section-box">
@@ -693,18 +698,12 @@ th{
 🟣 已知點座標段
 </h3>
 
-<div class="database-status">
+<div>
 
 <span
     id="knownCount"
     class="known-tag">
     0 點
-</span>
-
-<span
-    id="knownSaveStatus"
-    class="known-tag">
-    已保存
 </span>
 
 <span
@@ -717,7 +716,8 @@ th{
 
 </div>
 
-<div id="knownDatabaseContent">
+<div
+    id="knownDatabaseContent">
 
 <div class="hint">
 
@@ -725,17 +725,25 @@ th{
 
 <br>
 
-此資料會自動保存到瀏覽器，
-<strong>關閉網頁後再次開啟仍會保留。</strong>
+<strong>
+支援大量複製 / 貼上：
+</strong>
 
-<br>
+可以直接從 Excel 複製
 
-也可以從 Excel 自動匯入。
+「點號、N、E」
 
-<br>
+三欄資料貼到表格。
 
-🟢 <strong>已知對應點座標線段</strong>不依此區域的顯示順序，
-而是依照「導線前瞻點序列」尋找對應點後連線。
+<br><br>
+
+<strong>🟢 已知對應點座標線段：</strong>
+
+地圖上的綠色線段會
+
+<strong>完全依照本資料庫由上到下的順序</strong>
+
+互相連線。
 
 </div>
 
@@ -823,7 +831,6 @@ Excel：
 <th>目標點號 ID</th>
 <th>實測邊長 (m)</th>
 <th>實測夾角<br>度 / 分 / 秒</th>
-<th>已知座標</th>
 <th>操作</th>
 </tr>
 
@@ -859,7 +866,7 @@ Excel：
     id="clearBtn"
     class="btn-danger">
 
-🗑️ 清空導線資料
+🗑️ 清空
 
 </button>
 
@@ -889,20 +896,19 @@ Excel：
 
 <div
     class="section-box"
-    id="summarySection">
+    id="summarySection"
+    style="display:none;">
 
 <div class="section-title">
 
 <h3>
-📋 計算統整表格
+📋 統整成果表
 </h3>
 
 <span
-    id="summaryStatus"
+    id="summaryCount"
     class="known-tag">
-
-尚未計算
-
+    0 筆
 </span>
 
 </div>
@@ -917,21 +923,36 @@ Excel：
 
 <tr>
 
-<th>序號</th>
+<th>站序</th>
+
 <th>測站</th>
+
 <th>目標點</th>
+
 <th>實測邊長<br>(m)</th>
-<th>反算平距<br>(m)</th>
+
+<th>反算邊長<br>(m)</th>
+
 <th>距離較差<br>(mm)</th>
+
+<th>實測夾角</th>
+
 <th>後視方位角<br>(°)</th>
+
 <th>計算方位角<br>(°)</th>
-<th>實測夾角<br>(DMS)</th>
+
 <th>計算 N</th>
+
 <th>計算 E</th>
+
 <th>已知 N</th>
+
 <th>已知 E</th>
+
 <th>ΔN<br>(mm)</th>
+
 <th>ΔE<br>(mm)</th>
+
 <th>平面座標較差<br>(mm)</th>
 
 </tr>
@@ -958,6 +979,8 @@ Excel：
 🗺️ 平面控制點座標圖
 </h3>
 
+<div>
+
 <span
     id="mapPointCount"
     class="known-tag">
@@ -965,6 +988,8 @@ Excel：
 尚未計算
 
 </span>
+
+</div>
 
 </div>
 
@@ -1020,9 +1045,7 @@ Excel：
 <div
     id="mapInfo"
     class="map-info">
-
-請先按「開始計算」
-
+    請先按「開始計算」
 </div>
 
 </div>
@@ -1041,7 +1064,7 @@ Excel：
     checked>
 
 <span>
-🔵 起算點
+🔵 座標起算點
 </span>
 
 </label>
@@ -1054,7 +1077,7 @@ Excel：
     checked>
 
 <span>
-🟢 已知點
+🟢 已知座標
 </span>
 
 </label>
@@ -1067,7 +1090,7 @@ Excel：
     checked>
 
 <span>
-🔴 計算點
+🔴 計算座標
 </span>
 
 </label>
@@ -1098,11 +1121,17 @@ Excel：
 
 </label>
 
+<!-- =========================
+     修改處
+     原「🟢 已知座標線段」
+     改為「🟢 已知對應點座標線段」
+========================= -->
+
 <label class="switch-row">
 
 <input
     type="checkbox"
-    id="showCorrespondingKnown"
+    id="showKnownCorresponding"
     checked>
 
 <span>
@@ -1132,17 +1161,17 @@ Excel：
 
 <div class="legend-item">
 <span class="legend-dot legend-blue"></span>
-起算點
+座標起算點
 </div>
 
 <div class="legend-item">
 <span class="legend-dot legend-green"></span>
-已知點
+已知座標
 </div>
 
 <div class="legend-item">
 <span class="legend-dot legend-red"></span>
-計算點
+計算座標
 </div>
 
 <div class="legend-item">
@@ -1151,95 +1180,43 @@ Excel：
 </div>
 
 <div class="legend-item">
-<span class="legend-line line-traverse"></span>
-導線線段
-</div>
-
-<div class="legend-item">
-<span class="legend-line line-known"></span>
+<span class="legend-known-line"></span>
 已知對應點座標線段
-</div>
-
-<div class="legend-item">
-<span class="legend-line line-diff"></span>
-座標較差連線
 </div>
 
 </div>
 
 <div class="map-help">
 
-<b>🟢 已知對應點座標線段規則</b>
+<b>🖱️ 操作方式</b>
 
 <br>
 
-程式會逐一讀取：
+拖曳：平移座標圖
 
 <br>
 
-① 導線前瞻點序列
+滑鼠滾輪：放大 / 縮小
 
 <br>
 
-② 找到同 ID 的已知點
+點擊點位：顯示座標及較差
 
 <br>
 
-③ 將這些已知座標依導線點序列排列
-
-<br>
-
-④ 再依序連線
+「Fit」：自動將所有點放入畫面
 
 <br><br>
 
-例如導線：
+<b>🟢 已知對應點座標線段</b>
 
 <br>
 
-A → B → C → D
+完全按照「🟣 已知點座標段」資料庫順序：
 
 <br>
 
-已知資料庫即使是：
-
-<br>
-
-C、A、D、B
-
-<br>
-
-實際畫出的已知線仍然是：
-
-<br>
-
-A → B → C → D
-
-<br><br>
-
-<strong>
-不會依已知資料庫的輸入順序連線。
-</strong>
-
-<hr>
-
-<b>🖱️ 操作</b>
-
-<br>
-
-拖曳：平移
-
-<br>
-
-滾輪：縮放
-
-<br>
-
-點擊點位：查看座標
-
-<br>
-
-Fit：自動適配全部座標
+第 1 點 → 第 2 點 → 第 3 點 → 第 4 點……
 
 </div>
 
@@ -1250,13 +1227,10 @@ Fit：自動適配全部座標
 </div>
 
 <!-- =========================
-     文字結果
+     計算結果
 ========================= -->
 
-<div
-    class="section-box"
-    id="resultArea">
-</div>
+<div id="resultArea"></div>
 
 </div>
 
@@ -1286,9 +1260,6 @@ document.getElementById("collapseArrow");
 const knownCount =
 document.getElementById("knownCount");
 
-const knownSaveStatus =
-document.getElementById("knownSaveStatus");
-
 const addKnownRowBtn =
 document.getElementById("addKnownRowBtn");
 
@@ -1313,12 +1284,6 @@ document.getElementById("reportFileImporter");
 const resultArea =
 document.getElementById("resultArea");
 
-const summaryTableBody =
-document.querySelector("#summaryTable tbody");
-
-const summaryStatus =
-document.getElementById("summaryStatus");
-
 const canvas =
 document.getElementById("coordinateCanvas");
 
@@ -1338,30 +1303,30 @@ document.getElementById("zoomValue");
    地圖狀態
 ===================================================== */
 
-let mapData=null;
+let mapData = null;
 
-let mapScale=1;
+let mapScale = 1;
 
-let mapOffsetX=0;
+let mapOffsetX = 0;
 
-let mapOffsetY=0;
+let mapOffsetY = 0;
 
-let dragging=false;
+let dragging = false;
 
-let dragStartX=0;
+let dragStartX = 0;
 
-let dragStartY=0;
+let dragStartY = 0;
 
-let originalOffsetX=0;
+let originalOffsetX = 0;
 
-let originalOffsetY=0;
+let originalOffsetY = 0;
 
-let viewCenterE=0;
+let viewCenterE = 0;
 
-let viewCenterN=0;
+let viewCenterN = 0;
 
 /* =====================================================
-   已知點區域預設收起
+   已知點：預設收起
 ===================================================== */
 
 knownContent.classList.remove("open");
@@ -1377,17 +1342,425 @@ collapseArrow.classList.toggle("open");
 });
 
 /* =====================================================
+   Excel 匯入
+===================================================== */
+
+selectFileBtn.addEventListener("click",function(){
+
+reportFileImporter.click();
+
+});
+
+reportFileImporter.addEventListener("change",function(event){
+
+const file =
+event.target.files[0];
+
+if(!file)return;
+
+const reader =
+new FileReader();
+
+reader.onload =
+function(e){
+
+try{
+
+const data =
+new Uint8Array(e.target.result);
+
+const workbook =
+XLSX.read(data,{
+    type:"array"
+});
+
+const sheetName =
+workbook.SheetNames[0];
+
+const worksheet =
+workbook.Sheets[sheetName];
+
+const rows =
+XLSX.utils.sheet_to_json(
+    worksheet,
+    {
+        header:1,
+        defval:""
+    }
+);
+
+function getCell(row,col){
+
+if(
+    rows[row] &&
+    rows[row][col] !== undefined
+){
+
+return String(rows[row][col]).trim();
+
+}
+
+return "";
+
+}
+
+/* =================================================
+   起算點
+================================================= */
+
+const bsId =
+(
+    getCell(5,0) +
+    " " +
+    getCell(6,0)
+).trim();
+
+const stId =
+(
+    getCell(7,0) +
+    " " +
+    getCell(8,0)
+).trim();
+
+const bsN =
+parseFloat(getCell(5,2));
+
+const bsE =
+parseFloat(getCell(6,2));
+
+const stN =
+parseFloat(getCell(7,2));
+
+const stE =
+parseFloat(getCell(8,2));
+
+document.getElementById("bsId").value =
+bsId;
+
+document.getElementById("stId").value =
+stId;
+
+if(!isNaN(bsN))
+document.getElementById("bsN").value =
+bsN.toFixed(4);
+
+if(!isNaN(bsE))
+document.getElementById("bsE").value =
+bsE.toFixed(4);
+
+if(!isNaN(stN))
+document.getElementById("stN").value =
+stN.toFixed(4);
+
+if(!isNaN(stE))
+document.getElementById("stE").value =
+stE.toFixed(4);
+
+/* =================================================
+   後視 → 設站距離
+================================================= */
+
+let firstDist =
+parseFloat(getCell(6,4));
+
+if(isNaN(firstDist)){
+
+firstDist =
+parseFloat(getCell(7,4));
+
+}
+
+if(!isNaN(firstDist)){
+
+document.getElementById("bsToStDist").value =
+firstDist;
+
+}
+
+/* =================================================
+   清除舊導線
+================================================= */
+
+tbody.innerHTML = "";
+
+const extractedRows = [];
+
+/* =================================================
+   導線資料
+================================================= */
+
+for(let i=0;i<rows.length;i++){
+
+const idRow =
+i + 9;
+
+const distRow =
+i + 8;
+
+const angleRow =
+i + 7;
+
+const id =
+rows[idRow] &&
+rows[idRow][0] !== undefined
+?
+String(rows[idRow][0]).trim()
+:
+"";
+
+const dist =
+rows[distRow] &&
+rows[distRow][4] !== undefined
+?
+parseFloat(rows[distRow][4])
+:
+NaN;
+
+const deg =
+rows[angleRow] &&
+rows[angleRow][11] !== undefined
+?
+parseFloat(rows[angleRow][11])
+:
+NaN;
+
+const min =
+rows[angleRow] &&
+rows[angleRow][12] !== undefined
+?
+parseFloat(rows[angleRow][12])
+:
+NaN;
+
+const sec =
+rows[angleRow] &&
+rows[angleRow][13] !== undefined
+?
+parseFloat(rows[angleRow][13])
+:
+NaN;
+
+if(
+    id !== "" ||
+    !isNaN(dist) ||
+    !isNaN(deg) ||
+    !isNaN(min) ||
+    !isNaN(sec)
+){
+
+extractedRows.push({
+
+id:id,
+
+dist:!isNaN(dist)?dist:"",
+
+deg:!isNaN(deg)?deg:"",
+
+min:!isNaN(min)?min:"",
+
+sec:!isNaN(sec)?sec:""
+
+});
+
+}
+
+}
+
+/* =================================================
+   加入導線
+================================================= */
+
+extractedRows.forEach(function(item){
+
+addRow(
+    item.id,
+    item.dist,
+    item.deg,
+    item.min,
+    item.sec
+);
+
+});
+
+if(extractedRows.length===0){
+
+addRow();
+
+}
+
+/* =================================================
+   嘗試從 Excel 自動抓取已知點
+================================================= */
+
+importKnownPointsFromExcel(rows);
+
+updateKnownStatus();
+
+saveData();
+
+alert("Excel 匯入完成！");
+
+}
+catch(error){
+
+alert(
+    "Excel 讀取失敗：\n" +
+    error.message
+);
+
+}
+
+};
+
+reader.readAsArrayBuffer(file);
+
+});
+
+/* =====================================================
+   Excel 已知點自動辨識
+===================================================== */
+
+function importKnownPointsFromExcel(rows){
+
+let headerRow = -1;
+
+let idCol = -1;
+
+let nCol = -1;
+
+let eCol = -1;
+
+for(let r=0;r<Math.min(rows.length,100);r++){
+
+const row =
+rows[r] || [];
+
+for(let c=0;c<Math.min(row.length,30);c++){
+
+const value =
+String(row[c] ?? "")
+.trim()
+.toLowerCase();
+
+if(
+    value === "點號" ||
+    value === "點名" ||
+    value === "id" ||
+    value === "point" ||
+    value === "point id"
+){
+
+if(idCol===-1){
+
+idCol=c;
+headerRow=r;
+
+}
+
+}
+
+if(
+    value === "n" ||
+    value === "northing" ||
+    value === "n座標" ||
+    value === "北座標"
+){
+
+nCol=c;
+
+}
+
+if(
+    value === "e" ||
+    value === "easting" ||
+    value === "e座標" ||
+    value === "東座標"
+){
+
+eCol=c;
+
+}
+
+}
+
+if(
+    headerRow>=0 &&
+    idCol>=0 &&
+    nCol>=0 &&
+    eCol>=0
+){
+
+break;
+
+}
+
+}
+
+if(
+    headerRow<0 ||
+    idCol<0 ||
+    nCol<0 ||
+    eCol<0
+){
+
+return;
+
+}
+
+knownTbody.innerHTML = "";
+
+for(
+    let r=headerRow+1;
+    r<rows.length;
+    r++
+){
+
+const row =
+rows[r] || [];
+
+const id =
+String(row[idCol] ?? "").trim();
+
+const n =
+parseFloat(row[nCol]);
+
+const e =
+parseFloat(row[eCol]);
+
+if(
+    id &&
+    !isNaN(n) &&
+    !isNaN(e)
+){
+
+addKnownRow(
+    id,
+    n,
+    e
+);
+
+}
+
+}
+
+}
+
+/* =====================================================
    Escape
 ===================================================== */
 
 function escapeHtml(value){
 
-return String(value ?? "")
+return String(value)
 
 .replace(/&/g,"&amp;")
+
 .replace(/</g,"&lt;")
+
 .replace(/>/g,"&gt;")
+
 .replace(/"/g,"&quot;")
+
 .replace(/'/g,"&#039;");
 
 }
@@ -1402,42 +1775,53 @@ function addKnownRow(
     e=""
 ){
 
-const row=document.createElement("tr");
+const row =
+document.createElement("tr");
 
-row.innerHTML=`
+row.innerHTML = `
 
 <td>
+
 <input
-    type="text"
-    class="known-id"
-    value="${escapeHtml(id)}"
-    placeholder="點號">
+type="text"
+class="known-id"
+value="${escapeHtml(id)}"
+placeholder="點號">
+
 </td>
 
 <td>
+
 <input
-    type="number"
-    step="any"
-    class="known-n"
-    value="${escapeHtml(n)}"
-    placeholder="N">
+type="number"
+step="any"
+class="known-n"
+value="${escapeHtml(n)}"
+placeholder="N">
+
 </td>
 
 <td>
+
 <input
-    type="number"
-    step="any"
-    class="known-e"
-    value="${escapeHtml(e)}"
-    placeholder="E">
+type="number"
+step="any"
+class="known-e"
+value="${escapeHtml(e)}"
+placeholder="E">
+
 </td>
 
 <td>
+
 <button
-    type="button"
-    class="btn-danger delete-known">
-    刪除
+type="button"
+class="btn-danger delete-known">
+
+刪除
+
 </button>
+
 </td>
 
 `;
@@ -1447,9 +1831,19 @@ row.querySelectorAll("input")
 
 input.addEventListener("input",function(){
 
-saveKnownDatabase();
+saveData();
 
 updateKnownStatus();
+
+});
+
+input.addEventListener("paste",function(){
+
+setTimeout(function(){
+
+handleKnownPaste(input);
+
+},50);
 
 });
 
@@ -1460,9 +1854,11 @@ row.querySelector(".delete-known")
 
 row.remove();
 
-saveKnownDatabase();
+saveData();
 
 updateKnownStatus();
+
+drawMap();
 
 });
 
@@ -1473,7 +1869,221 @@ updateKnownCount();
 }
 
 /* =====================================================
-   已知點資料庫
+   已知點大量貼上
+===================================================== */
+
+function handleKnownPaste(input){
+
+const text =
+input.value;
+
+if(
+    text.indexOf("\t")===-1 &&
+    text.indexOf("\n")===-1
+){
+
+return;
+
+}
+
+const lines =
+text
+.split(/\r?\n/)
+.map(x=>x.trim())
+.filter(x=>x);
+
+if(lines.length<=1)return;
+
+const startRow =
+input.closest("tr");
+
+let rowIndex =
+Array.from(knownTbody.children)
+.indexOf(startRow);
+
+lines.forEach(function(line,index){
+
+const parts =
+line.split("\t");
+
+if(parts.length<3)return;
+
+let row;
+
+if(index===0){
+
+row=startRow;
+
+}
+else{
+
+row =
+knownTbody.children[rowIndex+index];
+
+if(!row){
+
+addKnownRow();
+
+row=knownTbody.lastElementChild;
+
+}
+
+}
+
+row.querySelector(".known-id").value =
+parts[0].trim();
+
+row.querySelector(".known-n").value =
+parts[1].trim();
+
+row.querySelector(".known-e").value =
+parts[2].trim();
+
+});
+
+updateKnownCount();
+
+updateKnownStatus();
+
+saveData();
+
+drawMap();
+
+}
+
+/* =====================================================
+   導線
+===================================================== */
+
+function addRow(
+    id="",
+    dist="",
+    deg="",
+    min="",
+    sec=""
+){
+
+const row =
+document.createElement("tr");
+
+row.innerHTML = `
+
+<td class="row-index"></td>
+
+<td>
+
+<input
+type="text"
+class="input-id"
+value="${escapeHtml(id)}"
+placeholder="例如：A10">
+
+<div class="known-status"></div>
+
+</td>
+
+<td>
+
+<input
+type="number"
+step="any"
+class="input-dist"
+value="${escapeHtml(dist)}"
+placeholder="m">
+
+</td>
+
+<td>
+
+<div class="angle-inputs">
+
+<input
+type="number"
+class="input-deg"
+value="${escapeHtml(deg)}"
+placeholder="度">
+
+<input
+type="number"
+class="input-min"
+value="${escapeHtml(min)}"
+placeholder="分">
+
+<input
+type="number"
+step="any"
+class="input-sec"
+value="${escapeHtml(sec)}"
+placeholder="秒">
+
+</div>
+
+</td>
+
+<td>
+
+<button
+type="button"
+class="btn-danger delete-row">
+
+刪除
+
+</button>
+
+</td>
+
+`;
+
+row.querySelectorAll("input")
+.forEach(function(input){
+
+input.addEventListener("input",function(){
+
+saveData();
+
+updateKnownStatus();
+
+});
+
+});
+
+row.querySelector(".delete-row")
+.addEventListener("click",function(){
+
+row.remove();
+
+updateRowIndices();
+
+saveData();
+
+});
+
+tbody.appendChild(row);
+
+updateRowIndices();
+
+}
+
+/* =====================================================
+   站序
+===================================================== */
+
+function updateRowIndices(){
+
+tbody.querySelectorAll("tr")
+.forEach(function(row,index){
+
+row.querySelector(".row-index")
+.textContent =
+index+1;
+
+});
+
+}
+
+/* =====================================================
+   已知資料庫
+   注意：此處保留資料庫原始順序
 ===================================================== */
 
 function getKnownDatabase(){
@@ -1519,96 +2129,101 @@ return db;
 }
 
 /* =====================================================
-   已知資料庫保存
+   取得「🟣 已知點座標段」原始順序
+   ★ 已知對應點座標線段專用
 ===================================================== */
 
-function saveKnownDatabase(){
+function getKnownPointsOrdered(){
 
-const database=[];
+const points=[];
 
 knownTbody
 .querySelectorAll("tr")
 .forEach(function(row){
 
-database.push({
+const id =
+row.querySelector(".known-id")
+.value
+.trim();
 
-id:
-row.querySelector(".known-id").value,
-
-n:
-row.querySelector(".known-n").value,
-
-e:
-row.querySelector(".known-e").value
-
-});
-
-});
-
-localStorage.setItem(
-    "survey_control_known_database_v14",
-    JSON.stringify(database)
+const n =
+parseFloat(
+    row.querySelector(".known-n").value
 );
 
-knownSaveStatus.textContent="已保存";
+const e =
+parseFloat(
+    row.querySelector(".known-e").value
+);
+
+if(
+    id &&
+    !isNaN(n) &&
+    !isNaN(e)
+){
+
+points.push({
+
+id:id,
+
+n:n,
+
+e:e
+
+});
+
+}
+
+});
+
+return points;
 
 }
 
 /* =====================================================
-   載入已知資料庫
+   已知點狀態
 ===================================================== */
 
-function loadKnownDatabase(){
+function updateKnownStatus(){
 
-const saved =
-localStorage.getItem(
-    "survey_control_known_database_v14"
-);
+const db =
+getKnownDatabase();
 
-knownTbody.innerHTML="";
+tbody
+.querySelectorAll("tr")
+.forEach(function(row){
 
-if(!saved){
+const id =
+row.querySelector(".input-id")
+.value
+.trim();
 
-addKnownRow();
-
-updateKnownCount();
-
-return;
-
-}
-
-try{
-
-const data=JSON.parse(saved);
+const status =
+row.querySelector(".known-status");
 
 if(
-    Array.isArray(data) &&
-    data.length
+    id &&
+    db[id]
 ){
 
-data.forEach(function(item){
+status.innerHTML = `
 
-addKnownRow(
-    item.id || "",
-    item.n || "",
-    item.e || ""
-);
+<span class="known-tag">
 
-});
+✓ 已對應已知點
+
+</span>
+
+`;
 
 }
 else{
 
-addKnownRow();
+status.innerHTML="";
 
 }
 
-}
-catch(error){
-
-addKnownRow();
-
-}
+});
 
 updateKnownCount();
 
@@ -1624,594 +2239,7 @@ const count =
 knownTbody.querySelectorAll("tr").length;
 
 knownCount.textContent =
-count+" 點";
-
-}
-
-/* =====================================================
-   導線
-===================================================== */
-
-function addRow(
-    id="",
-    dist="",
-    deg="",
-    min="",
-    sec=""
-){
-
-const row=document.createElement("tr");
-
-row.innerHTML=`
-
-<td class="row-index"></td>
-
-<td>
-
-<input
-    type="text"
-    class="input-id"
-    value="${escapeHtml(id)}"
-    placeholder="例如：A10">
-
-<div class="known-status"></div>
-
-</td>
-
-<td>
-
-<input
-    type="number"
-    step="any"
-    class="input-dist"
-    value="${escapeHtml(dist)}"
-    placeholder="m">
-
-</td>
-
-<td>
-
-<div class="angle-inputs">
-
-<input
-    type="number"
-    class="input-deg"
-    value="${escapeHtml(deg)}"
-    placeholder="度">
-
-<input
-    type="number"
-    class="input-min"
-    value="${escapeHtml(min)}"
-    placeholder="分">
-
-<input
-    type="number"
-    step="any"
-    class="input-sec"
-    value="${escapeHtml(sec)}"
-    placeholder="秒">
-
-</div>
-
-</td>
-
-<td class="known-status-table">
-
-</td>
-
-<td>
-
-<button
-    type="button"
-    class="btn-danger delete-row">
-    刪除
-</button>
-
-</td>
-
-`;
-
-row.querySelectorAll("input")
-.forEach(function(input){
-
-input.addEventListener("input",function(){
-
-saveTraverseData();
-
-updateKnownStatus();
-
-});
-
-});
-
-row.querySelector(".delete-row")
-.addEventListener("click",function(){
-
-row.remove();
-
-updateRowIndices();
-
-saveTraverseData();
-
-});
-
-tbody.appendChild(row);
-
-updateRowIndices();
-
-updateKnownStatus();
-
-}
-
-/* =====================================================
-   站序
-===================================================== */
-
-function updateRowIndices(){
-
-tbody.querySelectorAll("tr")
-.forEach(function(row,index){
-
-row.querySelector(".row-index")
-.textContent=index+1;
-
-});
-
-}
-
-/* =====================================================
-   已知對應狀態
-===================================================== */
-
-function updateKnownStatus(){
-
-const db=getKnownDatabase();
-
-tbody
-.querySelectorAll("tr")
-.forEach(function(row){
-
-const id=
-row.querySelector(".input-id")
-.value
-.trim();
-
-const status=
-row.querySelector(".known-status");
-
-const tableStatus=
-row.querySelector(".known-status-table");
-
-if(
-    id &&
-    db[id]
-){
-
-const html=`
-
-<span class="known-tag">
-✓ 已對應
-</span>
-
-`;
-
-status.innerHTML=html;
-
-tableStatus.innerHTML=html;
-
-}
-else{
-
-status.innerHTML="";
-
-tableStatus.innerHTML="";
-
-}
-
-});
-
-updateKnownCount();
-
-}
-
-/* =====================================================
-   Excel
-===================================================== */
-
-selectFileBtn.addEventListener("click",function(){
-
-reportFileImporter.click();
-
-});
-
-reportFileImporter.addEventListener(
-"change",
-function(event){
-
-const file=event.target.files[0];
-
-if(!file)return;
-
-const reader=new FileReader();
-
-reader.onload=function(e){
-
-try{
-
-const data=
-new Uint8Array(e.target.result);
-
-const workbook=
-XLSX.read(
-    data,
-    {type:"array"}
-);
-
-const sheetName=
-workbook.SheetNames[0];
-
-const worksheet=
-workbook.Sheets[sheetName];
-
-const rows=
-XLSX.utils.sheet_to_json(
-    worksheet,
-    {
-        header:1,
-        defval:""
-    }
-);
-
-function getCell(row,col){
-
-if(
-    rows[row] &&
-    rows[row][col]!==undefined
-){
-
-return String(rows[row][col]).trim();
-
-}
-
-return "";
-
-}
-
-/* ==============================================
-   起算點
-============================================== */
-
-const bsId=
-(
-    getCell(5,0)+" "+
-    getCell(6,0)
-).trim();
-
-const stId=
-(
-    getCell(7,0)+" "+
-    getCell(8,0)
-).trim();
-
-const bsN=parseFloat(getCell(5,2));
-const bsE=parseFloat(getCell(6,2));
-
-const stN=parseFloat(getCell(7,2));
-const stE=parseFloat(getCell(8,2));
-
-document.getElementById("bsId").value=bsId;
-document.getElementById("stId").value=stId;
-
-if(!isNaN(bsN))
-document.getElementById("bsN").value=
-bsN.toFixed(4);
-
-if(!isNaN(bsE))
-document.getElementById("bsE").value=
-bsE.toFixed(4);
-
-if(!isNaN(stN))
-document.getElementById("stN").value=
-stN.toFixed(4);
-
-if(!isNaN(stE))
-document.getElementById("stE").value=
-stE.toFixed(4);
-
-/* ==============================================
-   後視 → 設站距離
-============================================== */
-
-let firstDist=
-parseFloat(getCell(6,4));
-
-if(isNaN(firstDist)){
-
-firstDist=
-parseFloat(getCell(7,4));
-
-}
-
-if(!isNaN(firstDist)){
-
-document.getElementById("bsToStDist").value=
-firstDist;
-
-}
-
-/* ==============================================
-   導線
-============================================== */
-
-tbody.innerHTML="";
-
-const extractedRows=[];
-
-for(
-    let i=0;
-    i<rows.length;
-    i++
-){
-
-const idRow=i+9;
-const distRow=i+8;
-const angleRow=i+7;
-
-const id=
-rows[idRow] &&
-rows[idRow][0]!==undefined
-?
-String(rows[idRow][0]).trim()
-:
-"";
-
-const dist=
-rows[distRow] &&
-rows[distRow][4]!==undefined
-?
-parseFloat(rows[distRow][4])
-:
-NaN;
-
-const deg=
-rows[angleRow] &&
-rows[angleRow][11]!==undefined
-?
-parseFloat(rows[angleRow][11])
-:
-NaN;
-
-const min=
-rows[angleRow] &&
-rows[angleRow][12]!==undefined
-?
-parseFloat(rows[angleRow][12])
-:
-NaN;
-
-const sec=
-rows[angleRow] &&
-rows[angleRow][13]!==undefined
-?
-parseFloat(rows[angleRow][13])
-:
-NaN;
-
-if(
-    id!=="" ||
-    !isNaN(dist) ||
-    !isNaN(deg) ||
-    !isNaN(min) ||
-    !isNaN(sec)
-){
-
-extractedRows.push({
-
-id:id,
-
-dist:!isNaN(dist)?dist:"",
-
-deg:!isNaN(deg)?deg:"",
-
-min:!isNaN(min)?min:"",
-
-sec:!isNaN(sec)?sec:""
-
-});
-
-}
-
-}
-
-extractedRows.forEach(function(item){
-
-addRow(
-    item.id,
-    item.dist,
-    item.deg,
-    item.min,
-    item.sec
-);
-
-});
-
-if(extractedRows.length===0){
-
-addRow();
-
-}
-
-/* ==============================================
-   已知點
-============================================== */
-
-importKnownPointsFromExcel(rows);
-
-saveKnownDatabase();
-
-saveTraverseData();
-
-updateKnownStatus();
-
-alert("Excel 匯入完成！");
-
-}
-catch(error){
-
-alert(
-    "Excel 讀取失敗：\n"+
-    error.message
-);
-
-}
-
-};
-
-reader.readAsArrayBuffer(file);
-
-reportFileImporter.value="";
-
-});
-
-/* =====================================================
-   Excel 已知點辨識
-===================================================== */
-
-function importKnownPointsFromExcel(rows){
-
-let headerRow=-1;
-
-let idCol=-1;
-
-let nCol=-1;
-
-let eCol=-1;
-
-for(
-    let r=0;
-    r<Math.min(rows.length,100);
-    r++
-){
-
-const row=rows[r]||[];
-
-for(
-    let c=0;
-    c<Math.min(row.length,30);
-    c++
-){
-
-const value=
-String(row[c]??"")
-.trim()
-.toLowerCase();
-
-if(
-    value==="點號" ||
-    value==="點名" ||
-    value==="id" ||
-    value==="point" ||
-    value==="point id"
-){
-
-if(idCol===-1){
-
-idCol=c;
-
-headerRow=r;
-
-}
-
-}
-
-if(
-    value==="n" ||
-    value==="northing" ||
-    value==="n座標" ||
-    value==="北座標"
-){
-
-nCol=c;
-
-}
-
-if(
-    value==="e" ||
-    value==="easting" ||
-    value==="e座標" ||
-    value==="東座標"
-){
-
-eCol=c;
-
-}
-
-}
-
-if(
-    headerRow>=0 &&
-    idCol>=0 &&
-    nCol>=0 &&
-    eCol>=0
-){
-
-break;
-
-}
-
-}
-
-if(
-    headerRow<0 ||
-    idCol<0 ||
-    nCol<0 ||
-    eCol<0
-){
-
-return;
-
-}
-
-/*
-   不會因為網頁重新整理而消失。
-   匯入 Excel 時更新資料庫。
-*/
-
-knownTbody.innerHTML="";
-
-for(
-    let r=headerRow+1;
-    r<rows.length;
-    r++
-){
-
-const row=rows[r]||[];
-
-const id=
-String(row[idCol]??"").trim();
-
-const n=
-parseFloat(row[nCol]);
-
-const e=
-parseFloat(row[eCol]);
-
-if(
-    id &&
-    !isNaN(n) &&
-    !isNaN(e)
-){
-
-addKnownRow(
-    id,
-    n,
-    e
-);
-
-}
-
-}
+count + " 點";
 
 }
 
@@ -2235,13 +2263,17 @@ Number(sec||0)/3600;
 
 function decimalToDMS(value){
 
-let d=Math.floor(value);
+let d =
+Math.floor(value);
 
-let remain=(value-d)*60;
+let remain =
+(value-d)*60;
 
-let m=Math.floor(remain);
+let m =
+Math.floor(remain);
 
-let s=(remain-m)*60;
+let s =
+(remain-m)*60;
 
 if(s>=59.99995){
 
@@ -2269,6 +2301,8 @@ return{
 
 /* =====================================================
    方位角
+   北 = 0°
+   順時針
 ===================================================== */
 
 function getAzimuth(
@@ -2278,11 +2312,13 @@ function getAzimuth(
     e2
 ){
 
-const dN=n2-n1;
+const dN =
+n2-n1;
 
-const dE=e2-e1;
+const dE =
+e2-e1;
 
-let angle=
+let angle =
 Math.atan2(
     dE,
     dN
@@ -2290,7 +2326,8 @@ Math.atan2(
 
 if(angle<0){
 
-angle+=2*Math.PI;
+angle +=
+2*Math.PI;
 
 }
 
@@ -2298,9 +2335,14 @@ return angle;
 
 }
 
+/* =====================================================
+   標準化
+===================================================== */
+
 function normalizeAzimuth(deg){
 
-deg=deg%360;
+deg =
+deg%360;
 
 if(deg<0)
 deg+=360;
@@ -2308,6 +2350,10 @@ deg+=360;
 return deg;
 
 }
+
+/* =====================================================
+   距離
+===================================================== */
 
 function getDistance(
     n1,
@@ -2317,8 +2363,13 @@ function getDistance(
 ){
 
 return Math.sqrt(
-    Math.pow(n2-n1,2)+
-    Math.pow(e2-e1,2)
+
+Math.pow(n2-n1,2)
+
++
+
+Math.pow(e2-e1,2)
+
 );
 
 }
@@ -2329,35 +2380,35 @@ return Math.sqrt(
 
 function runCalculation(){
 
-const bsN=
+const bsN =
 parseFloat(
     document.getElementById("bsN").value
 );
 
-const bsE=
+const bsE =
 parseFloat(
     document.getElementById("bsE").value
 );
 
-const stN=
+const stN =
 parseFloat(
     document.getElementById("stN").value
 );
 
-const stE=
+const stE =
 parseFloat(
     document.getElementById("stE").value
 );
 
-const bsId=
+const bsId =
 document.getElementById("bsId")
 .value.trim();
 
-const stId=
+const stId =
 document.getElementById("stId")
 .value.trim();
 
-const bsToStDist=
+const bsToStDist =
 parseFloat(
     document.getElementById("bsToStDist").value
 );
@@ -2377,36 +2428,36 @@ return null;
 
 }
 
-const knownDb=
+const knownDb =
 getKnownDatabase();
 
-const rows=
+const rows =
 tbody.querySelectorAll("tr");
 
 const legs=[];
 
 rows.forEach(function(row,index){
 
-const id=
+const id =
 row.querySelector(".input-id")
 .value.trim();
 
-const dist=
+const dist =
 parseFloat(
     row.querySelector(".input-dist").value
 );
 
-const deg=
+const deg =
 parseFloat(
     row.querySelector(".input-deg").value
 );
 
-const min=
+const min =
 parseFloat(
     row.querySelector(".input-min").value
 );
 
-const sec=
+const sec =
 parseFloat(
     row.querySelector(".input-sec").value
 );
@@ -2420,13 +2471,13 @@ return;
 
 }
 
-const known=
-knownDb[id]||null;
+const known =
+knownDb[id] || null;
 
 legs.push({
 
 id:
-id||
+id ||
 `P${index+1}`,
 
 dist:
@@ -2485,65 +2536,76 @@ return null;
 
 }
 
-/* ==============================================
+/* =================================================
    初始
-============================================== */
+================================================= */
 
-let curStN=stN;
+let curStN =
+stN;
 
-let curStE=stE;
+let curStE =
+stE;
 
-let curStId=stId||"ST";
+let curStId =
+stId ||
+"ST";
 
-let azPrevDeg=
+let azPrevDeg =
 getAzimuth(
     bsN,
     bsE,
     stN,
     stE
 )
-*180/Math.PI;
+*
+180 /
+Math.PI;
 
 const results=[];
 
-/* ==============================================
-   逐段
-============================================== */
+/* =================================================
+   逐段計算
+================================================= */
 
 legs.forEach(function(leg){
 
-const azBS=azPrevDeg;
+const azBS =
+azPrevDeg;
 
-const angleDeg=
+const angleDeg =
 dmsToDecimal(
     leg.deg,
     leg.min,
     leg.sec
 );
 
-const azimuth=
+const azimuth =
 normalizeAzimuth(
-    azBS-
-    180+
+    azBS -
+    180 +
     angleDeg
 );
 
-const radAz=
-azimuth*Math.PI/180;
+const radAz =
+azimuth *
+Math.PI /
+180;
 
-const dN=
-leg.dist*Math.cos(radAz);
+const dN =
+leg.dist *
+Math.cos(radAz);
 
-const dE=
-leg.dist*Math.sin(radAz);
+const dE =
+leg.dist *
+Math.sin(radAz);
 
-const targetN=
+const targetN =
 curStN+dN;
 
-const targetE=
+const targetE =
 curStE+dE;
 
-const calcDist=
+const calcDist =
 getDistance(
     curStN,
     curStE,
@@ -2551,7 +2613,7 @@ getDistance(
     targetE
 );
 
-const distDiff=
+const distDiff =
 (calcDist-leg.dist)*1000;
 
 let diffN=null;
@@ -2565,15 +2627,15 @@ if(
     leg.knownE!==null
 ){
 
-diffN=
+diffN =
 (targetN-leg.knownN)*1000;
 
-diffE=
+diffE =
 (targetE-leg.knownE)*1000;
 
-diffDist=
+diffDist =
 Math.sqrt(
-    Math.pow(diffN,2)+
+    Math.pow(diffN,2) +
     Math.pow(diffE,2)
 );
 
@@ -2581,53 +2643,76 @@ Math.sqrt(
 
 results.push({
 
-stationId:curStId,
+stationId:
+curStId,
 
-targetId:leg.id,
+targetId:
+leg.id,
 
-measuredDist:leg.dist,
+measuredDist:
+leg.dist,
 
-calcDist:calcDist,
+calcDist:
+calcDist,
 
-distDiff:distDiff,
+distDiff:
+distDiff,
 
-measuredAngleDeg:angleDeg,
+measuredAngleDeg:
+angleDeg,
 
-backAzimuth:azBS,
+backAzimuth:
+azBS,
 
-azimuth:azimuth,
+azimuth:
+azimuth,
 
-targetN:targetN,
+targetN:
+targetN,
 
-targetE:targetE,
+targetE:
+targetE,
 
-knownN:leg.knownN,
+knownN:
+leg.knownN,
 
-knownE:leg.knownE,
+knownE:
+leg.knownE,
 
-diffN:diffN,
+diffN:
+diffN,
 
-diffE:diffE,
+diffE:
+diffE,
 
-diffDist:diffDist
+diffDist:
+diffDist
 
 });
 
-curStN=targetN;
+curStN =
+targetN;
 
-curStE=targetE;
+curStE =
+targetE;
 
-curStId=leg.id;
+curStId =
+leg.id;
 
-azPrevDeg=azimuth;
+azPrevDeg =
+azimuth;
 
 });
 
 return{
 
-initialBsId:bsId||"BS",
+initialBsId:
+bsId ||
+"BS",
 
-initialStId:stId||"ST",
+initialStId:
+stId ||
+"ST",
 
 bsN:bsN,
 
@@ -2637,7 +2722,8 @@ stN:stN,
 
 stE:stE,
 
-bsToStDist:bsToStDist,
+bsToStDist:
+bsToStDist,
 
 firstCalcDist:
 getDistance(
@@ -2647,7 +2733,8 @@ getDistance(
     stE
 ),
 
-legsCalculated:results
+legsCalculated:
+results
 
 };
 
@@ -2659,24 +2746,47 @@ legsCalculated:results
 
 function buildSummaryTable(data){
 
-summaryTableBody.innerHTML="";
+const section =
+document.getElementById("summarySection");
 
-data.legsCalculated.forEach(
-function(r,index){
+const summaryBody =
+document.querySelector("#summaryTable tbody");
 
-const tr=
+summaryBody.innerHTML="";
+
+data.legsCalculated.forEach(function(r,index){
+
+const row =
 document.createElement("tr");
 
-const dms=
+const dms =
 decimalToDMS(
     r.measuredAngleDeg
 );
 
-const knownExists=
-r.knownN!==null &&
-r.knownE!==null;
+let diffClass="";
 
-tr.innerHTML=`
+if(r.diffDist!==null){
+
+if(r.diffDist<=10){
+
+diffClass="diff-good";
+
+}
+else if(r.diffDist<=30){
+
+diffClass="diff-warning";
+
+}
+else{
+
+diffClass="diff-bad";
+
+}
+
+}
+
+row.innerHTML=`
 
 <td>${index+1}</td>
 
@@ -2688,169 +2798,81 @@ tr.innerHTML=`
 
 <td>${r.calcDist.toFixed(4)}</td>
 
-<td class="${Math.abs(r.distDiff)<1?'good':'bad'}">
-${r.distDiff.toFixed(2)}
+<td>${r.distDiff.toFixed(2)}</td>
+
+<td>
+${dms.d}° ${dms.m}' ${dms.s.toFixed(2)}"
 </td>
 
 <td>${r.backAzimuth.toFixed(6)}</td>
 
 <td>${r.azimuth.toFixed(6)}</td>
 
+<td>${r.targetN.toFixed(4)}</td>
+
+<td>${r.targetE.toFixed(4)}</td>
+
 <td>
-${dms.d}° ${dms.m}' ${dms.s.toFixed(2)}"
+${
+r.knownN!==null
+?
+r.knownN.toFixed(4)
+:
+"-"
+}
 </td>
 
-<td class="calc-cell">
-${r.targetN.toFixed(4)}
+<td>
+${
+r.knownE!==null
+?
+r.knownE.toFixed(4)
+:
+"-"
+}
 </td>
 
-<td class="calc-cell">
-${r.targetE.toFixed(4)}
+<td class="${diffClass}">
+${
+r.diffN!==null
+?
+r.diffN.toFixed(2)
+:
+"-"
+}
 </td>
 
-<td class="${knownExists?'known-cell':''}">
-${knownExists?r.knownN.toFixed(4):"-"}
+<td class="${diffClass}">
+${
+r.diffE!==null
+?
+r.diffE.toFixed(2)
+:
+"-"
+}
 </td>
 
-<td class="${knownExists?'known-cell':''}">
-${knownExists?r.knownE.toFixed(4):"-"}
-</td>
-
-<td class="${knownExists?'diff-cell':''}">
-${knownExists?r.diffN.toFixed(2):"-"}
-</td>
-
-<td class="${knownExists?'diff-cell':''}">
-${knownExists?r.diffE.toFixed(2):"-"}
-</td>
-
-<td class="${knownExists?'diff-cell':''}">
-${knownExists?r.diffDist.toFixed(2):"-"}
+<td class="${diffClass}">
+${
+r.diffDist!==null
+?
+r.diffDist.toFixed(2)
+:
+"-"
+}
 </td>
 
 `;
 
-summaryTableBody.appendChild(tr);
+summaryBody.appendChild(row);
 
 });
 
-summaryStatus.textContent=
-"共 "+data.legsCalculated.length+" 站";
+document.getElementById("summaryCount")
+.textContent =
+data.legsCalculated.length+" 筆";
 
-}
-
-/* =====================================================
-   結果
-===================================================== */
-
-function buildResultText(data){
-
-let text=
-"========================================\n"+
-"       平面控制點檢測成果表\n"+
-"========================================\n\n";
-
-text+=
-`後視點：${data.initialBsId}\n`;
-
-text+=
-`N：${data.bsN.toFixed(4)}\n`;
-
-text+=
-`E：${data.bsE.toFixed(4)}\n\n`;
-
-text+=
-`設站點：${data.initialStId}\n`;
-
-text+=
-`N：${data.stN.toFixed(4)}\n`;
-
-text+=
-`E：${data.stE.toFixed(4)}\n\n`;
-
-text+=
-`後視→設站計算距離：${data.firstCalcDist.toFixed(4)} m\n`;
-
-text+=
-`後視→設站實測邊長：`;
-
-text+=
-isNaN(data.bsToStDist)
-?
-"-"
-:
-data.bsToStDist+" m";
-
-text+="\n\n";
-
-data.legsCalculated.forEach(
-function(r,index){
-
-const dms=
-decimalToDMS(
-    r.measuredAngleDeg
-);
-
-text+=
-`第 ${index+1} 站\n`;
-
-text+=
-`測站：${r.stationId}\n`;
-
-text+=
-`目標點：${r.targetId}\n`;
-
-text+=
-`實測邊長：${r.measuredDist.toFixed(4)} m\n`;
-
-text+=
-`反算邊長：${r.calcDist.toFixed(4)} m\n`;
-
-text+=
-`距離較差：${r.distDiff.toFixed(2)} mm\n`;
-
-text+=
-`實測夾角：${dms.d}° ${dms.m}' ${dms.s.toFixed(2)}"\n`;
-
-text+=
-`後視方位角：${r.backAzimuth.toFixed(6)}°\n`;
-
-text+=
-`計算方位角：${r.azimuth.toFixed(6)}°\n`;
-
-text+=
-`計算 N：${r.targetN.toFixed(4)}\n`;
-
-text+=
-`計算 E：${r.targetE.toFixed(4)}\n`;
-
-if(
-    r.knownN!==null
-){
-
-text+=
-`已知 N：${r.knownN.toFixed(4)}\n`;
-
-text+=
-`已知 E：${r.knownE.toFixed(4)}\n`;
-
-text+=
-`ΔN：${r.diffN.toFixed(2)} mm\n`;
-
-text+=
-`ΔE：${r.diffE.toFixed(2)} mm\n`;
-
-text+=
-`平面座標較差：${r.diffDist.toFixed(2)} mm\n`;
-
-}
-
-text+=
-"----------------------------------------\n";
-
-});
-
-return text;
+section.style.display="block";
 
 }
 
@@ -2858,25 +2880,129 @@ return text;
    計算按鈕
 ===================================================== */
 
-calculateBtn.addEventListener(
-"click",
-function(){
+calculateBtn.addEventListener("click",function(){
 
-saveKnownDatabase();
-
-saveTraverseData();
-
-const data=
+const data =
 runCalculation();
 
 if(!data)return;
 
+let text =
+"========================================\n";
+
+text +=
+"     平面控制點檢測成果表\n";
+
+text +=
+"========================================\n\n";
+
+text +=
+`後視點：${data.initialBsId}\n`;
+
+text +=
+`N：${data.bsN.toFixed(4)}\n`;
+
+text +=
+`E：${data.bsE.toFixed(4)}\n\n`;
+
+text +=
+`設站點：${data.initialStId}\n`;
+
+text +=
+`N：${data.stN.toFixed(4)}\n`;
+
+text +=
+`E：${data.stE.toFixed(4)}\n\n`;
+
+text +=
+`後視→設站計算距離：${data.firstCalcDist.toFixed(4)} m\n`;
+
+text +=
+`後視→設站實測邊長：`;
+
+text +=
+isNaN(data.bsToStDist)
+?
+"-"
+:
+data.bsToStDist+" m";
+
+text += "\n\n";
+
+data.legsCalculated.forEach(function(r,index){
+
+const dms =
+decimalToDMS(
+    r.measuredAngleDeg
+);
+
+text +=
+`第 ${index+1} 站\n`;
+
+text +=
+`測站：${r.stationId}\n`;
+
+text +=
+`目標點：${r.targetId}\n`;
+
+text +=
+`實測邊長：${r.measuredDist.toFixed(4)} m\n`;
+
+text +=
+`反算邊長：${r.calcDist.toFixed(4)} m\n`;
+
+text +=
+`距離較差：${r.distDiff.toFixed(2)} mm\n`;
+
+text +=
+`實測夾角：`;
+
+text +=
+`${dms.d}° ${dms.m}' ${dms.s.toFixed(2)}"\n`;
+
+text +=
+`後視方位角：${r.backAzimuth.toFixed(6)}°\n`;
+
+text +=
+`計算方位角：${r.azimuth.toFixed(6)}°\n`;
+
+text +=
+`計算 N：${r.targetN.toFixed(4)}\n`;
+
+text +=
+`計算 E：${r.targetE.toFixed(4)}\n`;
+
+if(r.knownN!==null){
+
+text +=
+`已知 N：${r.knownN.toFixed(4)}\n`;
+
+text +=
+`已知 E：${r.knownE.toFixed(4)}\n`;
+
+text +=
+`ΔN：${r.diffN.toFixed(2)} mm\n`;
+
+text +=
+`ΔE：${r.diffE.toFixed(2)} mm\n`;
+
+text +=
+`平面座標較差：${r.diffDist.toFixed(2)} mm\n`;
+
+}
+
+text +=
+"----------------------------------------\n";
+
+});
+
+resultArea.textContent =
+text;
+
+resultArea.style.display =
+"block";
+
 buildSummaryTable(data);
-
-resultArea.textContent=
-buildResultText(data);
-
-resultArea.style.display="block";
 
 buildMapData(data);
 
@@ -2884,25 +3010,21 @@ fitMap();
 
 drawMap();
 
-document
-.getElementById("summarySection")
-.scrollIntoView({
+resultArea.scrollIntoView({
     behavior:"smooth"
 });
 
 });
 
 /* =====================================================
-   地圖資料
+   建立地圖資料
 ===================================================== */
 
 function buildMapData(data){
 
 const points=[];
 
-/* ==============================================
-   起算點
-============================================== */
+/* 起算點 */
 
 points.push({
 
@@ -2916,13 +3038,7 @@ e:data.bsE,
 
 knownN:null,
 
-knownE:null,
-
-diffN:null,
-
-diffE:null,
-
-diffDist:null
+knownE:null
 
 });
 
@@ -2938,22 +3054,13 @@ e:data.stE,
 
 knownN:null,
 
-knownE:null,
-
-diffN:null,
-
-diffE:null,
-
-diffDist:null
+knownE:null
 
 });
 
-/* ==============================================
-   計算點
-============================================== */
+/* 計算點 */
 
-data.legsCalculated.forEach(
-function(r){
+data.legsCalculated.forEach(function(r){
 
 points.push({
 
@@ -2979,21 +3086,30 @@ diffDist:r.diffDist
 
 });
 
+/*
+   ★ 重要：
+   另外完整保存「🟣 已知點座標段」的原始順序
+*/
+
+const knownOrdered =
+getKnownPointsOrdered();
+
 mapData={
 
 points:points,
+
+knownOrdered:knownOrdered,
 
 data:data
 
 };
 
-document
-.getElementById("mapPointCount")
-.textContent=
-points.length+" 個計算/起算點";
+document.getElementById("mapPointCount")
+.textContent =
+points.length+" 個點";
 
-mapInfo.textContent=
-"拖曳平移・滾輪縮放・點擊點位查看資料";
+mapInfo.textContent =
+"可拖曳平移・滾輪縮放・點擊點位查看資料";
 
 }
 
@@ -3003,23 +3119,17 @@ mapInfo.textContent=
 
 function resizeCanvas(){
 
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
-const ratio=
-window.devicePixelRatio||1;
+const ratio =
+window.devicePixelRatio || 1;
 
-canvas.width=
-Math.max(
-    1,
-    rect.width*ratio
-);
+canvas.width =
+Math.max(1,rect.width*ratio);
 
-canvas.height=
-Math.max(
-    1,
-    rect.height*ratio
-);
+canvas.height =
+Math.max(1,rect.height*ratio);
 
 ctx.setTransform(
     ratio,
@@ -3048,32 +3158,28 @@ function fitMap(){
 if(
     !mapData ||
     !mapData.points.length
-){
+)return;
 
-return;
-
-}
-
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
-const width=rect.width;
+const width =
+rect.width;
 
-const height=rect.height;
+const height =
+rect.height;
 
-const ns=[];
+const ns =
+mapData.points.map(p=>p.n);
 
-const es=[];
+const es =
+mapData.points.map(p=>p.e);
 
 /*
-   計算座標
+   計算座標 + 對應已知座標
 */
 
-mapData.points.forEach(
-function(p){
-
-ns.push(p.n);
-es.push(p.e);
+mapData.points.forEach(function(p){
 
 if(
     p.knownN!==null &&
@@ -3089,22 +3195,43 @@ es.push(p.knownE);
 });
 
 /*
-   沒有資料
+   ★ 同時把
+   🟣 已知點座標段
+   全部納入 Fit
 */
 
-if(!ns.length)return;
+if(
+    mapData.knownOrdered &&
+    mapData.knownOrdered.length
+){
 
-let minN=Math.min(...ns);
+mapData.knownOrdered.forEach(function(p){
 
-let maxN=Math.max(...ns);
+ns.push(p.n);
 
-let minE=Math.min(...es);
+es.push(p.e);
 
-let maxE=Math.max(...es);
+});
 
-let rangeN=maxN-minN;
+}
 
-let rangeE=maxE-minE;
+let minN =
+Math.min(...ns);
+
+let maxN =
+Math.max(...ns);
+
+let minE =
+Math.min(...es);
+
+let maxE =
+Math.max(...es);
+
+let rangeN =
+maxN-minN;
+
+let rangeE =
+maxE-minE;
 
 if(rangeN===0)
 rangeN=10;
@@ -3114,31 +3241,30 @@ rangeE=10;
 
 const margin=80;
 
-const scaleX=
-(width-margin*2)/rangeE;
+const scaleX =
+(width-margin*2)/
+rangeE;
 
-const scaleY=
-(height-margin*2)/rangeN;
+const scaleY =
+(height-margin*2)/
+rangeN;
 
-mapScale=
+mapScale =
 Math.min(
     scaleX,
     scaleY
 );
 
-mapScale=
+mapScale =
 Math.max(
     0.05,
-    Math.min(
-        100000,
-        mapScale
-    )
+    Math.min(100000,mapScale)
 );
 
-viewCenterE=
+viewCenterE =
 (minE+maxE)/2;
 
-viewCenterN=
+viewCenterN =
 (minN+maxN)/2;
 
 mapOffsetX=0;
@@ -3157,21 +3283,25 @@ drawMap();
 
 function worldToScreen(n,e){
 
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
 return{
 
 x:
-rect.width/2+
+rect.width/2
++
 (e-viewCenterE)*
-mapScale+
+mapScale
++
 mapOffsetX,
 
 y:
-rect.height/2-
+rect.height/2
+-
 (n-viewCenterN)*
-mapScale+
+mapScale
++
 mapOffsetY
 
 };
@@ -3184,27 +3314,21 @@ mapOffsetY
 
 function screenToWorld(x,y){
 
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
 return{
 
 e:
-viewCenterE+
-(
-    x-
-    rect.width/2-
-    mapOffsetX
-)/
+viewCenterE
++
+(x-rect.width/2-mapOffsetX)/
 mapScale,
 
 n:
-viewCenterN-
-(
-    y-
-    rect.height/2-
-    mapOffsetY
-)/
+viewCenterN
+-
+(y-rect.height/2-mapOffsetY)/
 mapScale
 
 };
@@ -3212,19 +3336,21 @@ mapScale
 }
 
 /* =====================================================
-   地圖
+   繪圖
 ===================================================== */
 
 function drawMap(){
 
 if(!canvas)return;
 
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
-const width=rect.width;
+const width =
+rect.width;
 
-const height=rect.height;
+const height =
+rect.height;
 
 ctx.clearRect(
     0,
@@ -3233,7 +3359,8 @@ ctx.clearRect(
     height
 );
 
-ctx.fillStyle="#fff";
+ctx.fillStyle =
+"#ffffff";
 
 ctx.fillRect(
     0,
@@ -3247,11 +3374,14 @@ if(
     !mapData.points.length
 ){
 
-ctx.fillStyle="#64748b";
+ctx.fillStyle =
+"#64748b";
 
-ctx.font="16px Arial";
+ctx.font =
+"16px Arial";
 
-ctx.textAlign="center";
+ctx.textAlign =
+"center";
 
 ctx.fillText(
     "請先按「開始計算」",
@@ -3273,13 +3403,8 @@ drawAxes(
     height
 );
 
-/*
-   ① 導線
-*/
-
 if(
-    document
-    .getElementById("showTraverse")
+    document.getElementById("showTraverse")
     .checked
 ){
 
@@ -3287,27 +3412,22 @@ drawTraverse();
 
 }
 
-/*
-   ② 已知對應點座標線段
-*/
+/* =================================================
+   🟢 已知對應點座標線段
+   完全依照「🟣 已知點座標段」順序
+================================================= */
 
 if(
-    document
-    .getElementById("showCorrespondingKnown")
+    document.getElementById("showKnownCorresponding")
     .checked
 ){
 
-drawCorrespondingKnownLines();
+drawKnownCorrespondingLines();
 
 }
 
-/*
-   ③ 座標較差
-*/
-
 if(
-    document
-    .getElementById("showDifference")
+    document.getElementById("showDifference")
     .checked
 ){
 
@@ -3315,17 +3435,11 @@ drawDifferences();
 
 }
 
-/*
-   ④ 點
-*/
-
-mapData.points.forEach(
-function(point){
+mapData.points.forEach(function(point){
 
 if(
     point.type==="start" &&
-    document
-    .getElementById("showStart")
+    document.getElementById("showStart")
     .checked
 ){
 
@@ -3336,10 +3450,12 @@ drawPoint(
 
 }
 
+else if(
+    point.type==="calculated"
+){
+
 if(
-    point.type==="calculated" &&
-    document
-    .getElementById("showCalculated")
+    document.getElementById("showCalculated")
     .checked
 ){
 
@@ -3351,11 +3467,9 @@ drawPoint(
 }
 
 if(
-    point.type==="calculated" &&
     point.knownN!==null &&
     point.knownE!==null &&
-    document
-    .getElementById("showKnown")
+    document.getElementById("showKnown")
     .checked
 ){
 
@@ -3363,7 +3477,41 @@ drawKnownPoint(point);
 
 }
 
+}
+
 });
+
+/*
+   ★ 額外把資料庫中的已知點畫出來
+   讓沒有對應計算點的已知座標也可以看見
+*/
+
+if(
+    document.getElementById("showKnown")
+    .checked &&
+    mapData.knownOrdered
+){
+
+const calculatedKnownIds =
+new Set(
+    mapData.points
+    .filter(p=>
+        p.type==="calculated" &&
+        p.knownN!==null
+    )
+    .map(p=>p.id)
+);
+
+mapData.knownOrdered.forEach(function(k){
+
+if(calculatedKnownIds.has(k.id))
+return;
+
+drawStandaloneKnownPoint(k);
+
+});
+
+}
 
 }
 
@@ -3375,7 +3523,8 @@ function drawGrid(width,height){
 
 ctx.save();
 
-ctx.strokeStyle="#e2e8f0";
+ctx.strokeStyle =
+"#e2e8f0";
 
 ctx.lineWidth=1;
 
@@ -3418,22 +3567,23 @@ ctx.restore();
 }
 
 /* =====================================================
-   軸
+   中心十字軸
 ===================================================== */
 
 function drawAxes(width,height){
 
 ctx.save();
 
-const centerX=
+const centerX =
 width/2+
 mapOffsetX;
 
-const centerY=
+const centerY =
 height/2+
 mapOffsetY;
 
-ctx.strokeStyle="#94a3b8";
+ctx.strokeStyle =
+"#94a3b8";
 
 ctx.lineWidth=1;
 
@@ -3441,37 +3591,27 @@ ctx.setLineDash([5,5]);
 
 ctx.beginPath();
 
-ctx.moveTo(
-    centerX,
-    0
-);
+ctx.moveTo(centerX,0);
 
-ctx.lineTo(
-    centerX,
-    height
-);
+ctx.lineTo(centerX,height);
 
 ctx.stroke();
 
 ctx.beginPath();
 
-ctx.moveTo(
-    0,
-    centerY
-);
+ctx.moveTo(0,centerY);
 
-ctx.lineTo(
-    width,
-    centerY
-);
+ctx.lineTo(width,centerY);
 
 ctx.stroke();
 
 ctx.setLineDash([]);
 
-ctx.fillStyle="#64748b";
+ctx.fillStyle =
+"#64748b";
 
-ctx.font="11px Arial";
+ctx.font =
+"11px Arial";
 
 ctx.fillText(
     "N ↑",
@@ -3490,28 +3630,28 @@ ctx.restore();
 }
 
 /* =====================================================
-   導線線段
+   導線
 ===================================================== */
 
 function drawTraverse(){
 
-const points=
+const points =
 mapData.points;
 
 if(points.length<2)return;
 
 ctx.save();
 
-ctx.strokeStyle="#334155";
+ctx.strokeStyle =
+"#334155";
 
 ctx.lineWidth=2;
 
 ctx.beginPath();
 
-points.forEach(
-function(p,index){
+points.forEach(function(p,index){
 
-const pos=
+const pos =
 worldToScreen(
     p.n,
     p.e
@@ -3543,95 +3683,47 @@ ctx.restore();
 }
 
 /* =====================================================
-   ⭐ 已知對應點座標線段
+   🟢 已知對應點座標線段
+   ★ 完全依照
+   ★「🟣 已知點座標段」資料庫順序
 ===================================================== */
 
-/*
-   重要：
-
-   不使用 known database 的排列順序。
-
-   使用 mapData.points 的排列順序。
-
-   mapData.points 本身就是：
-
-   後視
-   ↓
-   設站
-   ↓
-   導線目標1
-   ↓
-   導線目標2
-   ↓
-   導線目標3
-   ...
-
-   只有具有 knownN / knownE 的點才進入線段。
-
-   例如：
-
-   導線：
-   A → B → C → D → E
-
-   已知資料庫：
-   C
-   E
-   A
-   D
-
-   實際已知對應線：
-
-   A → C → D → E
-
-   B 因沒有已知座標所以跳過。
-*/
-
-function drawCorrespondingKnownLines(){
+function drawKnownCorrespondingLines(){
 
 if(
     !mapData ||
-    !mapData.points
+    !mapData.knownOrdered ||
+    mapData.knownOrdered.length<2
 ){
 
 return;
 
 }
 
-const knownPoints=
-mapData.points.filter(
-function(p){
-
-return(
-    p.type==="calculated" &&
-    p.knownN!==null &&
-    p.knownE!==null
-);
-
-});
-
-/*
-   至少兩個已知對應點才畫線
-*/
-
-if(knownPoints.length<2)return;
+const knownPoints =
+mapData.knownOrdered;
 
 ctx.save();
 
-ctx.strokeStyle="#16a34a";
+ctx.strokeStyle =
+"#16a34a";
 
-ctx.lineWidth=4;
+ctx.lineWidth=3;
+
+/*
+   使用實線
+*/
 
 ctx.setLineDash([]);
 
 ctx.beginPath();
 
-knownPoints.forEach(
-function(point,index){
+knownPoints.forEach(function(p,index){
 
-const pos=
+const pos =
 worldToScreen(
-    point.knownN,
-    point.knownE
+    p.n,
+    p.e
 );
 
 if(index===0){
@@ -3665,25 +3757,20 @@ ctx.restore();
 
 function drawDifferences(){
 
-mapData.points.forEach(
-function(p){
+mapData.points.forEach(function(p){
 
 if(
     p.knownN===null ||
     p.knownE===null
-){
+)return;
 
-return;
-
-}
-
-const calc=
+const calc =
 worldToScreen(
     p.n,
     p.e
 );
 
-const known=
+const known =
 worldToScreen(
     p.knownN,
     p.knownE
@@ -3691,7 +3778,8 @@ worldToScreen(
 
 ctx.save();
 
-ctx.strokeStyle="#f97316";
+ctx.strokeStyle =
+"#f97316";
 
 ctx.lineWidth=3;
 
@@ -3726,12 +3814,9 @@ ctx.restore();
    計算點
 ===================================================== */
 
-function drawPoint(
-    point,
-    type
-){
+function drawPoint(point,type){
 
-const pos=
+const pos =
 worldToScreen(
     point.n,
     point.e
@@ -3749,33 +3834,41 @@ ctx.arc(
     Math.PI*2
 );
 
-ctx.fillStyle=
-type==="start"
-?
-"#2563eb"
-:
+if(type==="start"){
+
+ctx.fillStyle =
+"#2563eb";
+
+}
+else{
+
+ctx.fillStyle =
 "#dc2626";
+
+}
 
 ctx.fill();
 
-ctx.strokeStyle="#fff";
+ctx.strokeStyle =
+"#ffffff";
 
 ctx.lineWidth=2;
 
 ctx.stroke();
 
 if(
-    document
-    .getElementById("showLabels")
+    document.getElementById("showLabels")
     .checked
 ){
 
-ctx.fillStyle="#0f172a";
+ctx.fillStyle =
+"#0f172a";
 
-ctx.font=
+ctx.font =
 "bold 13px Arial";
 
-ctx.textAlign="left";
+ctx.textAlign =
+"left";
 
 ctx.fillText(
     point.id,
@@ -3790,12 +3883,12 @@ ctx.restore();
 }
 
 /* =====================================================
-   已知點
+   已知對應點
 ===================================================== */
 
 function drawKnownPoint(point){
 
-const pos=
+const pos =
 worldToScreen(
     point.knownN,
     point.knownE
@@ -3813,31 +3906,96 @@ ctx.arc(
     Math.PI*2
 );
 
-ctx.fillStyle="#16a34a";
+ctx.fillStyle =
+"#16a34a";
 
 ctx.fill();
 
-ctx.strokeStyle="#fff";
+ctx.strokeStyle =
+"#ffffff";
 
 ctx.lineWidth=2;
 
 ctx.stroke();
 
 if(
-    document
-    .getElementById("showLabels")
+    document.getElementById("showLabels")
     .checked
 ){
 
-ctx.fillStyle="#166534";
+ctx.fillStyle =
+"#166534";
 
-ctx.font=
+ctx.font =
 "12px Arial";
 
-ctx.textAlign="left";
+ctx.textAlign =
+"left";
 
 ctx.fillText(
     point.id+" 已知",
+    pos.x+9,
+    pos.y+13
+);
+
+}
+
+ctx.restore();
+
+}
+
+/* =====================================================
+   資料庫中未對應的已知點
+===================================================== */
+
+function drawStandaloneKnownPoint(point){
+
+const pos =
+worldToScreen(
+    point.n,
+    point.e
+);
+
+ctx.save();
+
+ctx.beginPath();
+
+ctx.arc(
+    pos.x,
+    pos.y,
+    6,
+    0,
+    Math.PI*2
+);
+
+ctx.fillStyle =
+"#16a34a";
+
+ctx.fill();
+
+ctx.strokeStyle =
+"#ffffff";
+
+ctx.lineWidth=2;
+
+ctx.stroke();
+
+if(
+    document.getElementById("showLabels")
+    .checked
+){
+
+ctx.fillStyle =
+"#166534";
+
+ctx.font =
+"12px Arial";
+
+ctx.textAlign =
+"left";
+
+ctx.fillText(
+    point.id,
     pos.x+9,
     pos.y+13
 );
@@ -3854,10 +4012,11 @@ ctx.restore();
 
 function updateZoomText(){
 
-zoomValue.textContent=
+zoomValue.textContent =
 Math.round(
     mapScale*100
-)+"%";
+)+
+"%";
 
 }
 
@@ -3869,34 +4028,31 @@ function zoomAt(
 
 if(!mapData)return;
 
-const before=
+const before =
 screenToWorld(
     screenX,
     screenY
 );
 
-mapScale*=factor;
+mapScale *= factor;
 
-mapScale=
+mapScale =
 Math.max(
     0.05,
-    Math.min(
-        100000,
-        mapScale
-    )
+    Math.min(100000,mapScale)
 );
 
-const after=
+const after =
 screenToWorld(
     screenX,
     screenY
 );
 
-mapOffsetX+=
+mapOffsetX +=
 (after.e-before.e)*
 mapScale;
 
-mapOffsetY-=
+mapOffsetY -=
 (after.n-before.n)*
 mapScale;
 
@@ -3906,13 +4062,10 @@ drawMap();
 
 }
 
-document
-.getElementById("zoomInBtn")
-.addEventListener(
-"click",
-function(){
+document.getElementById("zoomInBtn")
+.addEventListener("click",function(){
 
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
 zoomAt(
@@ -3923,13 +4076,10 @@ zoomAt(
 
 });
 
-document
-.getElementById("zoomOutBtn")
-.addEventListener(
-"click",
-function(){
+document.getElementById("zoomOutBtn")
+.addEventListener("click",function(){
 
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
 zoomAt(
@@ -3940,11 +4090,8 @@ zoomAt(
 
 });
 
-document
-.getElementById("zoomResetBtn")
-.addEventListener(
-"click",
-function(){
+document.getElementById("zoomResetBtn")
+.addEventListener("click",function(){
 
 mapScale=1;
 
@@ -3958,18 +4105,15 @@ drawMap();
 
 });
 
-document
-.getElementById("zoomFitBtn")
-.addEventListener(
-"click",
-function(){
+document.getElementById("zoomFitBtn")
+.addEventListener("click",function(){
 
 fitMap();
 
 });
 
 /* =====================================================
-   滾輪
+   滾輪縮放
 ===================================================== */
 
 canvas.addEventListener(
@@ -3978,14 +4122,16 @@ function(e){
 
 e.preventDefault();
 
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
-const mx=
-e.clientX-rect.left;
+const mx =
+e.clientX-
+rect.left;
 
-const my=
-e.clientY-rect.top;
+const my =
+e.clientY-
+rect.top;
 
 if(e.deltaY<0){
 
@@ -4013,7 +4159,7 @@ zoomAt(
 );
 
 /* =====================================================
-   拖曳
+   滑鼠拖曳
 ===================================================== */
 
 canvas.addEventListener(
@@ -4024,15 +4170,20 @@ dragging=true;
 
 canvas.classList.add("dragging");
 
-dragStartX=e.clientX;
+dragStartX =
+e.clientX;
 
-dragStartY=e.clientY;
+dragStartY =
+e.clientY;
 
-originalOffsetX=mapOffsetX;
+originalOffsetX =
+mapOffsetX;
 
-originalOffsetY=mapOffsetY;
+originalOffsetY =
+mapOffsetY;
 
-});
+}
+);
 
 window.addEventListener(
 "mouseup",
@@ -4042,7 +4193,8 @@ dragging=false;
 
 canvas.classList.remove("dragging");
 
-});
+}
+);
 
 window.addEventListener(
 "mousemove",
@@ -4050,24 +4202,28 @@ function(e){
 
 if(!dragging)return;
 
-const dx=
-e.clientX-dragStartX;
+const dx =
+e.clientX-
+dragStartX;
 
-const dy=
-e.clientY-dragStartY;
+const dy =
+e.clientY-
+dragStartY;
 
-mapOffsetX=
-originalOffsetX+dx;
+mapOffsetX =
+originalOffsetX+
+dx;
 
-mapOffsetY=
-originalOffsetY+dy;
+mapOffsetY =
+originalOffsetY+
+dy;
 
 drawMap();
 
 });
 
 /* =====================================================
-   Tooltip
+   點擊 / Tooltip
 ===================================================== */
 
 canvas.addEventListener(
@@ -4078,45 +4234,91 @@ if(dragging)return;
 
 if(!mapData)return;
 
-const rect=
+const rect =
 canvas.getBoundingClientRect();
 
-const mx=
-e.clientX-rect.left;
+const mx =
+e.clientX-
+rect.left;
 
-const my=
-e.clientY-rect.top;
+const my =
+e.clientY-
+rect.top;
 
 let found=null;
 
-mapData.points.forEach(
-function(p){
+mapData.points.forEach(function(p){
 
-const pos=
+const pos =
 worldToScreen(
     p.n,
     p.e
 );
 
-const distance=
+const dist =
 Math.sqrt(
-    Math.pow(
-        mx-pos.x,
-        2
-    )+
-    Math.pow(
-        my-pos.y,
-        2
-    )
+    Math.pow(mx-pos.x,2)+
+    Math.pow(my-pos.y,2)
 );
 
-if(distance<14){
+if(dist<14){
 
 found=p;
 
 }
 
 });
+
+/*
+   如果不是計算/起算點，
+   再尋找資料庫中的獨立已知點
+*/
+
+if(!found && mapData.knownOrdered){
+
+mapData.knownOrdered.forEach(function(p){
+
+const pos =
+worldToScreen(
+    p.n,
+    p.e
+);
+
+const dist =
+Math.sqrt(
+    Math.pow(mx-pos.x,2)+
+    Math.pow(my-pos.y,2)
+);
+
+if(dist<14){
+
+found={
+
+id:p.id,
+
+n:p.n,
+
+e:p.e,
+
+type:"known-only",
+
+knownN:p.n,
+
+knownE:p.e,
+
+diffN:null,
+
+diffE:null,
+
+diffDist:null
+
+};
+
+}
+
+});
+
+}
 
 if(!found){
 
@@ -4126,64 +4328,84 @@ return;
 
 }
 
-let html=
+let html =
 "<strong>"+
 escapeHtml(found.id)+
 "</strong><br>";
 
-html+=
-"計算 N："+
-found.n.toFixed(4)+
+html +=
+"計算 N："+found.n.toFixed(4)+
 "<br>";
 
-html+=
-"計算 E："+
-found.e.toFixed(4)+
+html +=
+"計算 E："+found.e.toFixed(4)+
 "<br>";
 
-if(found.knownN!==null){
+if(
+    found.knownN!==null &&
+    found.knownN!==undefined &&
+    found.diffN!==null
+){
 
-html+=
+html +=
 "<hr style='border-color:#475569'>";
 
-html+=
-"已知 N："+
-found.knownN.toFixed(4)+
+html +=
+"已知 N："+found.knownN.toFixed(4)+
 "<br>";
 
-html+=
-"已知 E："+
-found.knownE.toFixed(4)+
+html +=
+"已知 E："+found.knownE.toFixed(4)+
 "<br>";
 
-html+=
-"ΔN："+
-found.diffN.toFixed(2)+
+html +=
+"ΔN："+found.diffN.toFixed(2)+
 " mm<br>";
 
-html+=
-"ΔE："+
-found.diffE.toFixed(2)+
+html +=
+"ΔE："+found.diffE.toFixed(2)+
 " mm<br>";
 
-html+=
-"平面較差："+
-found.diffDist.toFixed(2)+
+html +=
+"平面較差："+found.diffDist.toFixed(2)+
 " mm";
 
 }
+else if(found.type==="known-only"){
 
-tooltip.innerHTML=html;
+html +=
+"<hr style='border-color:#475569'>";
 
-tooltip.style.display="block";
+html +=
+"資料庫已知點<br>";
 
-tooltip.style.left=
+html +=
+"N："+found.knownN.toFixed(4)+
+"<br>";
+
+html +=
+"E："+found.knownE.toFixed(4);
+
+}
+
+tooltip.innerHTML =
+html;
+
+tooltip.style.display =
+"block";
+
+tooltip.style.left =
 (mx+15)+"px";
 
-tooltip.style.top=
+tooltip.style.top =
 (my+15)+"px";
 
-});
+}
+);
+
+/* =====================================================
+   點擊隱藏 Tooltip
+===================================================== */
 
 canvas.addEventListener(
 "mouseleave",
@@ -4198,18 +4420,17 @@ tooltip.style.display="none";
 ===================================================== */
 
 [
-    "showStart",
-    "showKnown",
-    "showCalculated",
-    "showLabels",
-    "showTraverse",
-    "showCorrespondingKnown",
-    "showDifference"
+"showStart",
+"showKnown",
+"showCalculated",
+"showLabels",
+"showTraverse",
+"showKnownCorresponding",
+"showDifference"
 ]
 .forEach(function(id){
 
-document
-.getElementById(id)
+document.getElementById(id)
 .addEventListener(
     "change",
     drawMap
@@ -4218,7 +4439,7 @@ document
 });
 
 /* =====================================================
-   新增已知點
+   已知點按鈕
 ===================================================== */
 
 addKnownRowBtn.addEventListener(
@@ -4227,13 +4448,23 @@ function(){
 
 addKnownRow();
 
-saveKnownDatabase();
+saveData();
+
+if(mapData){
+
+mapData.knownOrdered =
+getKnownPointsOrdered();
+
+fitMap();
+
+drawMap();
 
 }
-);
+
+});
 
 /* =====================================================
-   新增導線
+   導線按鈕
 ===================================================== */
 
 addRowBtn.addEventListener(
@@ -4242,10 +4473,9 @@ function(){
 
 addRow();
 
-saveTraverseData();
+saveData();
 
-}
-);
+});
 
 /* =====================================================
    清空
@@ -4257,8 +4487,7 @@ function(){
 
 if(
     !confirm(
-        "確定要清空導線計算資料嗎？\n\n"+
-        "注意：🟣 已知點座標資料庫不會被刪除。"
+        "確定要清空全部資料嗎？"
     )
 ){
 
@@ -4266,35 +4495,34 @@ return;
 
 }
 
-/*
-   只清除導線及起算資料。
-   不刪除已知點資料庫。
-*/
-
 [
-    "bsId",
-    "stId",
-    "bsN",
-    "bsE",
-    "stN",
-    "stE",
-    "bsToStDist"
+"bsId",
+"stId",
+"bsN",
+"bsE",
+"stN",
+"stE",
+"bsToStDist"
 ]
 .forEach(function(id){
 
-document.getElementById(id).value="";
+document.getElementById(id)
+.value="";
 
 });
 
+knownTbody.innerHTML="";
+
 tbody.innerHTML="";
+
+addKnownRow();
 
 addRow();
 
-summaryTableBody.innerHTML="";
-
-summaryStatus.textContent="尚未計算";
-
 resultArea.style.display="none";
+
+document.getElementById("summarySection")
+.style.display="none";
 
 mapData=null;
 
@@ -4306,21 +4534,19 @@ mapOffsetY=0;
 
 drawMap();
 
-saveTraverseData();
-
-updateKnownStatus();
+saveData();
 
 });
 
 /* =====================================================
-   Excel 匯出
+   匯出 Excel
 ===================================================== */
 
 exportExcelBtn.addEventListener(
 "click",
 function(){
 
-const data=
+const data =
 runCalculation();
 
 if(!data)return;
@@ -4376,20 +4602,35 @@ excelRows.push([
 excelRows.push([
 
 data.initialBsId,
+
 data.bsN,
+
 data.bsE,
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 data.bsN,
+
 data.bsE
 
 ]);
@@ -4397,24 +4638,39 @@ data.bsE
 excelRows.push([
 
 data.initialStId,
+
 data.stN,
+
 data.stE,
+
 data.firstCalcDist,
+
 isNaN(data.bsToStDist)
 ?
 "-"
 :
 data.bsToStDist,
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 "-",
+
 data.stN,
+
 data.stE
 
 ]);
@@ -4422,7 +4678,7 @@ data.stE
 data.legsCalculated.forEach(
 function(r){
 
-const dms=
+const dms =
 decimalToDMS(
     r.measuredAngleDeg
 );
@@ -4485,9 +4741,7 @@ r.targetE
 
 });
 
-/* ==============================================
-   已知點資料庫
-============================================== */
+/* 已知點座標段 */
 
 excelRows.push([]);
 
@@ -4501,78 +4755,33 @@ excelRows.push([
     "E"
 ]);
 
+/*
+   保持資料庫原始順序匯出
+*/
+
 knownTbody
 .querySelectorAll("tr")
 .forEach(function(row){
 
 excelRows.push([
 
-row.querySelector(".known-id").value,
+row.querySelector(".known-id")
+.value,
 
-row.querySelector(".known-n").value,
+row.querySelector(".known-n")
+.value,
 
-row.querySelector(".known-e").value
+row.querySelector(".known-e")
+.value
 
 ]);
 
 });
 
-/* ==============================================
-   已知對應點座標線段說明
-============================================== */
-
-excelRows.push([]);
-
-excelRows.push([
-    "🟢 已知對應點座標線段"
-]);
-
-excelRows.push([
-    "連線規則",
-    "依導線前瞻點序列尋找對應已知點後連線"
-]);
-
-const corresponding=[];
-
-data.legsCalculated.forEach(
-function(r){
-
-if(
-    r.knownN!==null &&
-    r.knownE!==null
-){
-
-corresponding.push([
-    r.targetId,
-    r.knownN,
-    r.knownE
-]);
-
-}
-
-});
-
-excelRows.push([
-    "點號",
-    "N",
-    "E"
-]);
-
-corresponding.forEach(
-function(row){
-
-excelRows.push(row);
-
-});
-
-/* ==============================================
-   Workbook
-============================================== */
-
-const workbook=
+const workbook =
 XLSX.utils.book_new();
 
-const worksheet=
+const worksheet =
 XLSX.utils.aoa_to_sheet(
     excelRows
 );
@@ -4585,16 +4794,17 @@ XLSX.utils.book_append_sheet(
 
 XLSX.writeFile(
     workbook,
-    "平面控制點檢測成果表_工程版.xlsx"
+    "平面控制點檢測成果表.xlsx"
 );
 
-});
+}
+);
 
 /* =====================================================
-   導線資料保存
+   LocalStorage
 ===================================================== */
 
-function saveTraverseData(){
+function saveData(){
 
 const data={
 
@@ -4619,9 +4829,30 @@ document.getElementById("stE").value,
 bsToStDist:
 document.getElementById("bsToStDist").value,
 
+knownDb:[],
+
 traverse:[]
 
 };
+
+knownTbody
+.querySelectorAll("tr")
+.forEach(function(row){
+
+data.knownDb.push({
+
+id:
+row.querySelector(".known-id").value,
+
+n:
+row.querySelector(".known-n").value,
+
+e:
+row.querySelector(".known-e").value
+
+});
+
+});
 
 tbody
 .querySelectorAll("tr")
@@ -4649,26 +4880,30 @@ row.querySelector(".input-sec").value
 });
 
 localStorage.setItem(
-    "survey_control_traverse_v14",
+    "survey_control_point_v13",
     JSON.stringify(data)
 );
 
 }
 
 /* =====================================================
-   導線資料載入
+   Load
 ===================================================== */
 
-function loadTraverseData(){
+function loadData(){
 
-const saved=
+const saved =
 localStorage.getItem(
-    "survey_control_traverse_v14"
+    "survey_control_point_v13"
 );
 
 if(!saved){
 
+addKnownRow();
+
 addRow();
+
+resizeCanvas();
 
 return;
 
@@ -4676,31 +4911,64 @@ return;
 
 try{
 
-const data=
+const data =
 JSON.parse(saved);
 
-document.getElementById("bsId").value=
+document.getElementById("bsId")
+.value =
 data.bsId||"";
 
-document.getElementById("stId").value=
+document.getElementById("stId")
+.value =
 data.stId||"";
 
-document.getElementById("bsN").value=
+document.getElementById("bsN")
+.value =
 data.bsN||"";
 
-document.getElementById("bsE").value=
+document.getElementById("bsE")
+.value =
 data.bsE||"";
 
-document.getElementById("stN").value=
+document.getElementById("stN")
+.value =
 data.stN||"";
 
-document.getElementById("stE").value=
+document.getElementById("stE")
+.value =
 data.stE||"";
 
-document.getElementById("bsToStDist").value=
+document.getElementById("bsToStDist")
+.value =
 data.bsToStDist||"";
 
+knownTbody.innerHTML="";
+
 tbody.innerHTML="";
+
+if(
+    data.knownDb &&
+    data.knownDb.length
+){
+
+data.knownDb.forEach(
+function(item){
+
+addKnownRow(
+    item.id,
+    item.n,
+    item.e
+);
+
+}
+);
+
+}
+else{
+
+addKnownRow();
+
+}
 
 if(
     data.traverse &&
@@ -4711,14 +4979,15 @@ data.traverse.forEach(
 function(item){
 
 addRow(
-    item.id||"",
-    item.dist||"",
-    item.deg||"",
-    item.min||"",
-    item.sec||""
+    item.id,
+    item.dist,
+    item.deg,
+    item.min,
+    item.sec
 );
 
-});
+}
+);
 
 }
 else{
@@ -4727,52 +4996,32 @@ addRow();
 
 }
 
+updateKnownStatus();
+
+resizeCanvas();
+
 }
 catch(error){
 
+knownTbody.innerHTML="";
+
 tbody.innerHTML="";
+
+addKnownRow();
 
 addRow();
 
-}
-
-updateRowIndices();
+resizeCanvas();
 
 }
 
-/* =====================================================
-   起算點輸入也自動保存
-===================================================== */
-
-[
-    "bsId",
-    "stId",
-    "bsN",
-    "bsE",
-    "stN",
-    "stE",
-    "bsToStDist"
-]
-.forEach(function(id){
-
-document
-.getElementById(id)
-.addEventListener(
-    "input",
-    saveTraverseData
-);
-
-});
+}
 
 /* =====================================================
    啟動
 ===================================================== */
 
-loadKnownDatabase();
-
-loadTraverseData();
-
-updateKnownStatus();
+loadData();
 
 setTimeout(
 function(){
@@ -4788,3 +5037,4 @@ resizeCanvas();
 
 </body>
 </html>
+```
